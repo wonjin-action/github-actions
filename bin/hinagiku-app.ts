@@ -13,22 +13,26 @@ import { ShareResourcesStack } from '../lib/stack/share-resources-stack';
 
 const app = new cdk.App();
 
-// ----------------------- Load context variables ------------------------------
-// This context need to be specified in args
-const argContext = 'environment';
-const envKey = app.node.tryGetContext(argContext);
-if (envKey == undefined)
-  throw new Error(`Please specify environment with context option. ex) cdk deploy -c ${argContext}=dev`);
-//Read Typescript Environment file
-const TsEnvPath = './params/' + envKey + '.ts';
-if (!fs.existsSync(TsEnvPath)) throw new Error(`Can't find a ts environment file [../params/` + envKey + `.ts]`);
+function loadContextVariable(): string {
+  const argContext = 'environment';
+  const envKey = app.node.tryGetContext(argContext);
+  if (envKey == undefined)
+    throw new Error(`Please specify environment with context option. ex) cdk deploy -c ${argContext}=dev`);
+  //Read Typescript Environment file
+  const TsEnvPath = './params/' + envKey + '.ts';
+  if (!fs.existsSync(TsEnvPath)) throw new Error(`Can't find a ts environment file [../params/` + envKey + `.ts]`);
 
-//ESLintではrequireの利用が禁止されているため除外コメントを追加
-//https://github.com/mynavi-group/csys-infra-baseline-environment-on-aws-change-homemade/issues/29#issuecomment-1437738803
-const config: IConfig = require('../params/' + envKey);
+  return envKey;
+}
 
-// Add envName to Stack for avoiding duplication of Stack names.
-const pjPrefix = config.Env.envName + 'BLEA';
+function getConfig(deployEnv: string): IConfig {
+  const tsEnvPath = './params/' + deployEnv + '.ts';
+  if (!fs.existsSync(tsEnvPath)) {
+    throw new Error(`Can't find a ts environment file [../params/${deployEnv}.ts]`);
+  }
+
+  return require('../params/' + deployEnv); // eslint-disable-line @typescript-eslint/no-var-requires
+}
 
 // ----------------------- Environment variables for stack ------------------------------
 // Default environment
@@ -49,6 +53,10 @@ function getProcEnv() {
     return procEnvDefault;
   }
 }
+
+const envName = loadContextVariable();
+const config: IConfig = getConfig(envName);
+const pjPrefix = `Hinagiku-${config.Env.envName}`;
 
 // ----------------------- Guest System Stacks ------------------------------
 
@@ -71,7 +79,7 @@ const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`
 // InfraResources
 new InfraResourcesPipelineStack(app, `${pjPrefix}-Pipeline`, {
   ...config.InfraResourcesPipelineParam,
-  env: envKey,
+  env: envName,
 });
 
 const waf = new WafStack(app, `${pjPrefix}-Waf`, {
