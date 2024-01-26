@@ -11,7 +11,7 @@ import { aws_ecr as ecr } from 'aws-cdk-lib';
 import { aws_events_targets as eventtarget } from 'aws-cdk-lib';
 
 export interface EcsappConstructProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   ecsCluster: ecs.Cluster;
   appName: string;
   prefix: string;
@@ -45,7 +45,7 @@ export class EcsappConstruct extends Construct {
     repository.onImageScanCompleted('ImageScanComplete').addTarget(target);
 
     const securityGroupForFargate = new ec2.SecurityGroup(this, `Sg`, {
-      vpc: props.myVpc,
+      vpc: props.vpc,
       allowAllOutbound: true, // for AWS APIs
     });
 

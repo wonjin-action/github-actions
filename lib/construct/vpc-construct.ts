@@ -6,19 +6,19 @@ import { aws_kms as kms } from 'aws-cdk-lib';
 import { aws_iam as iam } from 'aws-cdk-lib';
 
 export interface VpcProps {
-  myVpcCidr: string;
-  myVpcMaxAzs: number;
+  vpcCidr: string;
+  vpcMaxAzs: number;
 }
 
 export class Vpc extends Construct {
-  public readonly myVpc: ec2.Vpc;
+  public readonly vpc: ec2.Vpc;
 
   constructor(scope: Construct, id: string, props: VpcProps) {
     super(scope, id);
 
-    const myVpc = new ec2.Vpc(this, 'Vpc', {
-      ipAddresses: ec2.IpAddresses.cidr(props.myVpcCidr),
-      maxAzs: props.myVpcMaxAzs,
+    const vpc = new ec2.Vpc(this, 'Vpc', {
+      ipAddresses: ec2.IpAddresses.cidr(props.vpcCidr),
+      maxAzs: props.vpcMaxAzs,
       natGateways: 2,
       flowLogs: {},
       subnetConfiguration: [
@@ -67,17 +67,17 @@ export class Vpc extends Construct {
       enforceSSL: true,
     });
 
-    myVpc.addFlowLog('FlowLogs', {
+    vpc.addFlowLog('FlowLogs', {
       destination: ec2.FlowLogDestination.toS3(flowLogBucket),
       trafficType: ec2.FlowLogTrafficType.ALL,
     });
-    this.myVpc = myVpc;
+    this.vpc = vpc;
 
     //  --------------------------------------------------------------
 
     // NACL for Public Subnets
     const naclPublic = new ec2.NetworkAcl(this, 'NaclPublic', {
-      vpc: myVpc,
+      vpc: vpc,
       subnetSelection: { subnetType: ec2.SubnetType.PUBLIC },
     });
 
@@ -101,7 +101,7 @@ export class Vpc extends Construct {
 
     // NACL for Private Subnets
     const naclPrivate = new ec2.NetworkAcl(this, 'NaclPrivate', {
-      vpc: myVpc,
+      vpc: vpc,
       subnetSelection: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
     });
 
@@ -124,46 +124,46 @@ export class Vpc extends Construct {
     });
 
     // VPC Endpoint for S3
-    myVpc.addGatewayEndpoint('S3EndpointForPrivate', {
+    vpc.addGatewayEndpoint('S3EndpointForPrivate', {
       service: ec2.GatewayVpcEndpointAwsService.S3,
       subnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }, { subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
     });
 
     // VPC Endpoint for SSM
-    myVpc.addInterfaceEndpoint('SsmEndpointForPrivate', {
+    vpc.addInterfaceEndpoint('SsmEndpointForPrivate', {
       service: ec2.InterfaceVpcEndpointAwsService.SSM,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
     });
-    myVpc.addInterfaceEndpoint('SsmMessagesEndpointForPrivate', {
+    vpc.addInterfaceEndpoint('SsmMessagesEndpointForPrivate', {
       service: ec2.InterfaceVpcEndpointAwsService.SSM_MESSAGES,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
     });
-    myVpc.addInterfaceEndpoint('Ec2EndpointForPrivate', {
+    vpc.addInterfaceEndpoint('Ec2EndpointForPrivate', {
       service: ec2.InterfaceVpcEndpointAwsService.EC2,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
     });
-    myVpc.addInterfaceEndpoint('Ec2MessagesEndpointForPrivate', {
+    vpc.addInterfaceEndpoint('Ec2MessagesEndpointForPrivate', {
       service: ec2.InterfaceVpcEndpointAwsService.EC2_MESSAGES,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
     });
 
     // VPC Endpoint for Fargate
-    myVpc.addInterfaceEndpoint('EcrDkrEndpointForPrivate', {
+    vpc.addInterfaceEndpoint('EcrDkrEndpointForPrivate', {
       service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
     });
-    myVpc.addInterfaceEndpoint('EcrEndpointForPrivate', {
+    vpc.addInterfaceEndpoint('EcrEndpointForPrivate', {
       service: ec2.InterfaceVpcEndpointAwsService.ECR,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
     });
-    myVpc.addInterfaceEndpoint('LogsEndpointForPrivate', {
+    vpc.addInterfaceEndpoint('LogsEndpointForPrivate', {
       service: ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
     });
 
     //Private SubnetをOutput（run_task.shが参照）
     new cdk.CfnOutput(this, 'subnetID', {
-      value: myVpc.selectSubnets({ subnetGroupName: 'Private' }).subnetIds[0],
+      value: vpc.selectSubnets({ subnetGroupName: 'Private' }).subnetIds[0],
     });
   }
 }

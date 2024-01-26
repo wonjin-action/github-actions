@@ -15,7 +15,7 @@ import { AlbtgConstruct } from './alb-target-group-construct';
 import { IEcsAlbParam, ICertificateIdentifier, IOptionalEcsAlbParam } from '../../../../params/interface';
 
 interface AlbConstructProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   alarmTopic: sns.Topic;
   ecsApps: IEcsAlbParam;
   AlbCertificateIdentifier: ICertificateIdentifier;
@@ -46,7 +46,7 @@ export class AlbConstruct extends Construct {
 
     //Security Group of ALB for App
     const securityGroupForAlb = new ec2.SecurityGroup(this, 'SgAlb', {
-      vpc: props.myVpc,
+      vpc: props.vpc,
       allowAllOutbound: true,
     });
     this.appAlbSecurityGroup = securityGroupForAlb;
@@ -55,10 +55,10 @@ export class AlbConstruct extends Construct {
 
     // ALB for App Server
     const lbForApp = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
-      vpc: props.myVpc,
+      vpc: props.vpc,
       internetFacing: true,
       securityGroup: securityGroupForAlb,
-      vpcSubnets: props.myVpc.selectSubnets({
+      vpcSubnets: props.vpc.selectSubnets({
         subnetGroupName: 'Public',
       }),
     });
@@ -191,7 +191,7 @@ export class AlbConstruct extends Construct {
 
     this.AlbTgs = props.ecsApps.map((ecsApp, index) => {
       return new AlbtgConstruct(this, `${ecsApp.appName}-TG`, {
-        myVpc: props.myVpc,
+        vpc: props.vpc,
         alarmTopic: props.alarmTopic,
         appAlbListener: lbForAppListener,
         path: (ecsApp as IOptionalEcsAlbParam).path,

@@ -7,7 +7,7 @@ import * as cw from 'aws-cdk-lib/aws-cloudwatch';
 import * as cw_actions from 'aws-cdk-lib/aws-cloudwatch-actions';
 
 export interface AlbtgConstructProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   alarmTopic: sns.Topic;
   appAlbListener: elbv2.ApplicationListener;
   path?: string;
@@ -25,7 +25,7 @@ export class AlbtgConstruct extends Construct {
       targetType: elbv2.TargetType.IP,
       protocol: elbv2.ApplicationProtocol.HTTP,
       deregistrationDelay: cdk.Duration.seconds(30),
-      vpc: props.myVpc,
+      vpc: props.vpc,
     });
     this.lbForAppTargetGroup = lbForAppTargetGroup;
 

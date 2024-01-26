@@ -10,7 +10,7 @@ import { aws_cloudwatch_actions as cw_actions } from 'aws-cdk-lib';
 import { ClusterInstance } from 'aws-cdk-lib/aws-rds';
 
 export interface DbAuroraStackProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   dbName: string;
   dbUser: string;
   dbAllocatedStorage: number;
@@ -87,7 +87,7 @@ export class DbAuroraStack extends cdk.Stack {
       serverlessV2MaxCapacity: props.auroraMaxAcu,
       serverlessV2MinCapacity: props.auroraMinAcu,
       vpcSubnets: props.vpcSubnets,
-      vpc: props.myVpc,
+      vpc: props.vpc,
       writer: ClusterInstance.provisioned('writer', {
         instanceType: props.instanceTypeWriter,
         parameterGroup: parameterGroupForInstance,

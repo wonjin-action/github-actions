@@ -5,7 +5,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 // import * as iam from 'aws-cdk-lib/aws-iam';
 
 export interface ModuleStackProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   engineVersion: opensearch.EngineVersion;
   zoneAwareness: number;
   ebsVolumeType: ec2.EbsDeviceVolumeType;
@@ -29,7 +29,7 @@ export class OpenSearchStack extends cdk.Stack {
     // 1. 特定セキュリティグループＩＤからの許可：特定のコンテナリソースなどアクセス元リソースが絞れる場合
     // 2. サブネットの指定：特定リソースの絞り込みが難しく、サブネット全体で指定したい場合
     const domainsg = new ec2.SecurityGroup(this, 'domainsg', {
-      vpc: props.myVpc,
+      vpc: props.vpc,
       allowAllOutbound: true,
     });
 
@@ -44,13 +44,13 @@ export class OpenSearchStack extends cdk.Stack {
     // 「2. サブネットの指定」を使用する場合はこちらをコメントイン
     // private subnetのCIDR内からのアクセスをすべて許可するインバウンドルール追加
     // private subnet内に多くのサービスがあり、個別の設定を受け付けるのが難しい場合使用
-    //  props.myVpc.selectSubnets({ subnets: props.myVpc.privateSubnets }).subnets.forEach((x:ec2.ISubnet) => {
+    //  props.vpc.selectSubnets({ subnets: props.vpc.privateSubnets }).subnets.forEach((x:ec2.ISubnet) => {
     //     domainsg.addIngressRule(ec2.Peer.ipv4(x.ipv4CidrBlock), ec2.Port.tcp(443));
     //   });
 
     const domain = new opensearch.Domain(this, cdk.Stack.of(this).stackName + 'OpenSearch', {
       version: props.engineVersion,
-      vpc: props.myVpc,
+      vpc: props.vpc,
       zoneAwareness: {
         availabilityZoneCount: props.zoneAwareness,
         enabled: true,

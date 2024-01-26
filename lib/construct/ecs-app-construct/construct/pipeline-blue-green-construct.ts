@@ -19,7 +19,7 @@ export interface PipelineBgConstructProps extends cdk.StackProps {
   listener: elbv2.ApplicationListener;
   testListener: elbv2.ApplicationListener;
   securityGroup: ec2.SecurityGroup;
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   logGroup: cwl.LogGroup;
   executionRole: iam.Role;
   taskRole?: iam.Role;

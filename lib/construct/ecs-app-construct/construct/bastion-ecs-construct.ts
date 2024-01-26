@@ -10,7 +10,7 @@ import * as imagedeploy from 'cdk-docker-image-deployment';
 import * as path from 'path';
 
 export interface BastionECSAppConstructProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   appKey: kms.IKey;
   containerImageTag: string;
   containerConfig: {
@@ -80,7 +80,7 @@ export class BastionECSAppConstruct extends Construct {
 
     //SecurityGroup
     const securityGroup = new ec2.SecurityGroup(this, `${id}-BastionSG`, {
-      vpc: props.myVpc,
+      vpc: props.vpc,
       allowAllOutbound: true, // for AWS APIs
     });
     this.securityGroup = securityGroup;

@@ -13,7 +13,7 @@ import { IEcsAlbParam, IEcsParam, ICertificateIdentifier } from '../../../params
 import { BastionECSAppConstruct } from './construct/bastion-ecs-construct';
 
 interface EcsAppConstructProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   appKey: kms.IKey;
   alarmTopic: sns.Topic;
   prefix: string;
@@ -42,7 +42,7 @@ export class EcsAppConstruct extends Construct {
 
     //ECS Common
     const ecsCommon = new EcsCommonConstruct(this, `${props.prefix}-ECSCommon`, {
-      myVpc: props.myVpc,
+      vpc: props.vpc,
       alarmTopic: props.alarmTopic,
       prefix: props.prefix,
 
@@ -58,7 +58,7 @@ export class EcsAppConstruct extends Construct {
     if (props.ecsFrontTasks) {
       //Create Origin Resources
       const frontAlb = new AlbConstruct(this, `${props.prefix}-FrontAlb`, {
-        myVpc: props.myVpc,
+        vpc: props.vpc,
         alarmTopic: props.alarmTopic,
         AlbCertificateIdentifier: props.AlbCertificateIdentifier,
         ecsApps: props.ecsFrontTasks,
@@ -67,7 +67,7 @@ export class EcsAppConstruct extends Construct {
 
       const frontEcsApps = props.ecsFrontTasks.map((ecsApp) => {
         return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Ecs-Resources`, {
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           ecsCluster: ecsCommon.ecsCluster,
           appName: ecsApp.appName,
           prefix: props.prefix,
@@ -88,7 +88,7 @@ export class EcsAppConstruct extends Construct {
           ecsServiceName: ecsApp.ecsServiceName,
           targetGroup: frontAlb.AlbTgs[index].lbForAppTargetGroup,
           securityGroup: ecsApp.securityGroupForFargate,
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
           ecsNameSpace: ecsCommon.ecsNameSpace,
           executionRole: ecsCommon.ecsTaskExecutionRole,
@@ -103,7 +103,7 @@ export class EcsAppConstruct extends Construct {
     if (props.ecsBackTasks) {
       const backEcsApps = props.ecsBackTasks.map((ecsApp) => {
         return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Ecs-Resources`, {
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           ecsCluster: ecsCommon.ecsCluster,
           appName: ecsApp.appName,
           prefix: props.prefix,
@@ -124,7 +124,7 @@ export class EcsAppConstruct extends Construct {
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
           securityGroup: ecsApp.securityGroupForFargate,
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
           logGroupForServiceConnect: ecsApp.serviceConnectLogGroup,
           ecsNameSpace: ecsCommon.ecsNameSpace,
@@ -139,7 +139,7 @@ export class EcsAppConstruct extends Construct {
     if (props.ecsFrontBgTasks) {
       //Create Origin Resources
       const frontAlbBg = new AlbBgConstruct(this, `${props.prefix}-Frontend-Bg`, {
-        myVpc: props.myVpc,
+        vpc: props.vpc,
         alarmTopic: props.alarmTopic,
         AlbBgCertificateIdentifier: props.AlbBgCertificateIdentifier,
         ecsApps: props.ecsFrontBgTasks,
@@ -150,7 +150,7 @@ export class EcsAppConstruct extends Construct {
 
       const frontEcsAppsBg = props.ecsFrontBgTasks.map((ecsApp) => {
         return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Ecs-Resources-Bg`, {
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           ecsCluster: ecsCommon.ecsCluster,
           appName: ecsApp.appName,
           prefix: props.prefix,
@@ -164,7 +164,7 @@ export class EcsAppConstruct extends Construct {
 
       const frontEcsServices = frontEcsAppsBg.map((ecsApp) => {
         return new EcsServiceConstruct(this, ecsApp.ecsServiceName, {
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
           ecsTaskExecutionRole: ecsCommon.ecsTaskExecutionRole,
@@ -189,7 +189,7 @@ export class EcsAppConstruct extends Construct {
           blueTargetGroup: frontAlbBg.AlbTgsBlue[index].lbForAppTargetGroup,
           greenTargetGroup: frontAlbBg.AlbTgsGreen[index].lbForAppTargetGroup,
           securityGroup: ecsApp.securityGroupForFargate,
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
           executionRole: ecsCommon.ecsTaskExecutionRole,
         });
@@ -201,7 +201,7 @@ export class EcsAppConstruct extends Construct {
     if (props.ecsBackBgTasks) {
       //Create Origin Resources
       const backendAlbBg = new AlbBgConstruct(this, `${props.prefix}-Backend-Bg`, {
-        myVpc: props.myVpc,
+        vpc: props.vpc,
         alarmTopic: props.alarmTopic,
         httpFlag: true,
         AlbBgCertificateIdentifier: props.AlbBgCertificateIdentifier,
@@ -214,7 +214,7 @@ export class EcsAppConstruct extends Construct {
 
       const backEcsAppsBg = props.ecsBackBgTasks.map((ecsApp) => {
         return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Ecs-Resources-Bg`, {
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           ecsCluster: ecsCommon.ecsCluster,
           appName: ecsApp.appName,
           prefix: props.prefix,
@@ -228,7 +228,7 @@ export class EcsAppConstruct extends Construct {
 
       const backEcsServices = backEcsAppsBg.map((ecsApp) => {
         return new EcsServiceConstruct(this, ecsApp.ecsServiceName, {
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
           ecsTaskExecutionRole: ecsCommon.ecsTaskExecutionRole,
@@ -253,7 +253,7 @@ export class EcsAppConstruct extends Construct {
           blueTargetGroup: backendAlbBg.AlbTgsBlue[index].lbForAppTargetGroup,
           greenTargetGroup: backendAlbBg.AlbTgsGreen[index].lbForAppTargetGroup,
           securityGroup: ecsApp.securityGroupForFargate,
-          myVpc: props.myVpc,
+          vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
           executionRole: ecsCommon.ecsTaskExecutionRole,
         });
@@ -262,7 +262,7 @@ export class EcsAppConstruct extends Construct {
     //Bastion Container
     if (props.ecsBastionTasks) {
       const bastionApp = new BastionECSAppConstruct(this, `${props.prefix}-Bastion-ECSAPP`, {
-        myVpc: props.myVpc,
+        vpc: props.vpc,
         appKey: props.appKey,
         containerImageTag: 'bastionimage',
         containerConfig: {

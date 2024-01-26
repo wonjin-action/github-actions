@@ -9,7 +9,7 @@ import { aws_events_targets as cwet } from 'aws-cdk-lib';
 import { aws_servicediscovery as sd } from 'aws-cdk-lib';
 
 export interface EcsCommonConstructProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   alarmTopic: sns.Topic;
   prefix: string;
 }
@@ -52,7 +52,7 @@ export class EcsCommonConstruct extends Construct {
     // Fargate Cluster
     // -  Enabling CloudWatch ContainerInsights
     const ecsCluster = new ecs.Cluster(this, 'Cluster', {
-      vpc: props.myVpc,
+      vpc: props.vpc,
       containerInsights: true,
       enableFargateCapacityProviders: true,
       clusterName: cdk.PhysicalName.GENERATE_IF_NEEDED, // for crossRegionReferences

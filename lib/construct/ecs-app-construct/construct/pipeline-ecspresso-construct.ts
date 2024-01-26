@@ -18,7 +18,7 @@ export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   ecsServiceName: string;
   targetGroup?: elbv2.ApplicationTargetGroup;
   securityGroup: ec2.SecurityGroup;
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   logGroup: cwl.LogGroup;
   logGroupForServiceConnect?: cwl.LogGroup;
   ecsNameSpace?: sd.INamespace;
@@ -59,17 +59,17 @@ export class PipelineEcspressoConstruct extends Construct {
         },
         // Subnet数が3の前提
         SUBNET_1: {
-          value: props.myVpc.selectSubnets({
+          value: props.vpc.selectSubnets({
             subnetGroupName: 'Private',
           }).subnetIds[0],
         },
         SUBNET_2: {
-          value: props.myVpc.selectSubnets({
+          value: props.vpc.selectSubnets({
             subnetGroupName: 'Private',
           }).subnetIds[1],
         },
         SUBNET_3: {
-          value: props.myVpc.selectSubnets({
+          value: props.vpc.selectSubnets({
             subnetGroupName: 'Private',
           }).subnetIds[2],
         },

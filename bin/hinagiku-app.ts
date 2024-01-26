@@ -61,8 +61,8 @@ const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`
   workspaceId: workspaceId,
   channelId: channelIdMon,
   ...config.CognitoParam,
-  myVpcCidr: config.VpcParam.cidr,
-  myVpcMaxAzs: config.VpcParam.maxAzs,
+  vpcCidr: config.VpcParam.cidr,
+  vpcMaxAzs: config.VpcParam.maxAzs,
   env: deployEnv,
 });
 
@@ -88,7 +88,7 @@ new OidcStack(app, `${pjPrefix}-OIDC`, {
 });
 
 const ecs = new EcsAppStack(app, `${pjPrefix}-ECS`, {
-  myVpc: shareResources.myVpc,
+  vpc: shareResources.vpc,
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
   prefix: pjPrefix,
@@ -114,9 +114,9 @@ const cloudfront = new CloudfrontStack(app, `${pjPrefix}-Cloudfront`, {
 
 // Aurora
 const dbCluster = new DbAuroraStack(app, `${pjPrefix}-DBAurora`, {
-  myVpc: shareResources.myVpc,
+  vpc: shareResources.vpc,
   dbAllocatedStorage: 25,
-  vpcSubnets: shareResources.myVpc.selectSubnets({
+  vpcSubnets: shareResources.vpc.selectSubnets({
     subnetGroupName: 'Protected',
   }),
   appServerSecurityGroup: ecs.app.backEcsApps[0].securityGroupForFargate,
@@ -148,7 +148,7 @@ new MonitorStack(app, `${pjPrefix}-MonitorStack`, {
 });
 
 new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
-  myVpc: shareResources.myVpc,
+  vpc: shareResources.vpc,
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
   appServerSecurityGroup: ecs.app.backEcsApps[0].securityGroupForFargate,

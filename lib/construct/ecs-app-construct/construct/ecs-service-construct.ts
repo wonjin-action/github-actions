@@ -6,7 +6,7 @@ import { aws_iam as iam } from 'aws-cdk-lib';
 import { aws_logs as cwl } from 'aws-cdk-lib';
 
 export interface EcsServiceConstructProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   ecsCluster: ecs.Cluster;
   ecsServiceName: string;
   securityGroupForFargate: ec2.SecurityGroup;
@@ -79,7 +79,7 @@ export class EcsServiceConstruct extends Construct {
         //  weight: 2,
         //},
       ],
-      vpcSubnets: props.myVpc.selectSubnets({
+      vpcSubnets: props.vpc.selectSubnets({
         subnetGroupName: 'Private',
       }),
       securityGroups: [props.securityGroupForFargate],

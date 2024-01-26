@@ -51,9 +51,9 @@ describe(`${pjPrefix} Guest Stacks`, () => {
     const appKey = new BLEAKeyAppStack(app, `${pjPrefix}-AppKey`, { env: procEnv });
 
     // Networking
-    const myVpcCidr = envVals['vpcCidr'];
+    const vpcCidr = envVals['vpcCidr'];
     const prodVpc = new BLEAVpcStack(app, `${pjPrefix}-Vpc`, {
-      myVpcCidr: myVpcCidr,
+      vpcCidr: vpcCidr,
       env: procEnv,
     });
 
@@ -65,14 +65,14 @@ describe(`${pjPrefix} Guest Stacks`, () => {
 
     // Simple CloudFront FrontEnd
     const front = new BLEAFrontendSimpleStack(app, `${pjPrefix}-SimpleFrontStack`, {
-      myVpc: prodVpc.myVpc,
+      vpc: prodVpc.vpc,
       webAcl: waf.webAcl,
       env: procEnv,
     });
 
     // Application Stack (LoadBalancer + Fargate)
     const ecsApp = new BLEAECSAppStack(app, `${pjPrefix}-ECSApp`, {
-      myVpc: prodVpc.myVpc,
+      vpc: prodVpc.vpc,
       appKey: appKey.kmsKey,
       alarmTopic: monitorAlarm.alarmTopic,
       webFront: front,
@@ -81,11 +81,11 @@ describe(`${pjPrefix} Guest Stacks`, () => {
 
     // Aurora
     const dbCluster = new BLEADbAuroraPgStack(app, `${pjPrefix}-DBAuroraPg`, {
-      myVpc: prodVpc.myVpc,
+      vpc: prodVpc.vpc,
       dbName: 'mydbname',
       dbUser: envVals['dbUser'],
       dbAllocatedStorage: 25,
-      vpcSubnets: prodVpc.myVpc.selectSubnets({
+      vpcSubnets: prodVpc.vpc.selectSubnets({
         subnetGroupName: 'Protected',
       }),
       appServerSecurityGroup: ecsApp.appServerSecurityGroup,

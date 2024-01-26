@@ -8,7 +8,7 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import * as path from 'path';
 
 export interface StepFunctionsSampleStackProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   ecsClusterName: string;
   ecsTaskExecutionRole: iam.Role;
   ecsTaskName: string;
@@ -63,7 +63,7 @@ export class StepFunctionsSampleStack extends cdk.Stack {
     );
 
     const securityGroupForTask = new ec2.SecurityGroup(this, 'SgTask', {
-      vpc: props.myVpc,
+      vpc: props.vpc,
       allowAllOutbound: true,
     });
 
@@ -94,7 +94,7 @@ export class StepFunctionsSampleStack extends cdk.Stack {
         TaskDefinition: ecsTaskDefArn,
         NetworkConfiguration: {
           AwsvpcConfiguration: {
-            Subnets: props.myVpc.privateSubnets.map(({ subnetId }) => subnetId),
+            Subnets: props.vpc.privateSubnets.map(({ subnetId }) => subnetId),
             SecurityGroups: [securityGroupForTask.securityGroupId],
           },
         },

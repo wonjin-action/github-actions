@@ -7,7 +7,7 @@ import { IEcsAlbParam, IEcsParam, ICertificateIdentifier } from '../../params/in
 import { EcsAppConstruct } from '../construct/ecs-app-construct';
 
 interface EcsAppStackProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   appKey: kms.IKey;
   alarmTopic: sns.Topic;
   prefix: string;
@@ -27,7 +27,7 @@ export class EcsAppStack extends cdk.Stack {
     super(scope, id, props);
 
     const ecs = new EcsAppConstruct(this, `${props.prefix}-ECSApp`, {
-      myVpc: props.myVpc,
+      vpc: props.vpc,
       appKey: props.appKey,
       alarmTopic: props.alarmTopic,
       prefix: props.prefix,

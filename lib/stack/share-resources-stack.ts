@@ -17,13 +17,13 @@ export interface ShareResourcesStackProps extends cdk.StackProps {
   domainPrefix: string;
   urlForCallback: string[];
   urlForLogout: string[];
-  myVpcCidr: string;
-  myVpcMaxAzs: number;
+  vpcCidr: string;
+  vpcMaxAzs: number;
 }
 
 export class ShareResourcesStack extends cdk.Stack {
   public readonly appKey: kms.Key;
-  public readonly myVpc: ec2.Vpc;
+  public readonly vpc: ec2.Vpc;
   public readonly alarmTopic: Topic;
 
   constructor(scope: Construct, id: string, props: ShareResourcesStackProps) {
@@ -52,10 +52,10 @@ export class ShareResourcesStack extends cdk.Stack {
 
     // Networking
     const vpc = new Vpc(this, `${props.pjPrefix}-Vpc`, {
-      myVpcCidr: props.myVpcCidr,
-      myVpcMaxAzs: props.myVpcMaxAzs,
+      vpcCidr: props.vpcCidr,
+      vpcMaxAzs: props.vpcMaxAzs,
     });
 
-    this.myVpc = vpc.myVpc;
+    this.vpc = vpc.vpc;
   }
 }

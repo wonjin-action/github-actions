@@ -9,7 +9,7 @@ import * as cwlog from 'aws-cdk-lib/aws-logs';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 export interface ModuleStackProps extends cdk.StackProps {
-  myVpc: ec2.Vpc;
+  vpc: ec2.Vpc;
   appKey: kms.IKey;
   alarmTopic: sns.Topic;
   appServerSecurityGroup: ec2.SecurityGroup;
@@ -37,7 +37,7 @@ export class ElastiCacheRedisStack extends cdk.Stack {
     });
 
     const securityGroupForRedis = new ec2.SecurityGroup(this, 'ElastiCacheRedisSecuritygGroup', {
-      vpc: props.myVpc,
+      vpc: props.vpc,
     });
     // 1. 特定セキュリティグループＩＤからの許可 を使用する場合はこちらをコメントイン。
     // 例:ecs のsecurity group をインバウンドルールに追加
@@ -50,14 +50,14 @@ export class ElastiCacheRedisStack extends cdk.Stack {
     // 「2. サブネットの指定」を使用する場合はこちらをコメントイン
     // private subnetのCIDR内からのアクセスをすべて許可するインバウンドルール追加
     // private subnet内に多くのサービスがあり、個別の設定を受け付けるのが難しい場合使用
-    // props.myVpc.selectSubnets({ subnets: props.myVpc.privateSubnets }).subnets.forEach((x:ec2.ISubnet) => {
+    // props.vpc.selectSubnets({ subnets: props.vpc.privateSubnets }).subnets.forEach((x:ec2.ISubnet) => {
     //   securityGroupForRedis.addIngressRule(ec2.Peer.ipv4(x.ipv4CidrBlock), ec2.Port.tcp(6379));
     // });
 
     const subnetgroup = new elasticache.CfnSubnetGroup(this, 'ElastiCacheRedisSubnetGroup', {
       cacheSubnetGroupName: cdk.Stack.of(this).stackName + '-Subnetgroup',
       description: 'for redis',
-      subnetIds: props.myVpc.isolatedSubnets.map(({ subnetId }) => subnetId),
+      subnetIds: props.vpc.isolatedSubnets.map(({ subnetId }) => subnetId),
     });
 
     // カスタマイズする場合は../elasticache-param-groupparams/config.tsファイルを修正していく。
