@@ -86,12 +86,12 @@ const waf = new WafStack(app, `${pjPrefix}-Waf`, {
   ...config.WafParam,
 });
 
-new OidcStack(app, `${pjPrefix}-OIDC`, {
+new OidcStack(app, `${pjPrefix}-Oidc`, {
   OrganizationName: config.OidcParam.OrganizationName,
   RepositoryNames: config.OidcParam.RepositoryNames,
 });
 
-const ecs = new EcsAppStack(app, `${pjPrefix}-ECS`, {
+const ecs = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   vpc: shareResources.vpc,
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
@@ -117,7 +117,7 @@ const cloudfront = new CloudfrontStack(app, `${pjPrefix}-Cloudfront`, {
 });
 
 // Aurora
-const dbCluster = new DbAuroraStack(app, `${pjPrefix}-DBAurora`, {
+const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {
   vpc: shareResources.vpc,
   dbAllocatedStorage: 25,
   vpcSubnets: shareResources.vpc.selectSubnets({
