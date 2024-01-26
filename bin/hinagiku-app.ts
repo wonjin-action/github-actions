@@ -4,15 +4,8 @@ import { WafStack } from '../lib/stack/waf-stack';
 import { ElastiCacheRedisStack } from '../lib/stack/elasticache-redis-stack';
 import * as fs from 'fs';
 import { IConfig } from '../params/interface';
-import { StepFunctionsSampleStack } from '../lib/stack/stepfunctions-sample-stack';
-import { OpenSearchStack } from '../lib/stack/opensearch-stack';
-import { BackupVaultStack } from '../lib/stack/backup-vault-stack';
-import { BackupPlanStack } from '../lib/stack/backup-plan-stack';
-//OpenSearchSererless使用の場合以下をコメントイン、import { OpenSearchStack } from '../lib/-opensearch-stack';をコメントアウト
-//import {OpenSearchServerlessStack} from '../lib/-opensearchserverless-stack';
 import { MonitorStack } from '../lib/stack/monitor-stack';
 import { EcsAppStack } from '../lib/stack/ecs-app-stack';
-import { Ec2Action } from 'aws-cdk-lib/aws-cloudwatch-actions';
 import { CloudfrontStack } from '../lib/stack/cloudfront-stack';
 import { OidcStack } from '../lib/stack/oidc-stack';
 import { InfraResourcesPipelineStack } from '../lib/stack/pipeline-infraresources-stack';
@@ -153,17 +146,6 @@ new MonitorStack(app, `${pjPrefix}-MonitorStack`, {
   // AutoScaleはCDK外で管理のため、固定値を修正要で設定
   ecsScaleOnRequestCount: 50,
   ecsTargetUtilizationPercent: 10000,
-  // canaryDurationAlarm: appCanary.canaryDurationAlarm,
-  // canaryFailedAlarm: appCanary.canaryFailedAlarm,
-  env: getProcEnv(),
-});
-
-new OpenSearchStack(app, `${pjPrefix}-OpenSearch`, {
-  myVpc: shareResources.myVpc,
-  appServerSecurityGroup: ecs.app.backEcsApps[0].securityGroupForFargate,
-  // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
-  bastionSecurityGroup: ecs.app.bastionApp.securityGroup,
-  ...config.OpensearchParam,
   env: getProcEnv(),
 });
 
@@ -177,73 +159,6 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
   ...config.ElastiCacheRedisParam,
   env: getProcEnv(),
 });
-
-// AWS Backupを利用する場合は以下をif文も含めてコメントインする。
-// 環境別パラメータファイル内でbackupDisasterRecoveryをtrueに設定するとDR用リージョンにクロスリージョンコピーされる。
-// falseであればDRリージョンにクロスリージョンレプリケーションされず東京リージョンのみのデプロイとなる。
-
-// const backupVault = new BackupVaultStack(app, `${pjPrefix}-BackupVault`, {
-//   env: getProcEnv(),
-//   appKey: shareResources.appKey,
-// });
-
-// if (config.BackupParam.backupDisasterRecovery) {
-//   // DR用リージョンにKMSキーを作成
-//   const appKeyDRRegion = new KeyAppStack(app, `${pjPrefix}-AppKeyDRRegion`, {
-//     env: {
-//       account: getProcEnv().account,
-//       region: config.DRRegionParam.region,
-//     },
-//     crossRegionReferences: true,
-//   });
-
-//   // DR用リージョンにバックアップボールトを作成
-//   const backupVaultDRRegion = new BackupVaultStack(app, `${pjPrefix}-BackupVaultDRRegion`, {
-//     env: {
-//       account: getProcEnv().account,
-//       region: config.DRRegionParam.region,
-//     },
-//     appKey: appKeyDRRegion.kmsKey,
-//     crossRegionReferences: true,
-//   });
-
-//   // DR用リージョンと東京リージョンに作成されたバックアップボールトを指定して、バックアッププランを作成
-//   new BackupPlanStack(app, `${pjPrefix}-BackupPlan`, {
-//     env: getProcEnv(),
-//     vault: backupVault.vault,
-//     secondaryVault: backupVaultDRRegion.vault,
-//     backupSchedule: config.BackupParam.backupSchedule,
-//     retentionPeriod: config.BackupParam.retentionPeriod,
-//     crossRegionReferences: true,
-//   });
-
-// } else {
-
-//   // 東京リージョンに作成されたバックアップボールトを指定して、バックアッププランを作成
-//   new BackupPlanStack(app, `${pjPrefix}-BackupPlan`, {
-//     env: getProcEnv(),
-//     vault: backupVault.vault,
-//     backupSchedule: config.BackupParam.backupSchedule,
-//     retentionPeriod: config.BackupParam.retentionPeriod,
-//   });
-// }
-
-// serverless使用の場合以下をコメントイン、OpenSearchStackをコメントアウト
-// new OpenSearchServerlessStack(app,`${pjPrefix}-OpenSearchServerless`,{
-//   myVpc: shareResources.myVpc,
-//   env: getProcEnv(),
-// })
-
-// StepFunctionsを使用したバッチ処理を使用する場合はコメントインする
-
-// new StepFunctionsSampleStack(app, `${pjPrefix}-StepFunctions`, {
-//   myVpc: shareResources.myVpc,
-//   ecsClusterName: ecs.app.ecsCommon.ecsCluster.clusterName,
-//   ecsTaskExecutionRole: ecs.app.ecsCommon.ecsTaskExecutionRole,
-//   // 作成済みのECSタスク名を指定（事前に本CDK外で手動作成が必要）
-//   ecsTaskName: 'runtask-sample',
-//   env: getProcEnv(),
-// })
 
 // --------------------------------- Tagging  -------------------------------------
 
