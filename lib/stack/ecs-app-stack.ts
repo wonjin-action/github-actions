@@ -12,11 +12,8 @@ interface EcsAppStackProps extends cdk.StackProps {
   alarmTopic: sns.Topic;
   prefix: string;
   AlbCertificateIdentifier: ICertificateIdentifier;
-  AlbBgCertificateIdentifier: ICertificateIdentifier;
   ecsFrontTasks: IEcsAlbParam;
-  ecsFrontBgTasks: IEcsAlbParam;
   ecsBackTasks: IEcsParam[];
-  ecsBackBgTasks: IEcsAlbParam;
   ecsBastionTasks?: boolean;
 }
 
@@ -32,11 +29,8 @@ export class EcsAppStack extends cdk.Stack {
       alarmTopic: props.alarmTopic,
       prefix: props.prefix,
       AlbCertificateIdentifier: props.AlbCertificateIdentifier,
-      AlbBgCertificateIdentifier: props.AlbBgCertificateIdentifier,
       ecsFrontTasks: props.ecsFrontTasks,
-      ecsFrontBgTasks: props.ecsFrontBgTasks,
       ecsBackTasks: props.ecsBackTasks,
-      ecsBackBgTasks: props.ecsBackBgTasks,
       ecsBastionTasks: props.ecsBastionTasks ?? true,
     });
     this.app = ecs;
