@@ -7,6 +7,7 @@ export interface OidcIamRoleConstructProps extends cdk.StackProps {
   repositoryName: string;
   openIdConnectProviderArn: string;
   statement: iam.PolicyStatementProps[];
+  name?: string;
 }
 
 export class OidcIamRoleConstruct extends Construct {
@@ -23,6 +24,7 @@ export class OidcIamRoleConstruct extends Construct {
             'repo:' + props.organizationName + '/' + props.repositoryName + ':*',
         },
       }),
+      roleName: props.name,
     });
 
     for (const value of props.statement) {
