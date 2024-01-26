@@ -11,7 +11,7 @@ set -euoC pipefail
 # global constant variable definition
 #-----------------------------------------------------------------------------------#
 # SCRIPT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
-DEPLOY_ENVS=("dev" "stg" "prd")
+DEPLOY_ENVS=("dev" "stage" "prod")
 
 
 #-----------------------------------------------------------------------------------#

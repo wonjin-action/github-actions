@@ -6,7 +6,7 @@ import * as sns from 'aws-cdk-lib/aws-sns';
 import * as cw from 'aws-cdk-lib/aws-cloudwatch';
 import * as cw_actions from 'aws-cdk-lib/aws-cloudwatch-actions';
 
-export interface AlbtgConstructProps extends cdk.StackProps {
+export interface AlbTargetProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   alarmTopic: sns.Topic;
   appAlbListener: elbv2.ApplicationListener;
@@ -14,36 +14,36 @@ export interface AlbtgConstructProps extends cdk.StackProps {
   priority?: number;
 }
 
-export class AlbtgConstruct extends Construct {
-  public readonly lbForAppTargetGroup: elbv2.ApplicationTargetGroup;
+export class AlbTarget extends Construct {
+  public readonly targetGroup: elbv2.ApplicationTargetGroup;
   public readonly albTgUnHealthyHostCountAlarm: cw.Alarm;
 
-  constructor(scope: Construct, id: string, props: AlbtgConstructProps) {
+  constructor(scope: Construct, id: string, props: AlbTargetProps) {
     super(scope, id);
 
-    const lbForAppTargetGroup = new elbv2.ApplicationTargetGroup(this, `TargetGroup`, {
+    const targetGroup = new elbv2.ApplicationTargetGroup(this, `TargetGroup`, {
       targetType: elbv2.TargetType.IP,
       protocol: elbv2.ApplicationProtocol.HTTP,
       deregistrationDelay: cdk.Duration.seconds(30),
       vpc: props.vpc,
     });
-    this.lbForAppTargetGroup = lbForAppTargetGroup;
+    this.targetGroup = targetGroup;
 
     if (props.path) {
       props.appAlbListener.addTargetGroups(`${props.path}-AddTarget`, {
-        targetGroups: [lbForAppTargetGroup],
+        targetGroups: [targetGroup],
         conditions: [elbv2.ListenerCondition.pathPatterns([props.path])],
         priority: props.priority,
       });
     } else {
       // default rule
       props.appAlbListener.addTargetGroups(`AddTarget`, {
-        targetGroups: [lbForAppTargetGroup],
+        targetGroups: [targetGroup],
       });
     }
 
     // Alarm for ALB TargetGroup - HealthyHostCount
-    lbForAppTargetGroup.metrics
+    targetGroup.metrics
       .healthyHostCount({
         period: cdk.Duration.minutes(1),
         statistic: cw.Stats.AVERAGE,
@@ -58,7 +58,7 @@ export class AlbtgConstruct extends Construct {
 
     // Alarm for ALB TargetGroup - UnHealthyHostCount
     // This alarm will be used on Dashbaord
-    this.albTgUnHealthyHostCountAlarm = lbForAppTargetGroup.metrics
+    this.albTgUnHealthyHostCountAlarm = targetGroup.metrics
       .unhealthyHostCount({
         period: cdk.Duration.minutes(1),
         statistic: cw.Stats.AVERAGE,

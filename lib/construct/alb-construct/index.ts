@@ -10,15 +10,15 @@ import { aws_cloudwatch_actions as cw_actions } from 'aws-cdk-lib';
 import { region_info as ri } from 'aws-cdk-lib';
 import { aws_cloudfront as cloudfront } from 'aws-cdk-lib';
 import { aws_certificatemanager as acm } from 'aws-cdk-lib';
-import { EcsappConstruct } from './ecs-app-construct';
-import { AlbtgConstruct } from './alb-target-group-construct';
-import { IEcsAlbParam, ICertificateIdentifier, IOptionalEcsAlbParam } from '../../../../params/interface';
+import { AlbTarget } from './alb-target-group-construct';
+import { IEcsAlbParam, ICertificateIdentifier, IOptionalEcsAlbParam } from '../../../params/interface';
+import { EcsappConstruct } from '../ecs-app-construct/construct/ecs-app-construct';
 
 interface AlbConstructProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   alarmTopic: sns.Topic;
-  ecsApps: IEcsAlbParam;
-  AlbCertificateIdentifier: ICertificateIdentifier;
+  albCertificateIdentifier: ICertificateIdentifier;
+  ecsApps?: IEcsAlbParam;
 }
 
 export class AlbConstruct extends Construct {
@@ -28,17 +28,17 @@ export class AlbConstruct extends Construct {
   public readonly webContentsBucket: s3.Bucket;
   public readonly cfDistribution: cloudfront.Distribution;
   public readonly ecsAlbApps: EcsappConstruct[];
-  public readonly AlbTgs: AlbtgConstruct[];
+  public readonly targetGroupConstructs: AlbTarget[];
 
   constructor(scope: Construct, id: string, props: AlbConstructProps) {
     super(scope, id);
 
     //Check if a certificate is specified
-    const hasValidAlbCert = props.AlbCertificateIdentifier.identifier !== '';
+    const hasValidAlbCert = props.albCertificateIdentifier.identifier !== '';
 
     // for ELB (Local regional Cert)
     const albCertificateArn = `arn:aws:acm:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:certificate/${
-      props.AlbCertificateIdentifier.identifier
+      props.albCertificateIdentifier.identifier
     }`;
     const albCert = acm.Certificate.fromCertificateArn(this, 'albCertificate', albCertificateArn);
 
@@ -189,14 +189,16 @@ export class AlbConstruct extends Construct {
       })
       .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
 
-    this.AlbTgs = props.ecsApps.map((ecsApp, index) => {
-      return new AlbtgConstruct(this, `${ecsApp.appName}-TG`, {
-        vpc: props.vpc,
-        alarmTopic: props.alarmTopic,
-        appAlbListener: lbForAppListener,
-        path: (ecsApp as IOptionalEcsAlbParam).path,
-        priority: index,
+    if (props.ecsApps != undefined) {
+      this.targetGroupConstructs = props.ecsApps.map((ecsApp, index) => {
+        return new AlbTarget(this, `${ecsApp.appName}-TargetGroup`, {
+          vpc: props.vpc,
+          alarmTopic: props.alarmTopic,
+          appAlbListener: lbForAppListener,
+          path: (ecsApp as IOptionalEcsAlbParam).path,
+          priority: index,
+        });
       });
-    });
+    }
   }
 }

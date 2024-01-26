@@ -11,7 +11,7 @@ import { region_info as ri } from 'aws-cdk-lib';
 import { aws_cloudfront as cloudfront } from 'aws-cdk-lib';
 import { aws_certificatemanager as acm } from 'aws-cdk-lib';
 import { EcsappConstruct } from './ecs-app-construct';
-import { AlbtgConstruct } from './alb-target-group-construct';
+import { AlbtgConstruct } from '../../alb-target-group-construct';
 import { IEcsAlbParam, ICertificateIdentifier, IOptionalEcsAlbParam } from '../../../../params/interface';
 
 interface AlbBgConstructProps extends cdk.StackProps {

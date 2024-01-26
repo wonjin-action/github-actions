@@ -17,7 +17,7 @@ export interface EcsappConstructProps extends cdk.StackProps {
   prefix: string;
   appKey: kms.IKey;
   alarmTopic: sns.Topic;
-  allowFromSG?: ec2.SecurityGroup[];
+  allowFromSg?: ec2.ISecurityGroup[];
   portNumber: number;
   useServiceConnect?: boolean;
 }
@@ -49,8 +49,8 @@ export class EcsappConstruct extends Construct {
       allowAllOutbound: true, // for AWS APIs
     });
 
-    if (props.allowFromSG) {
-      for (const sg of props.allowFromSG) {
+    if (props.allowFromSg) {
+      for (const sg of props.allowFromSg) {
         securityGroupForFargate.connections.allowFrom(sg, ec2.Port.tcp(props.portNumber));
       }
     }
@@ -68,7 +68,7 @@ export class EcsappConstruct extends Construct {
 
     if (props.useServiceConnect) {
       // CloudWatch Logs Group for Service Connect
-      const serviceConnectLogGroup = new cwl.LogGroup(this, `LogforSC`, {
+      const serviceConnectLogGroup = new cwl.LogGroup(this, `LogforServiceConnect`, {
         // 方式設計より保存期間5年とする
         retention: cwl.RetentionDays.FIVE_YEARS,
         encryptionKey: props.appKey,

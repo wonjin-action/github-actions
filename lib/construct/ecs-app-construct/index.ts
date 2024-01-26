@@ -5,23 +5,22 @@ import * as sns from 'aws-cdk-lib/aws-sns';
 import { EcsappConstruct } from './construct/ecs-app-construct';
 import { EcsCommonConstruct } from './construct/ecs-common-construct';
 import { PipelineEcspressoConstruct } from './construct/pipeline-ecspresso-construct';
-import { AlbConstruct } from './construct/alb-construct';
-import { IEcsAlbParam, IEcsParam, ICertificateIdentifier } from '../../../params/interface';
+import { IEcsAlbParam, IEcsParam } from '../../../params/interface';
 import { BastionECSAppConstruct } from './construct/bastion-ecs-construct';
+import { AlbConstruct } from '../alb-construct';
 
 interface EcsAppConstructProps {
   vpc: ec2.Vpc;
   appKey: kms.IKey;
   alarmTopic: sns.Topic;
   prefix: string;
-  AlbCertificateIdentifier: ICertificateIdentifier;
-  ecsFrontTasks: IEcsAlbParam;
-  ecsBackTasks: IEcsParam[];
+  albConstruct: AlbConstruct;
+  ecsFrontTasks?: IEcsAlbParam;
+  ecsBackTasks?: IEcsParam[];
   ecsBastionTasks: boolean;
 }
 
 export class EcsAppConstruct extends Construct {
-  public readonly frontAlb: AlbConstruct;
   public readonly frontEcsApps: EcsappConstruct[];
   public readonly backEcsApps: EcsappConstruct[];
   public readonly ecsCommon: EcsCommonConstruct;
@@ -31,37 +30,24 @@ export class EcsAppConstruct extends Construct {
     super(scope, id);
 
     //ECS Common
-    const ecsCommon = new EcsCommonConstruct(this, `${props.prefix}-ECSCommon`, {
+    const ecsCommon = new EcsCommonConstruct(this, `${props.prefix}-EcsCommon`, {
       vpc: props.vpc,
       alarmTopic: props.alarmTopic,
       prefix: props.prefix,
-
-      // -- SAMPLE: Pass your own ECR repository and your own image
-      //  repository: ecr.repository,
-      //  imageTag: build_container.imageTag,
     });
     this.ecsCommon = ecsCommon;
 
     if (props.ecsFrontTasks) {
-      //Create Origin Resources
-      const frontAlb = new AlbConstruct(this, `${props.prefix}-FrontAlb`, {
-        vpc: props.vpc,
-        alarmTopic: props.alarmTopic,
-        AlbCertificateIdentifier: props.AlbCertificateIdentifier,
-        ecsApps: props.ecsFrontTasks,
-      });
-      this.frontAlb = frontAlb;
-
-      const frontEcsApps = props.ecsFrontTasks.map((ecsApp) => {
-        return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Ecs-Resources`, {
+      const frontEcsApps = props.ecsFrontTasks.map((app) => {
+        return new EcsappConstruct(this, `${props.prefix}-${app.appName}-FrontApp-Ecs-Resources`, {
           vpc: props.vpc,
           ecsCluster: ecsCommon.ecsCluster,
-          appName: ecsApp.appName,
+          appName: app.appName,
           prefix: props.prefix,
           appKey: props.appKey,
           alarmTopic: props.alarmTopic,
-          allowFromSG: [frontAlb.appAlbSecurityGroup],
-          portNumber: ecsApp.portNumber,
+          allowFromSg: [props.albConstruct.appAlbSecurityGroup],
+          portNumber: app.portNumber,
         });
       });
       this.frontEcsApps = frontEcsApps;
@@ -73,7 +59,7 @@ export class EcsAppConstruct extends Construct {
           appName: ecsApp.appName,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
-          targetGroup: frontAlb.AlbTgs[index].lbForAppTargetGroup,
+          targetGroup: props.albConstruct.targetGroupConstructs[index].targetGroup,
           securityGroup: ecsApp.securityGroupForFargate,
           vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
@@ -93,7 +79,7 @@ export class EcsAppConstruct extends Construct {
           prefix: props.prefix,
           appKey: props.appKey,
           alarmTopic: props.alarmTopic,
-          allowFromSG: this.frontEcsApps.map((ecsAlbApp) => ecsAlbApp.securityGroupForFargate),
+          allowFromSg: this.frontEcsApps.map((ecsAlbApp) => ecsAlbApp.securityGroupForFargate),
           portNumber: ecsApp.portNumber,
           useServiceConnect: true,
         });

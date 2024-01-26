@@ -134,72 +134,17 @@ export const AlbBgCertificateIdentifier: inf.ICertificateIdentifier = {
   identifier: '',
 };
 
-// インターネットアクセス可能なECSサービス、タスクのパラメータを設定する
-// ・appName：ECSサービスやタスク名に使用する名前
-// ・portNumber：コンテナがリクエストを受け付けるポート（HTTPであれば80）
-// ・pathが存在しないタスクがデフォルトルールになる。1タスク必ず設定する（0でも2以上でもNG）
-// ・path：デフォルトルールでないタスクの場合に必ず設定する、リクエストを振り分けるパスの文字列を設定
-// 本サンプルでは2種類のECSサービスを定義し、EcsAppをデフォルトルールを設定している
 export const EcsFrontTasks: inf.IEcsAlbParam = [
   {
     appName: 'EcsApp',
     portNumber: 80,
   },
-  {
-    appName: 'EcsApp2',
-    portNumber: 80,
-    path: '/path',
-  },
 ];
 
-// インターネットアクセス可能なECSサービス、タスクのパラメータを設定する、デプロイはBlue/Greenデプロイとなる
-// ・appName：ECSサービスやタスク名に使用する名前
-// ・portNumber：コンテナがリクエストを受け付けるポート（HTTPであれば80）
-// ・pathが存在しないタスクがデフォルトルールになる。1タスク必ず設定する（0でも2以上でもNG）
-// ・path：デフォルトルールでないタスクの場合に必ず設定する、リクエストを振り分けるパスの文字列を設定
-// 本サンプルでは2種類のECSサービスを定義し、EcsAppBgをデフォルトルールを設定している
-export const EcsFrontBgTasks: inf.IEcsAlbParam = [
-  {
-    appName: 'EcsAppBg',
-    portNumber: 80,
-  },
-  {
-    appName: 'EcsApp2Bg',
-    portNumber: 80,
-    path: '/path',
-  },
-];
-
-// VPC内でService Connectを経由して接続するECSサービス、タスクのパラメータを設定する
-// ・appName：ECSサービスやタスク名に使用する名前
-// ・portNumber：コンテナがリクエストを受け付けるポート（HTTPであれば80）
-// 本サンプルでは2種類のECSサービスを定義している
 export const EcsBackTasks: inf.IEcsParam[] = [
   {
     appName: 'EcsBackend',
     portNumber: 8080,
-  },
-  {
-    appName: 'EcsBackend2',
-    portNumber: 8080,
-  },
-];
-
-// VPC内でALBを経由して接続するECSサービス、タスクのパラメータを設定する、デプロイはBlue/Greenデプロイとなる
-// ・appName：ECSサービスやタスク名に使用する名前
-// ・portNumber：コンテナがリクエストを受け付けるポート（HTTPであれば80）
-// ・pathが存在しないタスクがデフォルトルールになる。1タスク必ず設定する（0でも2以上でもNG）
-// ・path：デフォルトルールでないタスクの場合に必ず設定する、リクエストを振り分けるパスの文字列を設定
-// 本サンプルでは2種類のECSサービスを定義し、EcsBackendBgをデフォルトルールを設定している
-export const EcsBackBgTasks: inf.IEcsAlbParam = [
-  {
-    appName: 'EcsBackendBg',
-    portNumber: 8080,
-  },
-  {
-    appName: 'EcsBackend2Bg',
-    portNumber: 8080,
-    path: '/path',
   },
 ];
 
@@ -221,7 +166,7 @@ export const CloudFrontParam: inf.ICloudFrontParam = {
 
 export const Env: inf.IEnv = {
   envName: 'Stg',
-  account: '111111111111',
+  account: '058264403343',
   region: 'ap-northeast-1',
 };
 

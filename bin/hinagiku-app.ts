@@ -91,14 +91,14 @@ new OidcStack(app, `${pjPrefix}-Oidc`, {
   repositoryNames: config.OidcParam.RepositoryNames,
 });
 
-const ecs = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
+const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   vpc: shareResources.vpc,
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
   prefix: pjPrefix,
-  AlbCertificateIdentifier: config.AlbCertificateIdentifier,
+  albCertificateIdentifier: config.AlbCertificateIdentifier,
   ecsFrontTasks: config.EcsFrontTasks,
-  ecsBackTasks: config.EcsBackTasks,
+  // ecsBackTasks: config.EcsBackTasks,
   env: deployEnv,
   crossRegionReferences: true,
 });
@@ -108,7 +108,7 @@ const cloudfront = new CloudfrontStack(app, `${pjPrefix}-Cloudfront`, {
   webAcl: waf.webAcl,
   CertificateIdentifier: config.CertificateIdentifier,
   cloudFrontParam: config.CloudFrontParam,
-  appAlbs: [ecs.app.frontAlb.appAlb],
+  appAlbs: [webApp.alb.appAlb],
   env: deployEnv,
   crossRegionReferences: true,
 });
@@ -120,9 +120,9 @@ const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {
   vpcSubnets: shareResources.vpc.selectSubnets({
     subnetGroupName: 'Protected',
   }),
-  appServerSecurityGroup: ecs.app.backEcsApps[0].securityGroupForFargate,
+  appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
   // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
-  bastionSecurityGroup: ecs.app.bastionApp.securityGroup,
+  bastionSecurityGroup: webApp.ecs.bastionApp.securityGroup,
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
   ...config.AuroraParam,
@@ -133,14 +133,14 @@ new MonitorStack(app, `${pjPrefix}-MonitorStack`, {
   pjPrefix: `${pjPrefix}`,
   alarmTopic: shareResources.alarmTopic,
   appEndpoint: 'https://demo-endpoint.com',
-  dashboardName: `${pjPrefix}-ECSApp`,
+  dashboardName: `${pjPrefix}-EcsApp`,
   cfDistributionId: cloudfront.cfDistributionId,
-  albFullName: ecs.app.frontAlb.appAlb.loadBalancerFullName,
-  appTargetGroupNames: ecs.app.frontAlb.AlbTgs.map((AlbTg) => AlbTg.lbForAppTargetGroup.targetGroupName),
-  albTgUnHealthyHostCountAlarms: ecs.app.frontAlb.AlbTgs.map((AlbTg) => AlbTg.albTgUnHealthyHostCountAlarm),
-  ecsClusterName: ecs.app.ecsCommon.ecsCluster.clusterName,
-  ecsAlbServiceNames: ecs.app.frontEcsApps.map((ecsAlbApp) => ecsAlbApp.ecsServiceName),
-  ecsInternalServiceNames: ecs.app.backEcsApps.map((ecsInternalApp) => ecsInternalApp.ecsServiceName),
+  albFullName: webApp.alb.appAlb.loadBalancerFullName,
+  appTargetGroupNames: webApp.alb.targetGroupConstructs.map((target) => target.targetGroup.targetGroupName),
+  albTgUnHealthyHostCountAlarms: webApp.alb.targetGroupConstructs.map((target) => target.albTgUnHealthyHostCountAlarm),
+  ecsClusterName: webApp.ecs.ecsCommon.ecsCluster.clusterName,
+  ecsAlbServiceNames: webApp.ecs.frontEcsApps.map((app) => app.ecsServiceName),
+  ecsInternalServiceNames: webApp.ecs.backEcsApps.map((app) => app.ecsServiceName),
   dbClusterName: dbCluster.dbClusterName,
   // AutoScaleはCDK外で管理のため、固定値を修正要で設定
   ecsScaleOnRequestCount: 50,
@@ -152,9 +152,9 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
   vpc: shareResources.vpc,
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
-  appServerSecurityGroup: ecs.app.backEcsApps[0].securityGroupForFargate,
+  appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
   // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
-  bastionSecurityGroup: ecs.app.bastionApp.securityGroup,
+  bastionSecurityGroup: webApp.ecs.bastionApp.securityGroup,
   ...config.ElastiCacheRedisParam,
   env: deployEnv,
 });

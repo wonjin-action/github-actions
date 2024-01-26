@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { aws_cloudwatch as cw } from 'aws-cdk-lib';
-import { Canary } from '../construct/canary-construct';
 import { Dashboard } from '../construct/dashboard-construct';
 import { ITopic } from 'aws-cdk-lib/aws-sns';
 
@@ -25,11 +24,6 @@ interface MonitorStackProps extends cdk.StackProps {
 export class MonitorStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: MonitorStackProps) {
     super(scope, id, props);
-
-    const canary = new Canary(this, `${props.pjPrefix}-Canary`, {
-      alarmTopic: props.alarmTopic,
-      appEndpoint: props.appEndpoint,
-    });
 
     // Dashboard
     new Dashboard(this, `${props.pjPrefix}-Dashboard`, {

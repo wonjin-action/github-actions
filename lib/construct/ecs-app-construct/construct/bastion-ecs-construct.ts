@@ -34,7 +34,7 @@ export class BastionECSAppConstruct extends Construct {
 
     // image Deployment
     new imagedeploy.DockerImageDeployment(this, `${id}-ImageDeployment`, {
-      source: imagedeploy.Source.directory(path.join(__dirname, '../../../../container/bastion', 'docker')),
+      source: imagedeploy.Source.directory(path.join(__dirname, '../../../../etc/container/bastion', 'docker')),
       destination: imagedeploy.Destination.ecr(repository, {
         tag: 'bastionimage',
       }),

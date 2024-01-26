@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { aws_iam as iam } from 'aws-cdk-lib';
 import { aws_sns as sns } from 'aws-cdk-lib';
 import { aws_s3 as s3 } from 'aws-cdk-lib';
-import * as synthetics from '@aws-cdk/aws-synthetics-alpha';
+import * as synthetics from 'aws-cdk-lib/aws-synthetics';
 import * as path from 'path';
 import { aws_cloudwatch as cw } from 'aws-cdk-lib';
 import { aws_cloudwatch_actions as cw_actions } from 'aws-cdk-lib';
