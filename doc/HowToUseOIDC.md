@@ -32,7 +32,7 @@
 
    ```Typescript
     // WAF用ロール
-    new MynvOidcIAMRoleConstruct(this, 'WafRole', {
+    new MynvOidcIamRoleConstruct(this, 'WafRole', {
       OrganizationName: props.OrganizationName,
       RepositoryName: props.RepositoryNames.WafRepositoryName,
       openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
@@ -52,7 +52,7 @@
 
    ```Typescript
    // (例)S3用ロール
-   new MynvOidcIAMRoleConstruct(this, 'S3Role', {
+   new MynvOidcIamRoleConstruct(this, 'S3Role', {
       (略)
     statement: [
         {

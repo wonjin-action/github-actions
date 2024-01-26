@@ -2,15 +2,15 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
-export interface OidcIAMRoleConstructProps extends cdk.StackProps {
+export interface OidcIamRoleConstructProps extends cdk.StackProps {
   OrganizationName: string;
   RepositoryName: string;
   openIdConnectProviderArn: string;
   statement: iam.PolicyStatementProps[];
 }
 
-export class OidcIAMRoleConstruct extends Construct {
-  constructor(scope: Construct, id: string, props: OidcIAMRoleConstructProps) {
+export class OidcIamRoleConstruct extends Construct {
+  constructor(scope: Construct, id: string, props: OidcIamRoleConstructProps) {
     super(scope, id);
 
     const oidcRole = new iam.Role(this, id, {

@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { OidcIAMRoleConstruct } from '../construct/oidc-iamrole-construct';
+import { OidcIamRoleConstruct } from '../construct/oidc-iamrole-construct';
 
 export interface OidcStackProps extends cdk.StackProps {
   OrganizationName: string;
@@ -19,7 +19,7 @@ export class OidcStack extends cdk.Stack {
     });
 
     // WAF用ロール
-    new OidcIAMRoleConstruct(this, 'WafRole', {
+    new OidcIamRoleConstruct(this, 'WafRole', {
       OrganizationName: props.OrganizationName,
       RepositoryName: props.RepositoryNames.WafRepositoryName,
       openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
@@ -31,7 +31,7 @@ export class OidcStack extends cdk.Stack {
       ],
     });
     // InfraResources用ロール
-    new OidcIAMRoleConstruct(this, 'InfraResourcesRole', {
+    new OidcIamRoleConstruct(this, 'InfraResourcesRole', {
       OrganizationName: props.OrganizationName,
       RepositoryName: props.RepositoryNames.InfraRepositoryName,
       openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
