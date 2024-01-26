@@ -45,11 +45,11 @@ function getProcEnv(env: IEnv) {
   };
 }
 
-const envName = loadContextVariable();
+const envName: string = loadContextVariable();
 const config: IConfig = getConfig(envName);
 const systemName = 'Hinagiku';
 const pjPrefix = `${systemName}-${config.Env.envName}`;
-const deployEnv = getProcEnv(config.Env);
+const deployEnv: cdk.Environment = getProcEnv(config.Env);
 
 // ----------------------- Guest System Stacks ------------------------------
 
