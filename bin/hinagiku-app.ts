@@ -18,9 +18,6 @@ function loadContextVariable(): string {
   const envKey = app.node.tryGetContext(argContext);
   if (envKey == undefined)
     throw new Error(`Please specify environment with context option. ex) cdk deploy -c ${argContext}=dev`);
-  //Read Typescript Environment file
-  const TsEnvPath = './params/' + envKey + '.ts';
-  if (!fs.existsSync(TsEnvPath)) throw new Error(`Can't find a ts environment file [../params/` + envKey + `.ts]`);
 
   return envKey;
 }
