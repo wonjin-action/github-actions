@@ -3,7 +3,7 @@ import { DbAuroraStack } from '../lib/stack/db-aurora-stack';
 import { WafStack } from '../lib/stack/waf-stack';
 import { ElastiCacheRedisStack } from '../lib/stack/elasticache-redis-stack';
 import * as fs from 'fs';
-import { IConfig } from '../params/interface';
+import { IConfig, IEnv } from '../params/interface';
 import { MonitorStack } from '../lib/stack/monitor-stack';
 import { EcsAppStack } from '../lib/stack/ecs-app-stack';
 import { CloudfrontStack } from '../lib/stack/cloudfront-stack';
@@ -35,29 +35,21 @@ function getConfig(deployEnv: string): IConfig {
 }
 
 // ----------------------- Environment variables for stack ------------------------------
-// Default environment
-const procEnvDefault = {
-  account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: process.env.CDK_DEFAULT_REGION,
-};
 
 // Define account id and region from context.
 // If "env" isn't defined on the environment variable in context, use account and region specified by "--profile".
-function getProcEnv() {
-  if (config.Env.account && config.Env.region) {
-    return {
-      account: config.Env.account,
-      region: config.Env.region,
-    };
-  } else {
-    return procEnvDefault;
-  }
+function getProcEnv(env: IEnv) {
+  return {
+    account: env.account ?? process.env.CDK_DEFAULT_ACCOUNT,
+    region: env.region ?? process.env.CDK_DEFAULT_REGION,
+  };
 }
 
 const envName = loadContextVariable();
 const config: IConfig = getConfig(envName);
 const systemName = 'Hinagiku';
 const pjPrefix = `${systemName}-${config.Env.envName}`;
+const deployEnv = getProcEnv(config.Env);
 
 // ----------------------- Guest System Stacks ------------------------------
 
@@ -74,7 +66,7 @@ const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`
   ...config.CognitoParam,
   myVpcCidr: config.VpcParam.cidr,
   myVpcMaxAzs: config.VpcParam.maxAzs,
-  env: getProcEnv(),
+  env: deployEnv,
 });
 
 // InfraResources
@@ -86,7 +78,7 @@ new InfraResourcesPipelineStack(app, `${pjPrefix}-Pipeline`, {
 const waf = new WafStack(app, `${pjPrefix}-Waf`, {
   scope: 'CLOUDFRONT',
   env: {
-    account: getProcEnv().account,
+    account: deployEnv.account,
     region: 'us-east-1',
   },
   crossRegionReferences: true,
@@ -109,7 +101,7 @@ const ecs = new EcsAppStack(app, `${pjPrefix}-ECS`, {
   ecsFrontBgTasks: config.EcsFrontBgTasks,
   ecsBackBgTasks: config.EcsBackBgTasks,
   ecsBackTasks: config.EcsBackTasks,
-  env: getProcEnv(),
+  env: deployEnv,
   crossRegionReferences: true,
 });
 
@@ -119,7 +111,7 @@ const cloudfront = new CloudfrontStack(app, `${pjPrefix}-Cloudfront`, {
   CertificateIdentifier: config.CertificateIdentifier,
   cloudFrontParam: config.CloudFrontParam,
   appAlbs: [ecs.app.frontAlb.appAlb],
-  env: getProcEnv(),
+  env: deployEnv,
   crossRegionReferences: true,
 });
 
@@ -136,7 +128,7 @@ const dbCluster = new DbAuroraStack(app, `${pjPrefix}-DBAurora`, {
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
   ...config.AuroraParam,
-  env: getProcEnv(),
+  env: deployEnv,
 });
 
 new MonitorStack(app, `${pjPrefix}-MonitorStack`, {
@@ -155,7 +147,7 @@ new MonitorStack(app, `${pjPrefix}-MonitorStack`, {
   // AutoScaleはCDK外で管理のため、固定値を修正要で設定
   ecsScaleOnRequestCount: 50,
   ecsTargetUtilizationPercent: 10000,
-  env: getProcEnv(),
+  env: deployEnv,
 });
 
 new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
@@ -166,7 +158,7 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
   // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
   bastionSecurityGroup: ecs.app.bastionApp.securityGroup,
   ...config.ElastiCacheRedisParam,
-  env: getProcEnv(),
+  env: deployEnv,
 });
 
 // --------------------------------- Tagging  -------------------------------------
