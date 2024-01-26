@@ -56,11 +56,15 @@ const channelIdMon = config.NotifierParam.channelIdMon;
 
 const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`, {
   pjPrefix,
-  notifyEmail: config.NotifierParam.monitoringNotifyEmail,
-  domainPrefix: `${pjPrefix}`.toLowerCase(),
-  workspaceId: workspaceId,
-  channelId: channelIdMon,
-  ...config.CognitoParam,
+  chatbotProps: {
+    notifyEmail: config.NotifierParam.monitoringNotifyEmail,
+    workspaceId: workspaceId,
+    channelId: channelIdMon,
+  },
+  cognitoProps: {
+    domainPrefix: `${pjPrefix}`.toLowerCase(),
+    ...config.CognitoParam,
+  },
   vpcCidr: config.VpcParam.cidr,
   vpcMaxAzs: config.VpcParam.maxAzs,
   env: deployEnv,

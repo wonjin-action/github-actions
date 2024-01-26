@@ -11,14 +11,18 @@ import { Topic } from 'aws-cdk-lib/aws-sns';
 
 export interface ShareResourcesStackProps extends cdk.StackProps {
   pjPrefix: string;
-  notifyEmail: string;
-  channelId: string;
-  workspaceId: string;
-  domainPrefix: string;
-  urlForCallback: string[];
-  urlForLogout: string[];
   vpcCidr: string;
   vpcMaxAzs: number;
+  chatbotProps?: {
+    notifyEmail: string;
+    channelId: string;
+    workspaceId: string;
+  };
+  cognitoProps?: {
+    domainPrefix: string;
+    urlForCallback: string[];
+    urlForLogout: string[];
+  };
 }
 
 export class ShareResourcesStack extends cdk.Stack {
@@ -30,21 +34,25 @@ export class ShareResourcesStack extends cdk.Stack {
     super(scope, id, props);
 
     const alarmTopic = new SNS(this, `${props.pjPrefix}-Alarm`, {
-      notifyEmail: props.notifyEmail,
+      notifyEmail: props.chatbotProps?.notifyEmail,
     });
     this.alarmTopic = alarmTopic.topic;
 
-    new Chatbot(this, `${props.pjPrefix}-Chatbot`, {
-      topicArn: alarmTopic.topic.topicArn,
-      workspaceId: props.workspaceId,
-      channelId: props.channelId,
-    });
+    if (props.chatbotProps != undefined) {
+      new Chatbot(this, `${props.pjPrefix}-Chatbot`, {
+        topicArn: alarmTopic.topic.topicArn,
+        workspaceId: props.chatbotProps?.workspaceId,
+        channelId: props.chatbotProps?.channelId,
+      });
+    }
 
-    new Cognito(this, `${props.pjPrefix}-Cognito`, {
-      domainPrefix: props.domainPrefix,
-      urlForCallback: props.urlForCallback,
-      urlForLogout: props.urlForLogout,
-    });
+    if (props.cognitoProps != undefined) {
+      new Cognito(this, `${props.pjPrefix}-Cognito`, {
+        domainPrefix: props.cognitoProps.domainPrefix,
+        urlForCallback: props.cognitoProps.urlForCallback,
+        urlForLogout: props.cognitoProps.urlForLogout,
+      });
+    }
     // CMK for Apps
     const appKey = new KMSKey(this, `${props.pjPrefix}-AppKey`);
 
