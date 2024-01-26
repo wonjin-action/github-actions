@@ -34,13 +34,13 @@ export class ShareResourcesStack extends cdk.Stack {
     });
     this.alarmTopic = alarmTopic.topic;
 
-    const chatbot = new Chatbot(this, `${props.pjPrefix}-Chatbot`, {
+    new Chatbot(this, `${props.pjPrefix}-Chatbot`, {
       topicArn: alarmTopic.topic.topicArn,
       workspaceId: props.workspaceId,
       channelId: props.channelId,
     });
 
-    const cognito = new Cognito(this, `${props.pjPrefix}-Cognito`, {
+    new Cognito(this, `${props.pjPrefix}-Cognito`, {
       domainPrefix: props.domainPrefix,
       urlForCallback: props.urlForCallback,
       urlForLogout: props.urlForLogout,
