@@ -56,7 +56,8 @@ function getProcEnv() {
 
 const envName = loadContextVariable();
 const config: IConfig = getConfig(envName);
-const pjPrefix = `Hinagiku-${config.Env.envName}`;
+const systemName = 'Hinagiku';
+const pjPrefix = `${systemName}-${config.Env.envName}`;
 
 // ----------------------- Guest System Stacks ------------------------------
 
