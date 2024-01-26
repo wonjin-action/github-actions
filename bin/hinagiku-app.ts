@@ -87,8 +87,8 @@ const waf = new WafStack(app, `${pjPrefix}-Waf`, {
 });
 
 new OidcStack(app, `${pjPrefix}-Oidc`, {
-  OrganizationName: config.OidcParam.OrganizationName,
-  RepositoryNames: config.OidcParam.RepositoryNames,
+  organizationName: config.OidcParam.OrganizationName,
+  repositoryNames: config.OidcParam.RepositoryNames,
 });
 
 const ecs = new EcsAppStack(app, `${pjPrefix}-Ecs`, {

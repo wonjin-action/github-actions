@@ -3,8 +3,8 @@ import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
 export interface OidcIamRoleConstructProps extends cdk.StackProps {
-  OrganizationName: string;
-  RepositoryName: string;
+  organizationName: string;
+  repositoryName: string;
   openIdConnectProviderArn: string;
   statement: iam.PolicyStatementProps[];
 }
@@ -20,7 +20,7 @@ export class OidcIamRoleConstruct extends Construct {
         },
         StringLike: {
           ['token.actions.githubusercontent.com:sub']:
-            'repo:' + props.OrganizationName + '/' + props.RepositoryName + ':*',
+            'repo:' + props.organizationName + '/' + props.repositoryName + ':*',
         },
       }),
     });
