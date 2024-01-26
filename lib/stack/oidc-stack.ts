@@ -42,5 +42,30 @@ export class OidcStack extends cdk.Stack {
         },
       ],
     });
+    new OidcIamRoleConstruct(this, 'AppRole', {
+      name: `role-for-${props.repositoryNames.AppRepository}-repo`,
+      organizationName: props.organizationName,
+      repositoryName: props.repositoryNames.AppRepository,
+      openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
+      statement: [
+        {
+          actions: [
+            'ecr:GetAuthorizationToken',
+            'cloudformation:DescribeStacks',
+            'sts:GetCallerIdentity',
+            's3:PutObject',
+            'ecr:GetDownloadUrlForLayer',
+            'ecr:BatchGetImage',
+            'ecr:PutImageTagMutability',
+            'ecr:UploadLayerPart',
+            'ecr:InitiateLayerUpload',
+            'ecr:CompleteLayerUpload',
+            'ecr:BatchCheckLayerAvailability',
+            'ecr:PutImage',
+          ],
+          resources: ['*'],
+        },
+      ],
+    });
   }
 }
