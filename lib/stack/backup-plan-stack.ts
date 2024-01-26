@@ -4,15 +4,15 @@ import * as rds from 'aws-cdk-lib/aws-rds';
 import * as events from 'aws-cdk-lib/aws-events';
 import { Duration } from 'aws-cdk-lib';
 
-export interface MynvBackupPlanStackProps extends cdk.StackProps {
+export interface BackupPlanStackProps extends cdk.StackProps {
   vault: backup.BackupVault;
   secondaryVault?: backup.BackupVault;
   backupSchedule: events.Schedule;
   retentionPeriod: Duration;
 }
 
-export class MynvBackupPlanStack extends cdk.Stack {
-  constructor(scope: cdk.App, id: string, props: MynvBackupPlanStackProps) {
+export class BackupPlanStack extends cdk.Stack {
+  constructor(scope: cdk.App, id: string, props: BackupPlanStackProps) {
     super(scope, id, props);
 
     //Plan名が固定値で入るため、Stack名をIDに設定

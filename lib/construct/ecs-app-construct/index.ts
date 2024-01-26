@@ -1,54 +1,47 @@
-import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { aws_wafv2 as wafv2 } from 'aws-cdk-lib';
-import { aws_ec2 as ec2 } from 'aws-cdk-lib';
-import { aws_kms as kms } from 'aws-cdk-lib';
-import { aws_sns as sns } from 'aws-cdk-lib';
-import { MynvEcsappConstruct } from './mynv-ecsapp-construct';
-import { MynvEcsCommonConstruct } from './mynv-ecs-common-construct';
-import { MynvPipelineBgConstruct } from './mynv-pipeline-bg-construct';
-import { MynvPipelineEcspressoConstruct } from './mynv-pipeline-ecspresso-construct';
-import { MynvCloudFrontConstruct } from './mynv-cloudfront-construct';
-import { MynvAlbConstruct } from './mynv-alb-construct';
-import { MynvAlbBgConstruct } from './mynv-alb-bg-construct';
-import { MynvEcsServiceConstruct } from './mynv-ecs-service-construct';
-import { IEcsAlbParam, IEcsParam, ICertificateIdentifier, ICloudFrontParam } from '../params/interface';
-import { MynvBastionECSAppConstruct } from '../lib/mynv-bastion-ecs-construct';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as kms from 'aws-cdk-lib/aws-kms';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import { EcsappConstruct } from './construct/ecs-app-construct';
+import { EcsCommonConstruct } from './construct/ecs-common-construct';
+import { PipelineBgConstruct } from './construct/pipeline-blue-green-construct';
+import { PipelineEcspressoConstruct } from './construct/pipeline-ecspresso-construct';
+import { AlbConstruct } from './construct/alb-construct';
+import { AlbBgConstruct } from './construct/alb-blue-green-construct';
+import { EcsServiceConstruct } from './construct/ecs-service-construct';
+import { IEcsAlbParam, IEcsParam, ICertificateIdentifier } from '../../../params/interface';
+import { BastionECSAppConstruct } from './construct/bastion-ecs-construct';
 
-interface MynvEcsStackProps extends cdk.StackProps {
+interface EcsAppConstructProps {
   myVpc: ec2.Vpc;
   appKey: kms.IKey;
-  webAcl: wafv2.CfnWebACL;
   alarmTopic: sns.Topic;
   prefix: string;
-  cloudFrontParam: ICloudFrontParam;
-  CertificateIdentifier: ICertificateIdentifier;
   AlbCertificateIdentifier: ICertificateIdentifier;
   AlbBgCertificateIdentifier: ICertificateIdentifier;
   ecsFrontTasks: IEcsAlbParam;
   ecsFrontBgTasks: IEcsAlbParam;
   ecsBackTasks: IEcsParam[];
   ecsBackBgTasks: IEcsAlbParam;
+  ecsBastionTasks: boolean;
 }
 
-export class MynvEcsStack extends cdk.Stack {
-  public readonly cloudFront: MynvCloudFrontConstruct;
-  public readonly cloudFrontBg: MynvCloudFrontConstruct;
-  public readonly frontAlb: MynvAlbConstruct;
-  public readonly frontAlbBg: MynvAlbBgConstruct;
-  public readonly frontEcsApps: MynvEcsappConstruct[];
-  public readonly frontEcsAppsBg: MynvEcsappConstruct[];
-  public readonly backendAlbBg: MynvAlbBgConstruct;
-  public readonly backEcsApps: MynvEcsappConstruct[];
-  public readonly backEcsAppsBg: MynvEcsappConstruct[];
-  public readonly ecsCommon: MynvEcsCommonConstruct;
-  public readonly bastionApp: MynvBastionECSAppConstruct;
+export class EcsAppConstruct extends Construct {
+  public readonly frontAlb: AlbConstruct;
+  public readonly frontAlbBg: AlbBgConstruct;
+  public readonly frontEcsApps: EcsappConstruct[];
+  public readonly frontEcsAppsBg: EcsappConstruct[];
+  public readonly backendAlbBg: AlbBgConstruct;
+  public readonly backEcsApps: EcsappConstruct[];
+  public readonly backEcsAppsBg: EcsappConstruct[];
+  public readonly ecsCommon: EcsCommonConstruct;
+  public readonly bastionApp: BastionECSAppConstruct;
 
-  constructor(scope: Construct, id: string, props: MynvEcsStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: EcsAppConstructProps) {
+    super(scope, id);
 
     //ECS Common
-    const ecsCommon = new MynvEcsCommonConstruct(this, `${props.prefix}-ECSCommon`, {
+    const ecsCommon = new EcsCommonConstruct(this, `${props.prefix}-ECSCommon`, {
       myVpc: props.myVpc,
       alarmTopic: props.alarmTopic,
       prefix: props.prefix,
@@ -64,7 +57,7 @@ export class MynvEcsStack extends cdk.Stack {
     // ※ECSサービスはパイプラインのecspressoコマンドにて作成
     if (props.ecsFrontTasks) {
       //Create Origin Resources
-      const frontAlb = new MynvAlbConstruct(this, `${props.prefix}-FrontAlb`, {
+      const frontAlb = new AlbConstruct(this, `${props.prefix}-FrontAlb`, {
         myVpc: props.myVpc,
         alarmTopic: props.alarmTopic,
         AlbCertificateIdentifier: props.AlbCertificateIdentifier,
@@ -73,7 +66,7 @@ export class MynvEcsStack extends cdk.Stack {
       this.frontAlb = frontAlb;
 
       const frontEcsApps = props.ecsFrontTasks.map((ecsApp) => {
-        return new MynvEcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Ecs-Resources`, {
+        return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Ecs-Resources`, {
           myVpc: props.myVpc,
           ecsCluster: ecsCommon.ecsCluster,
           appName: ecsApp.appName,
@@ -88,7 +81,7 @@ export class MynvEcsStack extends cdk.Stack {
 
       //Pipeline for Frontend Rolling
       frontEcsApps.forEach((ecsApp, index) => {
-        new MynvPipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Pipeline`, {
+        new PipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Pipeline`, {
           prefix: props.prefix,
           appName: ecsApp.appName,
           ecsCluster: ecsCommon.ecsCluster,
@@ -109,7 +102,7 @@ export class MynvEcsStack extends cdk.Stack {
     // ※ECSサービスはパイプラインのecspressoコマンドにて作成
     if (props.ecsBackTasks) {
       const backEcsApps = props.ecsBackTasks.map((ecsApp) => {
-        return new MynvEcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Ecs-Resources`, {
+        return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Ecs-Resources`, {
           myVpc: props.myVpc,
           ecsCluster: ecsCommon.ecsCluster,
           appName: ecsApp.appName,
@@ -125,7 +118,7 @@ export class MynvEcsStack extends cdk.Stack {
 
       //Pipeline for Backend Rolling
       backEcsApps.forEach((ecsApp) => {
-        new MynvPipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Pipeline`, {
+        new PipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Pipeline`, {
           prefix: props.prefix,
           appName: ecsApp.appName,
           ecsCluster: ecsCommon.ecsCluster,
@@ -145,7 +138,7 @@ export class MynvEcsStack extends cdk.Stack {
     // CloudFront + Public ALB + ECS resources(Repo, Log Group, SG, CloudWatch) + ECS Service + Blue/Green Pipeline
     if (props.ecsFrontBgTasks) {
       //Create Origin Resources
-      const frontAlbBg = new MynvAlbBgConstruct(this, `${props.prefix}-Frontend-Bg`, {
+      const frontAlbBg = new AlbBgConstruct(this, `${props.prefix}-Frontend-Bg`, {
         myVpc: props.myVpc,
         alarmTopic: props.alarmTopic,
         AlbBgCertificateIdentifier: props.AlbBgCertificateIdentifier,
@@ -156,7 +149,7 @@ export class MynvEcsStack extends cdk.Stack {
       this.frontAlbBg = frontAlbBg;
 
       const frontEcsAppsBg = props.ecsFrontBgTasks.map((ecsApp) => {
-        return new MynvEcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Ecs-Resources-Bg`, {
+        return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Ecs-Resources-Bg`, {
           myVpc: props.myVpc,
           ecsCluster: ecsCommon.ecsCluster,
           appName: ecsApp.appName,
@@ -170,7 +163,7 @@ export class MynvEcsStack extends cdk.Stack {
       this.frontEcsAppsBg = frontEcsAppsBg;
 
       const frontEcsServices = frontEcsAppsBg.map((ecsApp) => {
-        return new MynvEcsServiceConstruct(this, ecsApp.ecsServiceName, {
+        return new EcsServiceConstruct(this, ecsApp.ecsServiceName, {
           myVpc: props.myVpc,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
@@ -187,7 +180,7 @@ export class MynvEcsStack extends cdk.Stack {
 
       //Pipeline for Frontend Blue/Green
       frontEcsAppsBg.forEach((ecsApp, index) => {
-        new MynvPipelineBgConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Bg-Pipeline`, {
+        new PipelineBgConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Bg-Pipeline`, {
           prefix: props.prefix,
           appName: ecsApp.appName,
           ecsService: frontEcsServices[index].ecsService,
@@ -207,7 +200,7 @@ export class MynvEcsStack extends cdk.Stack {
     // Private ALB + ECS resources(Repo, Log Group, SG, CloudWatch) + ECS Service + Blue/Green Pipeline
     if (props.ecsBackBgTasks) {
       //Create Origin Resources
-      const backendAlbBg = new MynvAlbBgConstruct(this, `${props.prefix}-Backend-Bg`, {
+      const backendAlbBg = new AlbBgConstruct(this, `${props.prefix}-Backend-Bg`, {
         myVpc: props.myVpc,
         alarmTopic: props.alarmTopic,
         httpFlag: true,
@@ -220,7 +213,7 @@ export class MynvEcsStack extends cdk.Stack {
       this.backendAlbBg = backendAlbBg;
 
       const backEcsAppsBg = props.ecsBackBgTasks.map((ecsApp) => {
-        return new MynvEcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Ecs-Resources-Bg`, {
+        return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Ecs-Resources-Bg`, {
           myVpc: props.myVpc,
           ecsCluster: ecsCommon.ecsCluster,
           appName: ecsApp.appName,
@@ -234,7 +227,7 @@ export class MynvEcsStack extends cdk.Stack {
       this.backEcsAppsBg = backEcsAppsBg;
 
       const backEcsServices = backEcsAppsBg.map((ecsApp) => {
-        return new MynvEcsServiceConstruct(this, ecsApp.ecsServiceName, {
+        return new EcsServiceConstruct(this, ecsApp.ecsServiceName, {
           myVpc: props.myVpc,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
@@ -251,7 +244,7 @@ export class MynvEcsStack extends cdk.Stack {
 
       // Pipeline for Backend Blue/Green
       backEcsAppsBg.forEach((ecsApp, index) => {
-        new MynvPipelineBgConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Bg-Pipeline`, {
+        new PipelineBgConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Bg-Pipeline`, {
           prefix: props.prefix,
           appName: ecsApp.appName,
           ecsService: backEcsServices[index].ecsService,
@@ -267,33 +260,19 @@ export class MynvEcsStack extends cdk.Stack {
       });
     }
     //Bastion Container
-    const bastionApp = new MynvBastionECSAppConstruct(this, `${props.prefix}-Bastion-ECSAPP`, {
-      myVpc: props.myVpc,
-      appKey: props.appKey,
-      containerImageTag: 'bastionimage',
-      containerConfig: {
-        cpu: 256,
-        memoryLimitMiB: 512,
-      },
-      repositoryName: 'bastionrepo',
-      ecsTaskExecutionRole: ecsCommon.ecsTaskExecutionRole,
-    });
-    this.bastionApp = bastionApp;
-
-    //Create CloudFront (共通で1つ)
-    const cloudFront = new MynvCloudFrontConstruct(this, `${props.prefix}-CloudFront`, {
-      webAcl: props.webAcl,
-      cloudFrontParam: props.cloudFrontParam,
-      CertificateIdentifier: props.CertificateIdentifier,
-      //ターゲットに設定するALBをリストで指定する。defaultのみの場合は1つでOK。
-      //BehaviorのルールはCloudFrontコンストラクト側で設定する。
-      //1.Rolling ALBを指定（本テンプレートのデフォルト値）
-      appAlbs: [this.frontAlb.appAlb],
-      //2.Blue/Green ALBを指定
-      //appAlbs: [this.frontAlbBg.appAlbBg],
-      //3.Rolling ALB、Blue/Green ALB両方を指定（マルチオリジン）
-      //appAlbs: [this.frontAlb.appAlb, this.frontAlbBg.appAlbBg],
-    });
-    this.cloudFront = cloudFront;
+    if (props.ecsBastionTasks) {
+      const bastionApp = new BastionECSAppConstruct(this, `${props.prefix}-Bastion-ECSAPP`, {
+        myVpc: props.myVpc,
+        appKey: props.appKey,
+        containerImageTag: 'bastionimage',
+        containerConfig: {
+          cpu: 256,
+          memoryLimitMiB: 512,
+        },
+        repositoryName: 'bastionrepo',
+        ecsTaskExecutionRole: ecsCommon.ecsTaskExecutionRole,
+      });
+      this.bastionApp = bastionApp;
+    }
   }
 }

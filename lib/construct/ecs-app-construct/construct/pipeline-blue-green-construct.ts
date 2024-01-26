@@ -10,7 +10,7 @@ import { aws_elasticloadbalancingv2 as elbv2 } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { aws_logs as cwl } from 'aws-cdk-lib';
 
-export interface MynvPipelineBgConstructProps extends cdk.StackProps {
+export interface PipelineBgConstructProps extends cdk.StackProps {
   prefix: string;
   appName: string;
   ecsService: ecs.FargateService;
@@ -25,8 +25,8 @@ export interface MynvPipelineBgConstructProps extends cdk.StackProps {
   taskRole?: iam.Role;
 }
 
-export class MynvPipelineBgConstruct extends Construct {
-  constructor(scope: Construct, id: string, props: MynvPipelineBgConstructProps) {
+export class PipelineBgConstruct extends Construct {
+  constructor(scope: Construct, id: string, props: PipelineBgConstructProps) {
     super(scope, id);
 
     const sourceBucket = new s3.Bucket(this, 'PipelineSourceBucket', {

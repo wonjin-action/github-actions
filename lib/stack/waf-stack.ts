@@ -2,10 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { aws_wafv2 as wafv2 } from 'aws-cdk-lib';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import * as CryptoJS from 'crypto-js';
 
-export interface BLEAWafStackProps extends cdk.StackProps {
+export interface WafStackProps extends cdk.StackProps {
   basicAuthUserName: string;
   basicAuthUserPass: string;
   scope: string;
@@ -20,10 +19,10 @@ export interface BLEAWafStackProps extends cdk.StackProps {
   allowIPList: string[];
 }
 
-export class BLEAWafStack extends cdk.Stack {
+export class WafStack extends cdk.Stack {
   public readonly webAcl: wafv2.CfnWebACL;
 
-  constructor(scope: Construct, id: string, props: BLEAWafStackProps) {
+  constructor(scope: Construct, id: string, props: WafStackProps) {
     super(scope, id, props);
 
     // Basic認証で用いるパスワード8文字を生成

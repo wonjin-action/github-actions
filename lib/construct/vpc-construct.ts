@@ -5,16 +5,16 @@ import { aws_s3 as s3 } from 'aws-cdk-lib';
 import { aws_kms as kms } from 'aws-cdk-lib';
 import { aws_iam as iam } from 'aws-cdk-lib';
 
-export interface BLEAVpcStackProps extends cdk.StackProps {
+export interface VpcProps {
   myVpcCidr: string;
   myVpcMaxAzs: number;
 }
 
-export class BLEAVpcStack extends cdk.Stack {
+export class Vpc extends Construct {
   public readonly myVpc: ec2.Vpc;
 
-  constructor(scope: Construct, id: string, props: BLEAVpcStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: VpcProps) {
+    super(scope, id);
 
     const myVpc = new ec2.Vpc(this, 'Vpc', {
       ipAddresses: ec2.IpAddresses.cidr(props.myVpcCidr),

@@ -9,15 +9,15 @@ import * as chatbot from 'aws-cdk-lib/aws-chatbot';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as events from 'aws-cdk-lib/aws-events';
 
-export interface MynvInfraResourcesPipelineStackProps {
+export interface InfraResourcesPipelineStackProps {
   slackChannelName: string;
   slackWorkspaceId: string;
   slackChannelId: string;
   env: string;
 }
 
-export class MynvInfraResourcesPipelineStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: MynvInfraResourcesPipelineStackProps) {
+export class InfraResourcesPipelineStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: InfraResourcesPipelineStackProps) {
     super(scope, id);
 
     const sourceBucket = new s3.Bucket(this, `SourceBucket`, {

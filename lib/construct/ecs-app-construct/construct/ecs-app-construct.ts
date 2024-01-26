@@ -10,7 +10,7 @@ import { aws_ecs as ecs } from 'aws-cdk-lib';
 import { aws_ecr as ecr } from 'aws-cdk-lib';
 import { aws_events_targets as eventtarget } from 'aws-cdk-lib';
 
-export interface MynvEcsappConstructProps extends cdk.StackProps {
+export interface EcsappConstructProps extends cdk.StackProps {
   myVpc: ec2.Vpc;
   ecsCluster: ecs.Cluster;
   appName: string;
@@ -22,7 +22,7 @@ export interface MynvEcsappConstructProps extends cdk.StackProps {
   useServiceConnect?: boolean;
 }
 
-export class MynvEcsappConstruct extends Construct {
+export class EcsappConstruct extends Construct {
   public readonly securityGroupForFargate: ec2.SecurityGroup;
   public readonly serviceConnectLogGroup: cwl.LogGroup;
   public readonly fargateLogGroup: cwl.LogGroup;
@@ -30,7 +30,7 @@ export class MynvEcsappConstruct extends Construct {
   public readonly appName: string;
   public readonly portNumber: number;
 
-  constructor(scope: Construct, id: string, props: MynvEcsappConstructProps) {
+  constructor(scope: Construct, id: string, props: EcsappConstructProps) {
     super(scope, id);
 
     this.appName = props.appName;
@@ -86,7 +86,7 @@ export class MynvEcsappConstruct extends Construct {
         ServiceName: this.ecsServiceName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
     })
       .createAlarm(this, 'FargateCpuUtil', {
         evaluationPeriods: 3,

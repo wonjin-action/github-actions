@@ -1,12 +1,12 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { aws_ec2 as ec2 } from 'aws-cdk-lib';
-import { aws_elasticloadbalancingv2 as elbv2 } from 'aws-cdk-lib';
-import { aws_sns as sns } from 'aws-cdk-lib';
-import { aws_cloudwatch as cw } from 'aws-cdk-lib';
-import { aws_cloudwatch_actions as cw_actions } from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as cw from 'aws-cdk-lib/aws-cloudwatch';
+import * as cw_actions from 'aws-cdk-lib/aws-cloudwatch-actions';
 
-export interface MynvAlbtgConstructProps extends cdk.StackProps {
+export interface AlbtgConstructProps extends cdk.StackProps {
   myVpc: ec2.Vpc;
   alarmTopic: sns.Topic;
   appAlbListener: elbv2.ApplicationListener;
@@ -14,11 +14,11 @@ export interface MynvAlbtgConstructProps extends cdk.StackProps {
   priority?: number;
 }
 
-export class MynvAlbtgConstruct extends Construct {
+export class AlbtgConstruct extends Construct {
   public readonly lbForAppTargetGroup: elbv2.ApplicationTargetGroup;
   public readonly albTgUnHealthyHostCountAlarm: cw.Alarm;
 
-  constructor(scope: Construct, id: string, props: MynvAlbtgConstructProps) {
+  constructor(scope: Construct, id: string, props: AlbtgConstructProps) {
     super(scope, id);
 
     const lbForAppTargetGroup = new elbv2.ApplicationTargetGroup(this, `TargetGroup`, {
@@ -46,7 +46,7 @@ export class MynvAlbtgConstruct extends Construct {
     lbForAppTargetGroup.metrics
       .healthyHostCount({
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
       })
       .createAlarm(this, `AlbTgHealthyHostCount`, {
         evaluationPeriods: 3,
@@ -61,7 +61,7 @@ export class MynvAlbtgConstruct extends Construct {
     this.albTgUnHealthyHostCountAlarm = lbForAppTargetGroup.metrics
       .unhealthyHostCount({
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
       })
       .createAlarm(this, `AlbTgUnHealthyHostCount`, {
         evaluationPeriods: 3,

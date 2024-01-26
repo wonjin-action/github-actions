@@ -10,35 +10,43 @@ import { aws_cloudwatch_actions as cw_actions } from 'aws-cdk-lib';
 import { region_info as ri } from 'aws-cdk-lib';
 import { aws_cloudfront as cloudfront } from 'aws-cdk-lib';
 import { aws_certificatemanager as acm } from 'aws-cdk-lib';
-import { MynvEcsappConstruct } from './mynv-ecsapp-construct';
-import { MynvAlbtgConstruct } from './mynv-albtg-construct';
-import { IEcsAlbParam, ICertificateIdentifier, IOptionalEcsAlbParam } from '../params/interface';
+import { EcsappConstruct } from './ecs-app-construct';
+import { AlbtgConstruct } from './alb-target-group-construct';
+import { IEcsAlbParam, ICertificateIdentifier, IOptionalEcsAlbParam } from '../../../../params/interface';
 
-interface MynvAlbConstructProps extends cdk.StackProps {
+interface AlbBgConstructProps extends cdk.StackProps {
   myVpc: ec2.Vpc;
   alarmTopic: sns.Topic;
   ecsApps: IEcsAlbParam;
-  AlbCertificateIdentifier: ICertificateIdentifier;
+  AlbBgCertificateIdentifier: ICertificateIdentifier;
+  allowFromSG?: ec2.SecurityGroup[];
+  httpFlag?: boolean;
+  internetFacing: boolean;
+  subnetGroupName: string;
 }
 
-export class MynvAlbConstruct extends Construct {
-  public readonly appAlb: elbv2.ApplicationLoadBalancer;
+export class AlbBgConstruct extends Construct {
+  public readonly appAlbBg: elbv2.ApplicationLoadBalancer;
   public readonly appAlbListerner: elbv2.ApplicationListener;
+  public readonly ALbListenerBlue: elbv2.ApplicationListener;
+  public readonly ALbListenerGreen: elbv2.ApplicationListener;
+  public readonly AlbTgsBlue: AlbtgConstruct[];
+  public readonly AlbTgsGreen: AlbtgConstruct[];
   public readonly appAlbSecurityGroup: ec2.SecurityGroup;
   public readonly webContentsBucket: s3.Bucket;
   public readonly cfDistribution: cloudfront.Distribution;
-  public readonly ecsAlbApps: MynvEcsappConstruct[];
-  public readonly AlbTgs: MynvAlbtgConstruct[];
+  public readonly ecsAlbApps: EcsappConstruct[];
+  public readonly AlbTgs: AlbtgConstruct[];
 
-  constructor(scope: Construct, id: string, props: MynvAlbConstructProps) {
+  constructor(scope: Construct, id: string, props: AlbBgConstructProps) {
     super(scope, id);
 
     //Check if a certificate is specified
-    const hasValidAlbCert = props.AlbCertificateIdentifier.identifier !== '';
+    const hasValidAlbCert = props.httpFlag ? false : props.AlbBgCertificateIdentifier.identifier !== '';
 
     // for ELB (Local regional Cert)
     const albCertificateArn = `arn:aws:acm:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:certificate/${
-      props.AlbCertificateIdentifier.identifier
+      props.AlbBgCertificateIdentifier.identifier
     }`;
     const albCert = acm.Certificate.fromCertificateArn(this, 'albCertificate', albCertificateArn);
 
@@ -51,23 +59,45 @@ export class MynvAlbConstruct extends Construct {
     });
     this.appAlbSecurityGroup = securityGroupForAlb;
 
+    //Allofw only from Front ECS Service SG
+    if (props.allowFromSG) {
+      for (const sg of props.allowFromSG) {
+        securityGroupForAlb.addIngressRule(
+          sg,
+          ec2.Port.allTcp(),
+          'Allow inbound traffic from specified security group',
+        );
+      }
+    }
+
     // ------------ Application LoadBalancer ---------------
 
     // ALB for App Server
-    const lbForApp = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
+    const lbForApp = new elbv2.ApplicationLoadBalancer(this, 'AlbBg', {
       vpc: props.myVpc,
-      internetFacing: true,
+      internetFacing: props.internetFacing,
       securityGroup: securityGroupForAlb,
       vpcSubnets: props.myVpc.selectSubnets({
-        subnetGroupName: 'Public',
+        subnetGroupName: props.subnetGroupName,
       }),
     });
-    this.appAlb = lbForApp;
+    this.appAlbBg = lbForApp;
 
-    let lbForAppListener: elbv2.ApplicationListener;
+    //ブルグリ用のリスナー変数を作成
+    let lbForAppListenerBlue: elbv2.ApplicationListener;
+    let lbForAppListenerGreen: elbv2.ApplicationListener;
     if (hasValidAlbCert) {
-      lbForAppListener = lbForApp.addListener('app', {
+      lbForAppListenerBlue = lbForApp.addListener('appBlue', {
         port: 443,
+        certificates: [
+          {
+            certificateArn: albCert.certificateArn,
+          },
+        ],
+        sslPolicy: elbv2.SslPolicy.RECOMMENDED_TLS,
+      });
+      lbForAppListenerGreen = lbForApp.addListener('appGreen', {
+        port: 8443,
         certificates: [
           {
             certificateArn: albCert.certificateArn,
@@ -85,15 +115,21 @@ export class MynvAlbConstruct extends Construct {
           permanent: true,
         }),
       });
-      redirectListener.node.addDependency(lbForAppListener);
+      redirectListener.node.addDependency(lbForAppListenerBlue);
     } else {
-      lbForAppListener = lbForApp.addListener('app', {
+      lbForAppListenerBlue = lbForApp.addListener('appBlue', {
         port: 80,
         protocol: elbv2.ApplicationProtocol.HTTP,
         open: true,
       });
+      lbForAppListenerGreen = lbForApp.addListener('appGreen', {
+        port: 8080,
+        protocol: elbv2.ApplicationProtocol.HTTP,
+        open: true,
+      });
     }
-    this.appAlbListerner = lbForAppListener;
+    this.ALbListenerBlue = lbForAppListenerBlue;
+    this.ALbListenerGreen = lbForAppListenerGreen;
 
     // Enable ALB Access Logging
     //
@@ -151,7 +187,7 @@ export class MynvAlbConstruct extends Construct {
     lbForApp.metrics
       .targetResponseTime({
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
       })
       .createAlarm(this, 'AlbResponseTime', {
         evaluationPeriods: 3,
@@ -165,7 +201,7 @@ export class MynvAlbConstruct extends Construct {
     lbForApp.metrics
       .httpCodeElb(elbv2.HttpCodeElb.ELB_4XX_COUNT, {
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.SUM,
+        statistic: cw.Stats.SUM,
       })
       .createAlarm(this, 'AlbHttp4xx', {
         evaluationPeriods: 3,
@@ -179,7 +215,7 @@ export class MynvAlbConstruct extends Construct {
     lbForApp.metrics
       .httpCodeElb(elbv2.HttpCodeElb.ELB_5XX_COUNT, {
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.SUM,
+        statistic: cw.Stats.SUM,
       })
       .createAlarm(this, 'AlbHttp5xx', {
         evaluationPeriods: 3,
@@ -189,11 +225,21 @@ export class MynvAlbConstruct extends Construct {
       })
       .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
 
-    this.AlbTgs = props.ecsApps.map((ecsApp, index) => {
-      return new MynvAlbtgConstruct(this, `${ecsApp.appName}-TG`, {
+    this.AlbTgsBlue = props.ecsApps.map((ecsApp, index) => {
+      return new AlbtgConstruct(this, `${ecsApp.appName}-Blue-TG`, {
         myVpc: props.myVpc,
         alarmTopic: props.alarmTopic,
-        appAlbListener: lbForAppListener,
+        appAlbListener: lbForAppListenerBlue,
+        path: (ecsApp as IOptionalEcsAlbParam).path,
+        priority: index,
+      });
+    });
+
+    this.AlbTgsGreen = props.ecsApps.map((ecsApp, index) => {
+      return new AlbtgConstruct(this, `${ecsApp.appName}-Green-TG`, {
+        myVpc: props.myVpc,
+        alarmTopic: props.alarmTopic,
+        appAlbListener: lbForAppListenerGreen,
         path: (ecsApp as IOptionalEcsAlbParam).path,
         priority: index,
       });

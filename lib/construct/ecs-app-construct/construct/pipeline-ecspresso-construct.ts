@@ -11,7 +11,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { aws_logs as cwl } from 'aws-cdk-lib';
 import { aws_servicediscovery as sd } from 'aws-cdk-lib';
 
-export interface MynvPipelineEcspressoConstructProps extends cdk.StackProps {
+export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   prefix: string;
   appName: string;
   ecsCluster: ecs.Cluster;
@@ -26,8 +26,8 @@ export interface MynvPipelineEcspressoConstructProps extends cdk.StackProps {
   taskRole?: iam.Role;
 }
 
-export class MynvPipelineEcspressoConstruct extends Construct {
-  constructor(scope: Construct, id: string, props: MynvPipelineEcspressoConstructProps) {
+export class PipelineEcspressoConstruct extends Construct {
+  constructor(scope: Construct, id: string, props: PipelineEcspressoConstructProps) {
     super(scope, id);
 
     //タスクロール,TargetGroupが指定されていない場合は、空文字をCodeBuildの環境変数として設定

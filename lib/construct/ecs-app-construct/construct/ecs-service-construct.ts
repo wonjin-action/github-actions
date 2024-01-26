@@ -5,7 +5,7 @@ import { aws_ecs as ecs } from 'aws-cdk-lib';
 import { aws_iam as iam } from 'aws-cdk-lib';
 import { aws_logs as cwl } from 'aws-cdk-lib';
 
-export interface MynvEcsServiceConstructProps extends cdk.StackProps {
+export interface EcsServiceConstructProps extends cdk.StackProps {
   myVpc: ec2.Vpc;
   ecsCluster: ecs.Cluster;
   ecsServiceName: string;
@@ -14,16 +14,15 @@ export interface MynvEcsServiceConstructProps extends cdk.StackProps {
   fargateLogGroup: cwl.LogGroup;
 }
 
-export class MynvEcsServiceConstruct extends Construct {
+export class EcsServiceConstruct extends Construct {
   public readonly ecsService: ecs.FargateService;
 
-  constructor(scope: Construct, id: string, props: MynvEcsServiceConstructProps) {
+  constructor(scope: Construct, id: string, props: EcsServiceConstructProps) {
     super(scope, id);
 
     // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html
     const ecsTask = new ecs.FargateTaskDefinition(this, 'EcsTask', {
       executionRole: props.ecsTaskExecutionRole,
-      //taskRole: serviceTaskRole,
       cpu: 256,
       memoryLimitMiB: 512,
     });

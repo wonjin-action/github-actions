@@ -9,7 +9,7 @@ import { aws_cloudwatch as cw } from 'aws-cdk-lib';
 import { aws_cloudwatch_actions as cw_actions } from 'aws-cdk-lib';
 import { ClusterInstance } from 'aws-cdk-lib/aws-rds';
 
-export interface BLEADbAuroraPgStackProps extends cdk.StackProps {
+export interface DbAuroraStackProps extends cdk.StackProps {
   myVpc: ec2.Vpc;
   dbName: string;
   dbUser: string;
@@ -30,13 +30,13 @@ export interface BLEADbAuroraPgStackProps extends cdk.StackProps {
   postgresqlParamForInstance: Record<string, string>;
 }
 
-export class BLEADbAuroraPgStack extends cdk.Stack {
+export class DbAuroraStack extends cdk.Stack {
   public readonly dbClusterName: string;
 
-  constructor(scope: Construct, id: string, props: BLEADbAuroraPgStackProps) {
+  constructor(scope: Construct, id: string, props: DbAuroraStackProps) {
     super(scope, id, props);
     // for Aurora PostgreSQL
-    const version = rds.AuroraPostgresEngineVersion.VER_13_6;
+    const version = rds.AuroraPostgresEngineVersion.VER_15_4;
     const engine = rds.DatabaseClusterEngine.auroraPostgres({
       version,
     });
@@ -133,7 +133,7 @@ export class BLEADbAuroraPgStack extends cdk.Stack {
     cluster
       .metricCPUUtilization({
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
       })
       .createAlarm(this, 'AuroraCPUUtil', {
         evaluationPeriods: 3,
@@ -155,7 +155,7 @@ export class BLEADbAuroraPgStack extends cdk.Stack {
     //       DBInstanceIdentifier: instance
     //     },
     //     period: cdk.Duration.minutes(1),
-    //     statistic: cw.Statistic.AVERAGE,
+    //     statistic: cw.Stats.AVERAGE,
     //   }).createAlarm(this, 'CPUUtilization', {
     //     evaluationPeriods: 3,
     //     datapointsToAlarm: 2,

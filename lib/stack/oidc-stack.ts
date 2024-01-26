@@ -1,15 +1,15 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { MynvOidcIAMRoleConstruct } from './mynv-oidc-iamrole-construct';
+import { OidcIAMRoleConstruct } from '../construct/oidc-iamrole-construct';
 
-export interface MynvOidcStackProps extends cdk.StackProps {
+export interface OidcStackProps extends cdk.StackProps {
   OrganizationName: string;
   RepositoryNames: Record<string, string>;
 }
 
-export class MynvOidcStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: MynvOidcStackProps) {
+export class OidcStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: OidcStackProps) {
     super(scope, id, props);
 
     // GithubActionsと接続するためのOpenIdConnectを作成
@@ -19,7 +19,7 @@ export class MynvOidcStack extends cdk.Stack {
     });
 
     // WAF用ロール
-    new MynvOidcIAMRoleConstruct(this, 'WafRole', {
+    new OidcIAMRoleConstruct(this, 'WafRole', {
       OrganizationName: props.OrganizationName,
       RepositoryName: props.RepositoryNames.WafRepositoryName,
       openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
@@ -31,7 +31,7 @@ export class MynvOidcStack extends cdk.Stack {
       ],
     });
     // InfraResources用ロール
-    new MynvOidcIAMRoleConstruct(this, 'InfraResourcesRole', {
+    new OidcIAMRoleConstruct(this, 'InfraResourcesRole', {
       OrganizationName: props.OrganizationName,
       RepositoryName: props.RepositoryNames.InfraRepositoryName,
       openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,

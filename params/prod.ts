@@ -216,6 +216,7 @@ export const NotifierParam: inf.INotifierParam = {
 
 export const CloudFrontParam: inf.ICloudFrontParam = {
   fqdn: '',
+  createClosedBucket: false,
 };
 
 export const Env: inf.IEnv = {

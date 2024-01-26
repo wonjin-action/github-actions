@@ -8,18 +8,18 @@ import { aws_events as cwe } from 'aws-cdk-lib';
 import { aws_events_targets as cwet } from 'aws-cdk-lib';
 import { aws_servicediscovery as sd } from 'aws-cdk-lib';
 
-export interface MynvEcsCommonConstructProps extends cdk.StackProps {
+export interface EcsCommonConstructProps extends cdk.StackProps {
   myVpc: ec2.Vpc;
   alarmTopic: sns.Topic;
   prefix: string;
 }
 
-export class MynvEcsCommonConstruct extends Construct {
+export class EcsCommonConstruct extends Construct {
   public readonly ecsCluster: ecs.Cluster;
   public readonly ecsTaskExecutionRole: iam.Role;
   public readonly ecsNameSpace: sd.INamespace;
 
-  constructor(scope: Construct, id: string, props: MynvEcsCommonConstructProps) {
+  constructor(scope: Construct, id: string, props: EcsCommonConstructProps) {
     super(scope, id);
 
     // --------------------- Fargate Cluster ----------------------------

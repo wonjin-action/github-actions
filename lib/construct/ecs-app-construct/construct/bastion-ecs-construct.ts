@@ -9,7 +9,7 @@ import { aws_logs as cwl } from 'aws-cdk-lib';
 import * as imagedeploy from 'cdk-docker-image-deployment';
 import * as path from 'path';
 
-export interface MynvBastionECSAppConstructProps extends cdk.StackProps {
+export interface BastionECSAppConstructProps extends cdk.StackProps {
   myVpc: ec2.Vpc;
   appKey: kms.IKey;
   containerImageTag: string;
@@ -21,10 +21,10 @@ export interface MynvBastionECSAppConstructProps extends cdk.StackProps {
   ecsTaskExecutionRole: iam.Role;
 }
 
-export class MynvBastionECSAppConstruct extends Construct {
+export class BastionECSAppConstruct extends Construct {
   public readonly securityGroup: ec2.SecurityGroup;
 
-  constructor(scope: Construct, id: string, props: MynvBastionECSAppConstructProps) {
+  constructor(scope: Construct, id: string, props: BastionECSAppConstructProps) {
     super(scope, id);
 
     // Create a repository
@@ -34,7 +34,7 @@ export class MynvBastionECSAppConstruct extends Construct {
 
     // image Deployment
     new imagedeploy.DockerImageDeployment(this, `${id}-ImageDeployment`, {
-      source: imagedeploy.Source.directory(path.join(__dirname, '../container/bastion', 'docker')),
+      source: imagedeploy.Source.directory(path.join(__dirname, '../../../../container/bastion', 'docker')),
       destination: imagedeploy.Destination.ecr(repository, {
         tag: 'bastionimage',
       }),

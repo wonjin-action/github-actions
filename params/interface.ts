@@ -102,6 +102,7 @@ export interface INotifierParam {
 
 export interface ICloudFrontParam {
   fqdn: string;
+  createClosedBucket: boolean;
 }
 
 export interface IEnv {

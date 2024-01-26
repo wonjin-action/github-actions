@@ -1,28 +1,26 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { aws_cloudwatch as cw } from 'aws-cdk-lib';
-import { MynvCloudFrontConstruct } from './mynv-cloudfront-construct';
-import { MynvAlbConstruct } from './mynv-alb-construct';
 
-interface BLEADashboardStackProps extends cdk.StackProps {
+interface DashboardProps {
   dashboardName: string;
-  webFront: MynvCloudFrontConstruct;
-  alb: MynvAlbConstruct;
+  cfDistributionId: string;
+  albFullName: string;
+  appTargetGroupNames: string[];
+  albTgUnHealthyHostCountAlarms: cw.Alarm[];
   ecsClusterName: string;
   ecsAlbServiceNames: string[];
   ecsInternalServiceNames: string[];
-  appTargetGroupNames: string[];
-  dbClusterName: string;
-  albTgUnHealthyHostCountAlarms: cw.Alarm[];
   ecsTargetUtilizationPercent: number;
   ecsScaleOnRequestCount: number;
-  // canaryDurationAlarm: cw.Alarm;
-  // canaryFailedAlarm: cw.Alarm;
+  dbClusterName: string;
+  canaryDurationAlarm?: cw.Alarm;
+  canaryFailedAlarm?: cw.Alarm;
 }
 
-export class BLEADashboardStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: BLEADashboardStackProps) {
-    super(scope, id, props);
+export class Dashboard extends Construct {
+  constructor(scope: Construct, id: string, props: DashboardProps) {
+    super(scope, id);
 
     /*
      *
@@ -38,10 +36,10 @@ export class BLEADashboardStack extends cdk.Stack {
       metricName: 'Requests',
       dimensionsMap: {
         Region: 'Global',
-        DistributionId: props.webFront.cfDistribution.distributionId,
+        DistributionId: props.cfDistributionId,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.NONE,
       region: 'us-east-1', // cloudfront defined on us-east-1
@@ -51,10 +49,10 @@ export class BLEADashboardStack extends cdk.Stack {
       metricName: '5xxErrorRate',
       dimensionsMap: {
         Region: 'Global',
-        DistributionId: props.webFront.cfDistribution.distributionId,
+        DistributionId: props.cfDistributionId,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.PERCENT,
       region: 'us-east-1', // cloudfront defined on us-east-1
@@ -64,10 +62,10 @@ export class BLEADashboardStack extends cdk.Stack {
       metricName: '4xxErrorRate',
       dimensionsMap: {
         Region: 'Global',
-        DistributionId: props.webFront.cfDistribution.distributionId,
+        DistributionId: props.cfDistributionId,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.PERCENT,
       region: 'us-east-1', // cloudfront defined on us-east-1
@@ -77,10 +75,10 @@ export class BLEADashboardStack extends cdk.Stack {
       metricName: 'TotalErrorRate',
       dimensionsMap: {
         Region: 'Global',
-        DistributionId: props.webFront.cfDistribution.distributionId,
+        DistributionId: props.cfDistributionId,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.PERCENT,
       region: 'us-east-1', // cloudfront defined on us-east-1
@@ -92,10 +90,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'RequestCount',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -103,10 +101,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'NewConnectionCount',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -114,10 +112,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'RejectedConnectionCount',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -125,10 +123,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'ClientTLSNegotiationErrorCount',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -136,10 +134,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'HTTPCode_ELB_5XX_Count',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -147,10 +145,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'HTTPCode_ELB_4XX_Count',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -161,10 +159,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'HTTPCode_Target_2XX_Count',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -172,10 +170,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'HTTPCode_Target_5XX_Count',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -183,10 +181,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'HTTPCode_Target_4XX_Count',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -194,10 +192,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'TargetConnectionErrorCount',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -205,10 +203,10 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'TargetTLSNegotiationErrorCount',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -216,24 +214,24 @@ export class BLEADashboardStack extends cdk.Stack {
       namespace: 'AWS/ApplicationELB',
       metricName: 'TargetResponseTime',
       dimensionsMap: {
-        LoadBalancer: props.alb.appAlb.loadBalancerFullName,
+        LoadBalancer: props.albFullName,
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.SECONDS,
     });
     const albTgRequestCountPerTarget: cw.Metric[] = [];
-    props.appTargetGroupNames.forEach((targetGropup, index) => {
+    props.appTargetGroupNames.forEach((targetGroup, index) => {
       albTgRequestCountPerTarget[index] = new cw.Metric({
         namespace: 'AWS/ApplicationELB',
         metricName: 'RequestCountPerTarget',
         dimensionsMap: {
-          LoadBalancer: props.alb.appAlb.loadBalancerFullName,
-          TargetGroup: targetGropup,
+          LoadBalancer: props.albFullName,
+          TargetGroup: targetGroup,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.SUM,
+        statistic: cw.Stats.SUM,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.COUNT,
       });
@@ -257,7 +255,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.PERCENT,
       });
@@ -269,7 +267,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.PERCENT,
       });
@@ -281,7 +279,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.COUNT,
       });
@@ -293,7 +291,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.COUNT,
       });
@@ -305,7 +303,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.COUNT,
       });
@@ -325,7 +323,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.PERCENT,
       });
@@ -337,7 +335,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.PERCENT,
       });
@@ -349,7 +347,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.COUNT,
       });
@@ -361,7 +359,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.COUNT,
       });
@@ -373,7 +371,7 @@ export class BLEADashboardStack extends cdk.Stack {
           ServiceName: ecsServiceName,
         },
         period: cdk.Duration.minutes(1),
-        statistic: cw.Statistic.AVERAGE,
+        statistic: cw.Stats.AVERAGE,
         label: "${PROP('MetricName')} /${PROP('Period')}sec",
         unit: cw.Unit.COUNT,
       });
@@ -390,7 +388,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "Writer: ${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -402,7 +400,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'READER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.SUM,
+      statistic: cw.Stats.SUM,
       label: "Reader: ${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.COUNT,
     });
@@ -414,7 +412,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "Writer: ${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.PERCENT,
     });
@@ -426,7 +424,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'READER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "Reader: ${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.PERCENT,
     });
@@ -438,7 +436,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "Writer: ${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MEGABITS,
     });
@@ -450,7 +448,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'READER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "Reader: ${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MEGABITS,
     });
@@ -462,7 +460,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "Writer: ${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MEGABITS,
     });
@@ -474,7 +472,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'READER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "Reader: ${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MEGABITS,
     });
@@ -488,7 +486,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MILLISECONDS,
     });
@@ -500,7 +498,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MILLISECONDS,
     });
@@ -512,7 +510,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MILLISECONDS,
     });
@@ -524,7 +522,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MILLISECONDS,
     });
@@ -536,7 +534,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MILLISECONDS,
     });
@@ -548,7 +546,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MILLISECONDS,
     });
@@ -560,7 +558,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MILLISECONDS,
     });
@@ -572,7 +570,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.SECONDS,
     });
@@ -584,7 +582,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'WRITER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.SECONDS,
     });
@@ -598,7 +596,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'READER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.MILLISECONDS,
     });
@@ -610,7 +608,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'READER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.SECONDS,
     });
@@ -622,7 +620,7 @@ export class BLEADashboardStack extends cdk.Stack {
         Role: 'READER',
       },
       period: cdk.Duration.minutes(1),
-      statistic: cw.Statistic.AVERAGE,
+      statistic: cw.Stats.AVERAGE,
       label: "${PROP('MetricName')} /${PROP('Period')}sec",
       unit: cw.Unit.SECONDS,
     });
@@ -653,27 +651,33 @@ export class BLEADashboardStack extends cdk.Stack {
     const dashboard = new cw.Dashboard(this, 'Dashboard', {
       dashboardName: props.dashboardName,
     });
+
+    // Canary
+    if (props.canaryDurationAlarm && props.canaryFailedAlarm) {
+      dashboard.addWidgets(
+        new cw.TextWidget({
+          markdown: '# Canary',
+          height: 1,
+          width: 24,
+        }),
+
+        new cw.AlarmWidget({
+          title: 'Canary response time',
+          width: 12,
+          height: 6,
+          alarm: props.canaryDurationAlarm,
+        }),
+
+        new cw.AlarmWidget({
+          title: 'Canary request failed',
+          width: 12,
+          height: 6,
+          alarm: props.canaryFailedAlarm,
+        }),
+      );
+    }
+
     dashboard.addWidgets(
-      // Canary
-      new cw.TextWidget({
-        markdown: '# Canary',
-        height: 1,
-        width: 24,
-      }),
-
-      // new cw.AlarmWidget({
-      //   title: 'Canary response time',
-      //   width: 12,
-      //   height: 6,
-      //   alarm: props.canaryDurationAlarm,
-      // }),
-      // new cw.AlarmWidget({
-      //   title: 'Canary request failed',
-      //   width: 12,
-      //   height: 6,
-      //   alarm: props.canaryFailedAlarm,
-      // }),
-
       // Requests
       new cw.TextWidget({
         markdown: '# Requests',

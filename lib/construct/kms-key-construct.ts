@@ -1,21 +1,20 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { aws_kms as kms } from 'aws-cdk-lib';
-import { aws_iam as iam } from 'aws-cdk-lib';
+import * as kms from 'aws-cdk-lib/aws-kms';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
-export class BLEAKeyAppStack extends cdk.Stack {
+export class KMSKey extends Construct {
   public readonly kmsKey: kms.Key;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
 
     // CMK
     const kmsKey = new kms.Key(this, 'Key', {
       enableKeyRotation: true,
-      description: 'for App',
+      description: 'Custom KMS key',
       alias: `${id}-for-app`,
     });
-    this.kmsKey = kmsKey;
 
     // Permission to access KMS Key from CloudWatch Logs
     kmsKey.addToResourcePolicy(
@@ -32,5 +31,7 @@ export class BLEAKeyAppStack extends cdk.Stack {
         },
       }),
     );
+
+    this.kmsKey = kmsKey;
   }
 }

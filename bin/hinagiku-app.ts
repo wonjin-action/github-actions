@@ -1,27 +1,22 @@
 import * as cdk from 'aws-cdk-lib';
-import { BLEAVpcStack } from '../lib/blea-vpc-stack';
-import { BLEAKeyAppStack } from '../lib/blea-key-app-stack';
-import { BLEADbAuroraPgStack } from '../lib/blea-db-aurora-pg-stack';
-import { BLEAMonitorAlarmStack } from '../lib/blea-monitor-alarm-stack';
-import { BLEAChatbotStack } from '../lib/blea-chatbot-stack';
-import { BLEAWafStack } from '../lib/blea-waf-stack';
-// import { BLEACanaryStack } from "../lib/blea-canary-stack";
-import { ElastiCacheRedisStack } from '../lib/mynv-elasticache-redis-stack';
+import { DbAuroraStack } from '../lib/stack/db-aurora-stack';
+import { WafStack } from '../lib/stack/waf-stack';
+import { ElastiCacheRedisStack } from '../lib/stack/elasticache-redis-stack';
 import * as fs from 'fs';
 import { IConfig } from '../params/interface';
-import { MynvStepFunctionsSampleStack } from '../lib/mynv-stepfunctions-sample-stack';
-import { MynvOpenSearchStack } from '../lib/mynv-opensearch-stack';
-import { MynvBackupVaultStack } from '../lib/mynv-backup-vault-stack';
-import { MynvBackupPlanStack } from '../lib/mynv-backup-plan-stack';
-//OpenSearchSererless使用の場合以下をコメントイン、import { MynvOpenSearchStack } from '../lib/mynv-opensearch-stack';をコメントアウト
-//import {MynvOpenSearchServerlessStack} from '../lib/mynv-opensearchserverless-stack';
-import { BLEADashboardStack } from '../lib/blea-dashboard-stack';
-import { MynvEcsStack } from '../lib/mynv-ecs-stack';
+import { StepFunctionsSampleStack } from '../lib/stack/stepfunctions-sample-stack';
+import { OpenSearchStack } from '../lib/stack/opensearch-stack';
+import { BackupVaultStack } from '../lib/stack/backup-vault-stack';
+import { BackupPlanStack } from '../lib/stack/backup-plan-stack';
+//OpenSearchSererless使用の場合以下をコメントイン、import { OpenSearchStack } from '../lib/-opensearch-stack';をコメントアウト
+//import {OpenSearchServerlessStack} from '../lib/-opensearchserverless-stack';
+import { MonitorStack } from '../lib/stack/monitor-stack';
+import { EcsAppStack } from '../lib/stack/ecs-app-stack';
 import { Ec2Action } from 'aws-cdk-lib/aws-cloudwatch-actions';
-import { MynvOidcStack } from '../lib/mynv-oidc-stack';
-// cognito使用の場合以下をコメントイン
-//import { MynvCognitoStack } from '../lib/mynv-cognito-stack';
-import { MynvInfraResourcesPipelineStack } from '../lib/mynv-pipeline-infraresources-stack';
+import { CloudfrontStack } from '../lib/stack/cloudfront-stack';
+import { OidcStack } from '../lib/stack/oidc-stack';
+import { InfraResourcesPipelineStack } from '../lib/stack/pipeline-infraresources-stack';
+import { ShareResourcesStack } from '../lib/stack/share-resources-stack';
 
 const app = new cdk.App();
 
@@ -68,40 +63,25 @@ function getProcEnv() {
 const workspaceId = config.NotifierParam.workspaceId;
 const channelIdMon = config.NotifierParam.channelIdMon;
 
-// Topic for monitoring guest system
-const monitorAlarm = new BLEAMonitorAlarmStack(app, `${pjPrefix}-MonitorAlarm`, {
+const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`, {
+  pjPrefix,
   notifyEmail: config.NotifierParam.monitoringNotifyEmail,
-  env: getProcEnv(),
-});
-
-new BLEAChatbotStack(app, `${pjPrefix}-ChatbotMonitor`, {
-  topicArn: monitorAlarm.alarmTopic.topicArn,
+  domainPrefix: `${pjPrefix}`.toLowerCase(),
   workspaceId: workspaceId,
   channelId: channelIdMon,
+  ...config.CognitoParam,
+  myVpcCidr: config.VpcParam.cidr,
+  myVpcMaxAzs: config.VpcParam.maxAzs,
   env: getProcEnv(),
 });
 
 // InfraResources
-new MynvInfraResourcesPipelineStack(app, `${pjPrefix}-Pipeline`, {
+new InfraResourcesPipelineStack(app, `${pjPrefix}-Pipeline`, {
   ...config.InfraResourcesPipelineParam,
   env: envKey,
 });
 
-// CMK for Apps
-const appKey = new BLEAKeyAppStack(app, `${pjPrefix}-AppKey`, {
-  env: getProcEnv(),
-});
-
-// Networking
-const myVpcCidr = config.VpcParam.cidr;
-const myVpcMaxAzs = config.VpcParam.maxAzs;
-const prodVpc = new BLEAVpcStack(app, `${pjPrefix}-Vpc`, {
-  myVpcCidr: myVpcCidr,
-  myVpcMaxAzs: myVpcMaxAzs,
-  env: getProcEnv(),
-});
-
-const waf = new BLEAWafStack(app, `${pjPrefix}-Waf`, {
+const waf = new WafStack(app, `${pjPrefix}-Waf`, {
   scope: 'CLOUDFRONT',
   env: {
     account: getProcEnv().account,
@@ -111,21 +91,18 @@ const waf = new BLEAWafStack(app, `${pjPrefix}-Waf`, {
   ...config.WafParam,
 });
 
-new MynvOidcStack(app, `${pjPrefix}-OIDC`, {
+new OidcStack(app, `${pjPrefix}-OIDC`, {
   OrganizationName: config.OidcParam.OrganizationName,
   RepositoryNames: config.OidcParam.RepositoryNames,
 });
 
-const ecs = new MynvEcsStack(app, `${pjPrefix}-ECS`, {
-  myVpc: prodVpc.myVpc,
-  appKey: appKey.kmsKey,
-  webAcl: waf.webAcl,
-  alarmTopic: monitorAlarm.alarmTopic,
+const ecs = new EcsAppStack(app, `${pjPrefix}-ECS`, {
+  myVpc: shareResources.myVpc,
+  appKey: shareResources.appKey,
+  alarmTopic: shareResources.alarmTopic,
   prefix: pjPrefix,
   AlbBgCertificateIdentifier: config.AlbBgCertificateIdentifier,
   AlbCertificateIdentifier: config.AlbCertificateIdentifier,
-  CertificateIdentifier: config.CertificateIdentifier,
-  cloudFrontParam: config.CloudFrontParam,
   ecsFrontTasks: config.EcsFrontTasks,
   ecsFrontBgTasks: config.EcsFrontBgTasks,
   ecsBackBgTasks: config.EcsBackBgTasks,
@@ -134,65 +111,69 @@ const ecs = new MynvEcsStack(app, `${pjPrefix}-ECS`, {
   crossRegionReferences: true,
 });
 
+const cloudfront = new CloudfrontStack(app, `${pjPrefix}-Cloudfront`, {
+  pjPrefix: pjPrefix,
+  webAcl: waf.webAcl,
+  CertificateIdentifier: config.CertificateIdentifier,
+  cloudFrontParam: config.CloudFrontParam,
+  appAlbs: [ecs.app.frontAlb.appAlb],
+  env: getProcEnv(),
+  crossRegionReferences: true,
+});
+
 // Aurora
-const dbCluster = new BLEADbAuroraPgStack(app, `${pjPrefix}-DBAuroraPg`, {
-  myVpc: prodVpc.myVpc,
+const dbCluster = new DbAuroraStack(app, `${pjPrefix}-DBAurora`, {
+  myVpc: shareResources.myVpc,
   dbAllocatedStorage: 25,
-  vpcSubnets: prodVpc.myVpc.selectSubnets({
+  vpcSubnets: shareResources.myVpc.selectSubnets({
     subnetGroupName: 'Protected',
   }),
-  appServerSecurityGroup: ecs.backEcsApps[0].securityGroupForFargate,
-  // appServerSecurityGroup: ecs.backEcsAppsBg[0].securityGroupForFargate,
-  bastionSecurityGroup: ecs.bastionApp.securityGroup,
-  appKey: appKey.kmsKey,
-  alarmTopic: monitorAlarm.alarmTopic,
+  appServerSecurityGroup: ecs.app.backEcsApps[0].securityGroupForFargate,
+  // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
+  bastionSecurityGroup: ecs.app.bastionApp.securityGroup,
+  appKey: shareResources.appKey,
+  alarmTopic: shareResources.alarmTopic,
   ...config.AuroraParam,
   env: getProcEnv(),
 });
 
-// Monitoring
-// const appCanary = new BLEACanaryStack(app, `${pjPrefix}-ECSAppCanary`, {
-//   alarmTopic: monitorAlarm.alarmTopic,
-//   appEndpoint: front.cfDistribution.domainName,
-//   env: getProcEnv(),
-// });
-
-new BLEADashboardStack(app, `${pjPrefix}-ECSAppDashboard`, {
+new MonitorStack(app, `${pjPrefix}-MonitorStack`, {
+  pjPrefix: `${pjPrefix}`,
+  alarmTopic: shareResources.alarmTopic,
+  appEndpoint: 'https://demo-endpoint.com',
   dashboardName: `${pjPrefix}-ECSApp`,
-  webFront: ecs.cloudFront,
-  alb: ecs.frontAlb,
-  ecsClusterName: ecs.ecsCommon.ecsCluster.clusterName,
-  ecsAlbServiceNames: ecs.frontEcsApps.map((ecsAlbApp) => ecsAlbApp.ecsServiceName),
-  ecsInternalServiceNames: ecs.backEcsApps.map((ecsInternalApp) => ecsInternalApp.ecsServiceName),
-  appTargetGroupNames: ecs.frontAlb.AlbTgs.map((AlbTg) => AlbTg.lbForAppTargetGroup.targetGroupName),
+  cfDistributionId: cloudfront.cfDistributionId,
+  albFullName: ecs.app.frontAlb.appAlb.loadBalancerFullName,
+  appTargetGroupNames: ecs.app.frontAlb.AlbTgs.map((AlbTg) => AlbTg.lbForAppTargetGroup.targetGroupName),
+  albTgUnHealthyHostCountAlarms: ecs.app.frontAlb.AlbTgs.map((AlbTg) => AlbTg.albTgUnHealthyHostCountAlarm),
+  ecsClusterName: ecs.app.ecsCommon.ecsCluster.clusterName,
+  ecsAlbServiceNames: ecs.app.frontEcsApps.map((ecsAlbApp) => ecsAlbApp.ecsServiceName),
+  ecsInternalServiceNames: ecs.app.backEcsApps.map((ecsInternalApp) => ecsInternalApp.ecsServiceName),
   dbClusterName: dbCluster.dbClusterName,
-  albTgUnHealthyHostCountAlarms: ecs.frontAlb.AlbTgs.map((AlbTg) => AlbTg.albTgUnHealthyHostCountAlarm),
   // AutoScaleはCDK外で管理のため、固定値を修正要で設定
-  //ecsScaleOnRequestCount: ecsApp.ecsScaleOnRequestCount,
   ecsScaleOnRequestCount: 50,
-  //ecsTargetUtilizationPercent: ecsApp.ecsTargetUtilizationPercent,
   ecsTargetUtilizationPercent: 10000,
   // canaryDurationAlarm: appCanary.canaryDurationAlarm,
   // canaryFailedAlarm: appCanary.canaryFailedAlarm,
   env: getProcEnv(),
 });
 
-new MynvOpenSearchStack(app, `${pjPrefix}-OpenSearch`, {
-  myVpc: prodVpc.myVpc,
-  appServerSecurityGroup: ecs.backEcsApps[0].securityGroupForFargate,
-  // appServerSecurityGroup: ecs.backEcsAppsBg[0].securityGroupForFargate,
-  bastionSecurityGroup: ecs.bastionApp.securityGroup,
+new OpenSearchStack(app, `${pjPrefix}-OpenSearch`, {
+  myVpc: shareResources.myVpc,
+  appServerSecurityGroup: ecs.app.backEcsApps[0].securityGroupForFargate,
+  // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
+  bastionSecurityGroup: ecs.app.bastionApp.securityGroup,
   ...config.OpensearchParam,
   env: getProcEnv(),
 });
 
 new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
-  myVpc: prodVpc.myVpc,
-  appKey: appKey.kmsKey,
-  alarmTopic: monitorAlarm.alarmTopic,
-  appServerSecurityGroup: ecs.backEcsApps[0].securityGroupForFargate,
-  // appServerSecurityGroup: ecs.backEcsAppsBg[0].securityGroupForFargate,
-  bastionSecurityGroup: ecs.bastionApp.securityGroup,
+  myVpc: shareResources.myVpc,
+  appKey: shareResources.appKey,
+  alarmTopic: shareResources.alarmTopic,
+  appServerSecurityGroup: ecs.app.backEcsApps[0].securityGroupForFargate,
+  // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
+  bastionSecurityGroup: ecs.app.bastionApp.securityGroup,
   ...config.ElastiCacheRedisParam,
   env: getProcEnv(),
 });
@@ -201,14 +182,14 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
 // 環境別パラメータファイル内でbackupDisasterRecoveryをtrueに設定するとDR用リージョンにクロスリージョンコピーされる。
 // falseであればDRリージョンにクロスリージョンレプリケーションされず東京リージョンのみのデプロイとなる。
 
-// const backupVault = new MynvBackupVaultStack(app, `${pjPrefix}-BackupVault`, {
+// const backupVault = new BackupVaultStack(app, `${pjPrefix}-BackupVault`, {
 //   env: getProcEnv(),
-//   appKey: appKey.kmsKey,
+//   appKey: shareResources.appKey,
 // });
 
 // if (config.BackupParam.backupDisasterRecovery) {
 //   // DR用リージョンにKMSキーを作成
-//   const appKeyDRRegion = new BLEAKeyAppStack(app, `${pjPrefix}-AppKeyDRRegion`, {
+//   const appKeyDRRegion = new KeyAppStack(app, `${pjPrefix}-AppKeyDRRegion`, {
 //     env: {
 //       account: getProcEnv().account,
 //       region: config.DRRegionParam.region,
@@ -217,7 +198,7 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
 //   });
 
 //   // DR用リージョンにバックアップボールトを作成
-//   const backupVaultDRRegion = new MynvBackupVaultStack(app, `${pjPrefix}-BackupVaultDRRegion`, {
+//   const backupVaultDRRegion = new BackupVaultStack(app, `${pjPrefix}-BackupVaultDRRegion`, {
 //     env: {
 //       account: getProcEnv().account,
 //       region: config.DRRegionParam.region,
@@ -227,7 +208,7 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
 //   });
 
 //   // DR用リージョンと東京リージョンに作成されたバックアップボールトを指定して、バックアッププランを作成
-//   new MynvBackupPlanStack(app, `${pjPrefix}-BackupPlan`, {
+//   new BackupPlanStack(app, `${pjPrefix}-BackupPlan`, {
 //     env: getProcEnv(),
 //     vault: backupVault.vault,
 //     secondaryVault: backupVaultDRRegion.vault,
@@ -239,7 +220,7 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
 // } else {
 
 //   // 東京リージョンに作成されたバックアップボールトを指定して、バックアッププランを作成
-//   new MynvBackupPlanStack(app, `${pjPrefix}-BackupPlan`, {
+//   new BackupPlanStack(app, `${pjPrefix}-BackupPlan`, {
 //     env: getProcEnv(),
 //     vault: backupVault.vault,
 //     backupSchedule: config.BackupParam.backupSchedule,
@@ -248,27 +229,21 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
 // }
 
 // serverless使用の場合以下をコメントイン、OpenSearchStackをコメントアウト
-// new MynvOpenSearchServerlessStack(app,`${pjPrefix}-OpenSearchServerless`,{
-//   myVpc: prodVpc.myVpc,
+// new OpenSearchServerlessStack(app,`${pjPrefix}-OpenSearchServerless`,{
+//   myVpc: shareResources.myVpc,
 //   env: getProcEnv(),
 // })
 
 // StepFunctionsを使用したバッチ処理を使用する場合はコメントインする
 
-// new MynvStepFunctionsSampleStack(app, `${pjPrefix}-StepFunctions`, {
-//   myVpc: prodVpc.myVpc,
-//   ecsClusterName: ecs.ecsCommon.ecsCluster.clusterName,
-//   ecsTaskExecutionRole: ecs.ecsCommon.ecsTaskExecutionRole,
+// new StepFunctionsSampleStack(app, `${pjPrefix}-StepFunctions`, {
+//   myVpc: shareResources.myVpc,
+//   ecsClusterName: ecs.app.ecsCommon.ecsCluster.clusterName,
+//   ecsTaskExecutionRole: ecs.app.ecsCommon.ecsTaskExecutionRole,
 //   // 作成済みのECSタスク名を指定（事前に本CDK外で手動作成が必要）
 //   ecsTaskName: 'runtask-sample',
 //   env: getProcEnv(),
 // })
-
-// cognito使用の場合以下をコメントイン
-// new CognitoStack(app, '${pjPrefix}-CognitoStack', {
-//   domainPrefix: '${pjPrefix}',
-//   ...config.CognitoParam,
-// });
 
 // --------------------------------- Tagging  -------------------------------------
 

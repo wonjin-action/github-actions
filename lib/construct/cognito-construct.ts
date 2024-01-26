@@ -3,20 +3,20 @@ import { Construct } from 'constructs';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager';
 
-interface CognitoStackProps extends cdk.StackProps {
+interface CognitoProps extends cdk.StackProps {
   domainPrefix: string;
   urlForCallback: string[];
   urlForLogout: string[];
-  secretArn: string;
-  identityProvider: typeof cognito.UserPoolClientIdentityProvider.COGNITO;
+  secretArn?: string;
+  identityProvider?: typeof cognito.UserPoolClientIdentityProvider.COGNITO;
 }
 
-export class MynvCognitoStack extends cdk.Stack {
+export class Cognito extends Construct {
   readonly userPool: cognito.UserPool;
-  readonly props: CognitoStackProps;
+  readonly props: CognitoProps;
 
-  constructor(scope: Construct, id: string, props: CognitoStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: CognitoProps) {
+    super(scope, id);
 
     this.props = props;
 
@@ -38,7 +38,6 @@ export class MynvCognitoStack extends cdk.Stack {
         logoutUrls: this.props.urlForLogout,
         scopes: [cognito.OAuthScope.EMAIL, cognito.OAuthScope.OPENID, cognito.OAuthScope.PROFILE],
       },
-      supportedIdentityProviders: [this.props.identityProvider],
     });
 
     if (this.props.identityProvider === cognito.UserPoolClientIdentityProvider.GOOGLE) {
