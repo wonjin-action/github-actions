@@ -65,35 +65,51 @@ export class AlbConstruct extends Construct {
     this.appAlb = lbForApp;
 
     let lbForAppListener: elbv2.ApplicationListener;
+    let defaultListenerlistenedPort: number;
     if (hasValidAlbCert) {
+      defaultListenerlistenedPort = 443;
       lbForAppListener = lbForApp.addListener('app', {
-        port: 443,
+        port: defaultListenerlistenedPort,
         certificates: [
           {
             certificateArn: albCert.certificateArn,
           },
         ],
         sslPolicy: elbv2.SslPolicy.RECOMMENDED_TLS,
+        open: false,
       });
 
+      const redirectListenerListenedPort = 80;
       // (mynavi mod) create redirect listener.
       const redirectListener = lbForApp.addListener('redirect', {
-        port: 80,
+        port: redirectListenerListenedPort,
         defaultAction: elbv2.ListenerAction.redirect({
           port: '443',
           protocol: 'HTTPS',
           permanent: true,
         }),
+        open: false,
       });
       redirectListener.node.addDependency(lbForAppListener);
     } else {
+      defaultListenerlistenedPort = 80;
       lbForAppListener = lbForApp.addListener('app', {
         port: 80,
         protocol: elbv2.ApplicationProtocol.HTTP,
-        open: true,
+        open: false,
       });
     }
     this.appAlbListerner = lbForAppListener;
+
+    const cfManagedPrefixIpListId = 'pl-58a04531';
+    securityGroupForAlb.connections.allowFrom(
+      ec2.Peer.prefixList(cfManagedPrefixIpListId),
+      ec2.Port.tcp(defaultListenerlistenedPort),
+    );
+    securityGroupForAlb.connections.allowFrom(
+      ec2.Peer.ipv4('210.190.113.128/25'),
+      ec2.Port.tcp(defaultListenerlistenedPort),
+    );
 
     // Enable ALB Access Logging
     //

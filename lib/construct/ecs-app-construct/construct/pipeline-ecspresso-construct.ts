@@ -10,6 +10,8 @@ import { aws_elasticloadbalancingv2 as elbv2 } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { aws_logs as cwl } from 'aws-cdk-lib';
 import { aws_servicediscovery as sd } from 'aws-cdk-lib';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
 
 export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   prefix: string;
@@ -20,6 +22,7 @@ export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   securityGroup: ec2.SecurityGroup;
   vpc: ec2.Vpc;
   logGroup: cwl.LogGroup;
+  port: number;
   logGroupForServiceConnect?: cwl.LogGroup;
   ecsNameSpace?: sd.INamespace;
   executionRole: iam.Role;
@@ -31,18 +34,20 @@ export class PipelineEcspressoConstruct extends Construct {
     super(scope, id);
 
     //タスクロール,TargetGroupが指定されていない場合は、空文字をCodeBuildの環境変数として設定
-    const taskRoleArn = props.taskRole?.roleArn || '';
+    const taskRoleArn = props.taskRole?.roleArn || props.executionRole.roleArn;
     const targetGroupArn = props.targetGroup?.targetGroupArn || '';
     const nameSpaceArn = props.ecsNameSpace?.namespaceArn || '';
     const logGroupForServiceConnect = props.logGroupForServiceConnect?.logGroupName || '';
 
     const sourceBucket = new s3.Bucket(this, 'PipelineSourceBucket', {
       versioned: true,
+      eventBridgeEnabled: true,
     });
+    sourceBucket.grantRead(props.executionRole, '.env');
 
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
       environment: {
-        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_2,
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
       },
       environmentVariables: {
         ECS_CLUSTER: {
@@ -91,6 +96,12 @@ export class PipelineEcspressoConstruct extends Construct {
         NAMESPACE: {
           value: nameSpaceArn,
         },
+        ENVFILE_BUCKET_ARN: {
+          value: sourceBucket.arnForObjects('.env'),
+        },
+        APP_PORT: {
+          value: props.port,
+        },
       },
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
@@ -109,7 +120,7 @@ export class PipelineEcspressoConstruct extends Construct {
           build: {
             commands: [
               //https://github.com/kayac/ecspresso
-              'export IMAGE1_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`',
+              'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`',
               'ls -lR',
               'ecspresso deploy --config ecspresso.yml',
               './autoscale.sh',
@@ -135,6 +146,8 @@ export class PipelineEcspressoConstruct extends Construct {
           'application-autoscaling:PutScalingPolicy',
           'application-autoscaling:DeleteScalingPolicy',
           'servicediscovery:GetNamespace',
+          'iam:CreateServiceLinkedRole',
+          'sts:AssumeRole',
         ],
         resources: ['*'],
       }),
@@ -165,6 +178,7 @@ export class PipelineEcspressoConstruct extends Construct {
       bucket: sourceBucket,
       bucketKey: 'image.zip',
       output: sourceOutput,
+      trigger: actions.S3Trigger.NONE,
     });
 
     const deployAction = new actions.CodeBuildAction({
@@ -185,6 +199,25 @@ export class PipelineEcspressoConstruct extends Construct {
       actions: [deployAction],
     });
 
-    new cdk.CfnOutput(this, `${props.appName}SourceBucketName`, { value: sourceBucket.bucketName });
+    new events.Rule(this, 'PipelineTriggerEventRule', {
+      eventPattern: {
+        account: [cdk.Stack.of(this).account],
+        source: ['aws.s3'],
+        detailType: ['Object Created'],
+        detail: {
+          bucket: {
+            name: [sourceBucket.bucketName],
+          },
+          object: {
+            key: ['image.zip'],
+          },
+        },
+      },
+      targets: [new targets.CodePipeline(pipeline)],
+    });
+
+    cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
+      name: 'sourceBucket',
+    });
   }
 }

@@ -4,9 +4,9 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager';
 
 interface CognitoProps extends cdk.StackProps {
-  domainPrefix: string;
-  urlForCallback: string[];
-  urlForLogout: string[];
+  domainPrefix?: string;
+  urlForCallback?: string[];
+  urlForLogout?: string[];
   secretArn?: string;
   identityProvider?: typeof cognito.UserPoolClientIdentityProvider.COGNITO;
 }
@@ -21,28 +21,29 @@ export class Cognito extends Construct {
     this.props = props;
 
     // User Pool
-    this.userPool = new cognito.UserPool(this, 'CognitoUserPool', {
+    const userPool = new cognito.UserPool(this, 'CognitoUserPool', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+    this.userPool = userPool;
 
-    this.userPool.addDomain('UserPoolDomain', {
-      cognitoDomain: {
-        domainPrefix: this.props.domainPrefix,
-      },
-    });
+    // this.userPool.addDomain('UserPoolDomain', {
+    //   cognitoDomain: {
+    //     domainPrefix: this.props.domainPrefix ?? '',
+    //   },
+    // });
 
-    const userPoolClient = this.userPool.addClient('UserPoolClient', {
-      generateSecret: false,
-      oAuth: {
-        callbackUrls: this.props.urlForCallback,
-        logoutUrls: this.props.urlForLogout,
-        scopes: [cognito.OAuthScope.EMAIL, cognito.OAuthScope.OPENID, cognito.OAuthScope.PROFILE],
-      },
-    });
+    // const userPoolClient = this.userPool.addClient('UserPoolClient', {
+    //   generateSecret: false,
+    //   oAuth: {
+    //     callbackUrls: this.props.urlForCallback,
+    //     logoutUrls: this.props.urlForLogout,
+    //     scopes: [cognito.OAuthScope.EMAIL, cognito.OAuthScope.OPENID, cognito.OAuthScope.PROFILE],
+    //   },
+    // });
 
-    if (this.props.identityProvider === cognito.UserPoolClientIdentityProvider.GOOGLE) {
-      userPoolClient.node.addDependency(this.createIdentityProviderGoogle());
-    }
+    // if (this.props.identityProvider === cognito.UserPoolClientIdentityProvider.GOOGLE) {
+    //   userPoolClient.node.addDependency(this.createIdentityProviderGoogle());
+    // }
   }
 
   // クライアントIDとシークレットは事前にSecretsManagerを作っておく必要があります

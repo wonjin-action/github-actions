@@ -48,7 +48,7 @@ export class OpenSearchStack extends cdk.Stack {
     //     domainsg.addIngressRule(ec2.Peer.ipv4(x.ipv4CidrBlock), ec2.Port.tcp(443));
     //   });
 
-    const domain = new opensearch.Domain(this, cdk.Stack.of(this).stackName + 'OpenSearch', {
+    new opensearch.Domain(this, cdk.Stack.of(this).stackName + 'OpenSearch', {
       version: props.engineVersion,
       vpc: props.vpc,
       zoneAwareness: {

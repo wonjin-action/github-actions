@@ -25,8 +25,8 @@ EOS
 }
 
 function parse_arg() {
-  local -r env="$2"
-  if [[ "$#" -lt 1 ]] || ! (printf '%s\n' "${DEPLOY_ENVS[@]}" | grep -qx "$env"); then
+  local -r _env="$2"
+  if [[ "$#" -lt 1 ]] || ! (printf '%s\n' "${DEPLOY_ENVS[@]}" | grep -qx "$_env"); then
     usage
   fi
 }
@@ -44,7 +44,8 @@ function main() {
   else
     local -r _target="$3"
     local -r _approval=$([[ $_env == dev || $_env == stage ]] && echo "--require-approval never")
-    npx cdk "$_command" -c environment="$_env" -o cdk.out/"$_env" "$_approval" "$_target"
+    eval "$(echo "npx cdk $_command -c environment=$_env -o cdk.out/$_env $_approval $_target")"
+    # npx cdk "$_command" -c environment="$_env" -o cdk.out/"$_env" "$_approval" "$_target"
   fi
 }
 

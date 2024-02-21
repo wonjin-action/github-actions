@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as opensearch from 'aws-cdk-lib/aws-opensearchserverless';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
-import * as iam from 'aws-cdk-lib/aws-iam';
+// import * as iam from 'aws-cdk-lib/aws-iam';
 
 export interface OpenSearchServerlessStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;

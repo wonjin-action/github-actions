@@ -65,6 +65,7 @@ export class EcsAppConstruct extends Construct {
           logGroup: ecsApp.fargateLogGroup,
           ecsNameSpace: ecsCommon.ecsNameSpace,
           executionRole: ecsCommon.ecsTaskExecutionRole,
+          port: ecsApp.portNumber,
           // taskRole: props.taskRole,
         });
       });
@@ -99,6 +100,7 @@ export class EcsAppConstruct extends Construct {
           logGroupForServiceConnect: ecsApp.serviceConnectLogGroup,
           ecsNameSpace: ecsCommon.ecsNameSpace,
           executionRole: ecsCommon.ecsTaskExecutionRole,
+          port: ecsApp.portNumber,
           // taskRole: props.taskRole,
         });
       });

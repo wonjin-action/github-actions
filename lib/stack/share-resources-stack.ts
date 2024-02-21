@@ -19,9 +19,9 @@ export interface ShareResourcesStackProps extends cdk.StackProps {
     workspaceId: string;
   };
   cognitoProps?: {
-    domainPrefix: string;
-    urlForCallback: string[];
-    urlForLogout: string[];
+    domainPrefix?: string;
+    urlForCallback?: string[];
+    urlForLogout?: string[];
   };
 }
 

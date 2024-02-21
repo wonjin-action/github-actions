@@ -7,10 +7,10 @@ import * as events from 'aws-cdk-lib/aws-events';
 import { Duration } from 'aws-cdk-lib';
 
 export interface ICognitoParam {
-  urlForCallback: string[];
-  urlForLogout: string[];
-  secretArn: string;
-  identityProvider: typeof cognito.UserPoolClientIdentityProvider.COGNITO;
+  urlForCallback?: string[];
+  urlForLogout?: string[];
+  secretArn?: string;
+  identityProvider?: typeof cognito.UserPoolClientIdentityProvider.COGNITO;
 }
 
 export interface IWafParam {
@@ -22,9 +22,9 @@ export interface IWafParam {
   overrideAction_LinuxRuleSet: wafv2.CfnWebACL.OverrideActionProperty;
   overrideAction_SQLiRuleSet: wafv2.CfnWebACL.OverrideActionProperty;
   overrideAction_CSCRuleSet: wafv2.CfnWebACL.OverrideActionProperty;
-  ruleAction_IPsetRuleSet: wafv2.CfnWebACL.RuleActionProperty;
-  ruleAction_BasicRuleSet: wafv2.CfnWebACL.RuleActionProperty;
-  allowIPList: string[];
+  ruleAction_IPsetRuleSet?: wafv2.CfnWebACL.RuleActionProperty;
+  ruleAction_BasicRuleSet?: wafv2.CfnWebACL.RuleActionProperty;
+  allowIPList?: string[];
 }
 export interface IOidcParam {
   OrganizationName: string;

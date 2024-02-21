@@ -3,26 +3,20 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as events from 'aws-cdk-lib/aws-events';
 import { Duration } from 'aws-cdk-lib';
 import * as inf from './interface';
-import * as cognito from 'aws-cdk-lib/aws-cognito';
+// import * as cognito from 'aws-cdk-lib/aws-cognito';
 
-export const CognitoParam: inf.ICognitoParam = {
-  urlForCallback: ['http://xxx/auth/callback'],
-  urlForLogout: ['http://xxx/auth/logout'],
-  secretArn: 'arn:aws:secretsmanager:xxx',
-  identityProvider: cognito.UserPoolClientIdentityProvider.GOOGLE,
-};
+export const CognitoParam: inf.ICognitoParam = {};
 
 export const WafParam: inf.IWafParam = {
-  basicAuthUserName: 'admin',
-  basicAuthUserPass: 'pass',
+  basicAuthUserName: 'hinagiku',
+  basicAuthUserPass: 'X8tTjJN3',
   overrideAction_CommonRuleSet: { count: {} },
   overrideAction_KnownBadInputsRuleSet: { count: {} },
   overrideAction_AmazonIpReputationList: { count: {} },
   overrideAction_LinuxRuleSet: { count: {} },
   overrideAction_SQLiRuleSet: { count: {} },
   overrideAction_CSCRuleSet: { count: {} },
-  ruleAction_IPsetRuleSet: { block: {} },
-  ruleAction_BasicRuleSet: {
+  ruleAction_IPsetRuleSet: {
     block: {
       customResponse: {
         responseCode: 401,
@@ -39,8 +33,12 @@ export const WafParam: inf.IWafParam = {
 };
 
 export const OidcParam: inf.IOidcParam = {
-  OrganizationName: 'OrganizationName',
-  RepositoryNames: { WafRepositoryName: 'WafRepositoryName', InfraRepositoryName: 'InfraRepositoryName' },
+  OrganizationName: 'mynavi-group',
+  RepositoryNames: {
+    Waf: 'hinagiku-renewal',
+    Infra: 'csys-infra-aws-hinagiku-renewal',
+    App: 'hinagiku-renewal',
+  },
 };
 
 export const OpensearchParam: inf.IOpenSearchParam = {
@@ -137,7 +135,7 @@ export const AlbBgCertificateIdentifier: inf.ICertificateIdentifier = {
 export const EcsFrontTasks: inf.IEcsAlbParam = [
   {
     appName: 'EcsApp',
-    portNumber: 80,
+    portNumber: 3000,
   },
 ];
 

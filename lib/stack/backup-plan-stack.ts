@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as backup from 'aws-cdk-lib/aws-backup';
-import * as rds from 'aws-cdk-lib/aws-rds';
+// import * as rds from 'aws-cdk-lib/aws-rds';
 import * as events from 'aws-cdk-lib/aws-events';
 import { Duration } from 'aws-cdk-lib';
 

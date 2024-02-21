@@ -134,7 +134,7 @@ export class CloudFrontConstruct extends Construct {
             ttl: cdk.Duration.seconds(20),
           },
         ],
-        defaultRootObject: '/', // Need for SecurityHub Findings CloudFront.1 compliant
+        defaultRootObject: '', // Need for SecurityHub Findings CloudFront.1 compliant
 
         // Domain and SSL Certificate
         ...(sslFlag

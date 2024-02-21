@@ -97,6 +97,8 @@ export class EcsappConstruct extends Construct {
       })
       .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
 
-    new cdk.CfnOutput(this, 'EcrRepo', { value: repository.repositoryName });
+    cdk.Stack.of(this).exportValue(repository.repositoryName, {
+      name: `${this.appName}RepositoryName`,
+    });
   }
 }

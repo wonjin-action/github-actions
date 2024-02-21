@@ -2,11 +2,11 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { aws_wafv2 as wafv2 } from 'aws-cdk-lib';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import * as CryptoJS from 'crypto-js';
+import { SHA256 } from 'crypto-js';
+import { Bucket, BucketEncryption, BlockPublicAccess } from 'aws-cdk-lib/aws-s3';
+import { CfnLoggingConfiguration } from 'aws-cdk-lib/aws-wafv2';
 
 export interface WafStackProps extends cdk.StackProps {
-  basicAuthUserName: string;
-  basicAuthUserPass: string;
   scope: string;
   overrideAction_CommonRuleSet: wafv2.CfnWebACL.OverrideActionProperty;
   overrideAction_KnownBadInputsRuleSet: wafv2.CfnWebACL.OverrideActionProperty;
@@ -14,9 +14,11 @@ export interface WafStackProps extends cdk.StackProps {
   overrideAction_LinuxRuleSet: wafv2.CfnWebACL.OverrideActionProperty;
   overrideAction_SQLiRuleSet: wafv2.CfnWebACL.OverrideActionProperty;
   overrideAction_CSCRuleSet: wafv2.CfnWebACL.OverrideActionProperty;
-  ruleAction_IPsetRuleSet: wafv2.CfnWebACL.RuleActionProperty;
-  ruleAction_BasicRuleSet: wafv2.CfnWebACL.RuleActionProperty;
-  allowIPList: string[];
+  ruleAction_IPsetRuleSet?: wafv2.CfnWebACL.RuleActionProperty;
+  ruleAction_BasicRuleSet?: wafv2.CfnWebACL.RuleActionProperty;
+  basicAuthUserName?: string;
+  basicAuthUserPass?: string;
+  allowIPList?: string[];
 }
 
 export class WafStack extends cdk.Stack {
@@ -25,37 +27,26 @@ export class WafStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: WafStackProps) {
     super(scope, id, props);
 
-    // Basic認証で用いるパスワード8文字を生成
-    const plaintext = props.basicAuthUserPass;
-    const hash = CryptoJS.SHA256(plaintext).toString();
-    const randomString = hash.slice(0, 8);
+    let basicAuthToken: string | undefined;
+    if (props.basicAuthUserName != undefined && props.basicAuthUserPass != undefined) {
+      const basicAuthSecret = this.initBasicAuthSecret({
+        basicAuthUserName: props.basicAuthUserName,
+        basicAuthPassword: props.basicAuthUserPass,
+      });
+      basicAuthToken = basicAuthSecret.token;
 
-    // Basic認証で用いるユーザー名をSSMパラメータストアに生成
-    const maintenanceUserName = new ssm.CfnParameter(this, 'maintenanceUserName', {
-      type: 'String',
-      name: 'maintenanceUserName',
-      value: props.basicAuthUserName,
-    });
+      new ssm.CfnParameter(this, 'maintenanceUserName', {
+        type: 'String',
+        name: 'maintenanceUserName',
+        value: basicAuthSecret.user,
+      });
 
-    // Basic認証で用いるパスワードをSSMパラメータストアに生成
-    const maintenanceUserPass = new ssm.CfnParameter(this, 'maintenanceUserPass', {
-      type: 'String',
-      name: 'maintenanceUserPass',
-      value: randomString,
-    });
-
-    // SSMパラメータストアのユーザー名とパスワードを用いてBasic認証文字列を生成
-    const authToken = maintenanceUserName.value + ':' + maintenanceUserPass.value;
-    const BASE64 = Buffer.from(authToken).toString('base64');
-    const authString = 'Basic ' + BASE64;
-
-    // IPsetルールを作成
-    const IPSetRule = new wafv2.CfnIPSet(this, 'IPset', {
-      name: 'IPset',
-      ipAddressVersion: 'IPV4',
-      scope: props.scope,
-      addresses: props.allowIPList,
-    });
+      new ssm.CfnParameter(this, 'maintenanceUserPass', {
+        type: 'String',
+        name: 'maintenanceUserPass',
+        value: basicAuthSecret.pass,
+      });
+    }
 
     // WebACLを作成
     const webAcl = new wafv2.CfnWebACL(this, cdk.Stack.of(this).stackName + 'WebAcl', {
@@ -63,7 +54,7 @@ export class WafStack extends cdk.Stack {
       scope: props.scope,
       visibilityConfig: {
         cloudWatchMetricsEnabled: true,
-        metricName: 'BLEAWebAcl',
+        metricName: 'WebAcl',
         sampledRequestsEnabled: true,
       },
       rules: [
@@ -147,130 +138,120 @@ export class WafStack extends cdk.Stack {
             },
           },
         },
-        {
-          priority: 6,
-          action: props.ruleAction_IPsetRuleSet,
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'IPset',
-          },
-          name: 'IPset',
-          statement: {
-            notStatement: {
-              statement: {
-                ipSetReferenceStatement: {
-                  arn: IPSetRule.attrArn,
-                },
-              },
-            },
-          },
-        },
-        {
-          name: 'BasicAuth',
-          priority: 7,
-          statement: {
-            notStatement: {
-              statement: {
-                byteMatchStatement: {
-                  searchString: authString,
-                  fieldToMatch: {
-                    singleHeader: {
-                      name: 'authorization',
-                    },
-                  },
-                  textTransformations: [
-                    {
-                      priority: 0,
-                      type: 'NONE',
-                    },
-                  ],
-                  positionalConstraint: 'EXACTLY',
-                },
-              },
-            },
-          },
-          action: props.ruleAction_BasicRuleSet,
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: false,
-            metricName: 'BasicAuthRule',
-          },
-        },
-        // CyberSecurityCloud社のマネージドルールを適用する場合は下記コードをコメントインする。
-        // 当ルールのWCUが1000のため、他ルールと組み合わせる場合はWCUの限界値を超えないようにルールの組み合わせに考慮する必要がある。
-        // 例)AWSマネージドルールをすべてコメントアウトしてCyberSecurityCloud社のマネージドルールをコメントイン
-        // また事前にAWSマーケットプレイスからサブスクリプション購入する必要がある。
-        //  購入方法
-        // ・aws-marketplace:ViewSubscriptionsとaws-marketplace:Subscribeを許可しているポリシーを持つIAMユーザーにログイン、もしくはスイッチロールする
-        // ・AWSマーケットプレイス(https://aws.amazon.com/marketplace/pp/prodview-kyur2d2omnrlg?sr=0-1&ref_=beagle&applicationId=AWSMPContessa)にアクセス
-        // ・「View purchse options」ボタンをクリック
-        // ・「Subscribe」ボタンをクリック
-        //
-        //
-        // {
-        //   priority: 1,
-        //   overrideAction: props.overrideAction_CSCRuleSet,
-        //   visibilityConfig: {
-        //     sampledRequestsEnabled: true,
-        //     cloudWatchMetricsEnabled: true,
-        //     metricName: 'CyberSecurityCloud-HighSecurityOWASPSet-',
-        //   },
-        //   name: 'CyberSecurityCloud-HighSecurityOWASPSet-',
-        //   statement: {
-        //     managedRuleGroupStatement: {
-        //       vendorName: 'Cyber Security Cloud Inc.',
-        //       name: 'CyberSecurityCloud-HighSecurityOWASPSet-',
-        //     },
-        //   },
-        // },
-        //
+        ...(props.allowIPList != undefined
+          ? [
+              this.createIpRule({
+                scope: props.scope,
+                ipList: props.allowIPList,
+                ipRuleSetAction: props.ruleAction_IPsetRuleSet,
+                basicAuthToken: basicAuthToken,
+              }),
+            ]
+          : []),
       ],
     });
     this.webAcl = webAcl;
 
-    // // ------------------------------------------------------------------------
-    // // CloudFront Distrubution
-    // //
-    // const cfdistribution = new cloudfront.Distribution(this, 'Distribution', {
-    //   defaultBehavior: {
-    //     origin: new origins.LoadBalancerV2Origin(props.originAlb),
-    //     viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    //     allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-    //     cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-    //     originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
-    //   },
-    //   defaultRootObject: '/', // Need for SecurityHub Findings CloudFront.1 compliant
+    const wafLogBucket = new Bucket(this, 'WafLogBucket', {
+      bucketName: 'aws-waf-logs-hinagiku'.toLowerCase(),
+      encryption: BucketEncryption.S3_MANAGED,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      lifecycleRules: [
+        {
+          id: 'monthly-rotation',
+          expiration: cdk.Duration.days(30),
+          abortIncompleteMultipartUploadAfter: cdk.Duration.days(30),
+        },
+      ],
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+    new CfnLoggingConfiguration(this, 'WebAclLogging', {
+      logDestinationConfigs: [wafLogBucket.bucketArn],
+      resourceArn: webAcl.attrArn,
+    });
+  }
 
-    //   domainNames: [fqdn],
-    //   certificate: cloudfrontCert,
-    //   additionalBehaviors: {
-    //     '/static/*': {
-    //       origin: new origins.S3Origin(props.originS3),
-    //       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    //       cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-    //     },
-    //   },
-    //   enableLogging: true,
-    //   logBucket: props.logBucket,
-    //   logIncludesCookies: true,
-    //   logFilePrefix: 'CloudFrontAccessLogs/',
-    //   errorResponses: [
-    //     {
-    //       httpStatus: 403,
-    //       responseHttpStatus: 403,
-    //       responsePagePath: '/static/sorry.html',
-    //       ttl: cdk.Duration.seconds(20),
-    //     },
-    //   ],
-    //   webAclId: webAcl.attrArn,
-    // });
+  private initBasicAuthSecret(props: { basicAuthUserName: string; basicAuthPassword: string }) {
+    const passwordHash = SHA256(props.basicAuthPassword).toString().slice(0, 8);
 
-    // // Add A Record to Route 53
-    // new r53.ARecord(this, 'appRecord', {
-    //   recordName: props.hostName,
-    //   zone: hostedZone,
-    //   target: r53.RecordTarget.fromAlias(new r53targets.CloudFrontTarget(cfdistribution)),
-    // });
+    const authToken = `${props.basicAuthUserName}:${passwordHash}`;
+    const encodedAuthToken = Buffer.from(authToken).toString('base64');
+
+    return {
+      user: props.basicAuthUserName,
+      pass: passwordHash,
+      token: encodedAuthToken,
+    };
+  }
+
+  private createIpRule(props: {
+    scope: string;
+    ipList: string[];
+    ipRuleSetAction?: wafv2.CfnWebACL.RuleActionProperty;
+    basicAuthToken?: string;
+  }) {
+    const ipSet = new wafv2.CfnIPSet(this, 'IPset', {
+      name: 'IPset',
+      ipAddressVersion: 'IPV4',
+      scope: props.scope,
+      addresses: props.ipList,
+    });
+
+    // This statement is matched when source ip address is not in ipSet.
+    const ipRuleStatement: wafv2.CfnWebACL.StatementProperty = {
+      notStatement: {
+        statement: {
+          ipSetReferenceStatement: {
+            arn: ipSet.attrArn,
+          },
+        },
+      },
+    };
+    const statements: wafv2.CfnWebACL.StatementProperty[] = [ipRuleStatement];
+
+    if (props.basicAuthToken != undefined) {
+      // This statement is matched when authorization header is not `Basic ${encodedAuthToken}`.
+      const basicAuthStatement: wafv2.CfnWebACL.StatementProperty = {
+        notStatement: {
+          statement: {
+            byteMatchStatement: {
+              positionalConstraint: 'EXACTLY',
+              searchString: `Basic ${props.basicAuthToken}`,
+              fieldToMatch: {
+                singleHeader: {
+                  name: 'authorization',
+                },
+              },
+              textTransformations: [
+                {
+                  priority: 0,
+                  type: 'NONE',
+                },
+              ],
+            },
+          },
+        },
+      };
+      statements.push(basicAuthStatement);
+    }
+
+    const ipRule: wafv2.CfnWebACL.RuleProperty = {
+      priority: 6,
+      action: props.ipRuleSetAction,
+      visibilityConfig: {
+        sampledRequestsEnabled: true,
+        cloudWatchMetricsEnabled: true,
+        metricName: 'IPset',
+      },
+      name: 'IPset',
+      statement: {
+        andStatement: {
+          statements: statements,
+        },
+      },
+    };
+
+    return ipRule;
   }
 }

@@ -18,34 +18,44 @@ export class OidcStack extends cdk.Stack {
       clientIds: ['sts.amazonaws.com'],
     });
 
-    // WAF用ロール
-    new OidcIamRoleConstruct(this, 'WafRole', {
-      organizationName: props.organizationName,
-      repositoryName: props.repositoryNames.WafRepositoryName,
-      openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
-      statement: [
-        {
-          actions: ['wafv2:ListWebACLs', 'wafv2:GetWebACL', 'wafv2:UpdateWebACL'],
-          resources: ['*'],
-        },
-      ],
-    });
-    // InfraResources用ロール
-    new OidcIamRoleConstruct(this, 'InfraResourcesRole', {
-      organizationName: props.organizationName,
-      repositoryName: props.repositoryNames.InfraRepositoryName,
-      openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
-      statement: [
-        {
-          actions: ['cloudformation:DescribeStacks', 's3:PutObject'],
-          resources: ['*'],
-        },
-      ],
-    });
+    // // WAF用ロール
+    // new OidcIamRoleConstruct(this, 'WafRole', {
+    //   organizationName: props.organizationName,
+    //   repositoryName: props.repositoryNames.Waf,
+    //   openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
+    //   statement: [
+    //     {
+    //       actions: ['wafv2:ListWebACLs', 'wafv2:GetWebACL', 'wafv2:UpdateWebACL'],
+    //       resources: ['*'],
+    //     },
+    //   ],
+    // });
+    // // InfraResources用ロール
+    // new OidcIamRoleConstruct(this, 'InfraResourcesRole', {
+    //   organizationName: props.organizationName,
+    //   repositoryName: props.repositoryNames.Infra,
+    //   openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
+    //   statement: [
+    //     {
+    //       actions: ['cloudformation:DescribeStacks', 's3:PutObject'],
+    //       resources: ['*'],
+    //     },
+    //   ],
+    // });
+    const ecrActions = [
+      'ecr:GetDownloadUrlForLayer',
+      'ecr:BatchGetImage',
+      'ecr:PutImageTagMutability',
+      'ecr:UploadLayerPart',
+      'ecr:InitiateLayerUpload',
+      'ecr:CompleteLayerUpload',
+      'ecr:BatchCheckLayerAvailability',
+      'ecr:PutImage',
+    ];
     new OidcIamRoleConstruct(this, 'AppRole', {
-      name: `role-for-${props.repositoryNames.AppRepository}-repo`,
+      name: `role-for-${props.repositoryNames.App}-repo`,
       organizationName: props.organizationName,
-      repositoryName: props.repositoryNames.AppRepository,
+      repositoryName: props.repositoryNames.App,
       openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
       statement: [
         {
@@ -54,14 +64,7 @@ export class OidcStack extends cdk.Stack {
             'cloudformation:DescribeStacks',
             'sts:GetCallerIdentity',
             's3:PutObject',
-            'ecr:GetDownloadUrlForLayer',
-            'ecr:BatchGetImage',
-            'ecr:PutImageTagMutability',
-            'ecr:UploadLayerPart',
-            'ecr:InitiateLayerUpload',
-            'ecr:CompleteLayerUpload',
-            'ecr:BatchCheckLayerAvailability',
-            'ecr:PutImage',
+            ...ecrActions,
           ],
           resources: ['*'],
         },
