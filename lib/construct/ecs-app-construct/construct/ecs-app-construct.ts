@@ -1,3 +1,6 @@
+// ecs 서비스와 작업 정의를 설정한다.
+// 프론트 엔드 및 백엔드 작업에 대한 각각의 ecs 서비스가 이 클래스를 통해 생성된다.
+
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { aws_ec2 as ec2 } from 'aws-cdk-lib';

@@ -1,3 +1,6 @@
+// 코드 파이프 라인과 코드 빌드 프로젝트를 설정한다.
+// 이것은 소스에서 부터 빌드, 배포 단계까지의 파이프 라인을 구성한다.
+
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
@@ -41,10 +44,11 @@ export class PipelineEcspressoConstruct extends Construct {
 
     const sourceBucket = new s3.Bucket(this, 'PipelineSourceBucket', {
       versioned: true,
-      eventBridgeEnabled: true,
+      eventBridgeEnabled: true, // 이벤트 브릿지가 이벤트를 발생시킬 수 있도록 한다.
     });
     sourceBucket.grantRead(props.executionRole, '.env');
 
+    //  aws 코드 빌드 프로젝트가 생성되며, 이는 도커 이미지를 사용하여 ,ecs 서비스를 배포하는 빌드 작업을 정의한다.
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
@@ -118,12 +122,13 @@ export class PipelineEcspressoConstruct extends Construct {
             ],
           },
           build: {
+            //빌드 단계
             commands: [
               //https://github.com/kayac/ecspresso
-              'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`',
-              'ls -lR',
-              'ecspresso deploy --config ecspresso.yml',
-              './autoscale.sh',
+              'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`', // imagedefinitions.json에서 도커 이미지 url를 읽어 환경 변수 IMAGE_NAME에 할당한다.
+              'ls -lR', // 현재 작업 디렉터리와  그 하위의 모든 파일 및 디렉토리 목록을 출력한다.
+              'ecspresso deploy --config ecspresso.yml', // ecspresso.yml 설정 파일에 따라 ecs 서비스를 배포한다. ecspresso.yml은 ecs 서비스의 구성을 정의하는 파일이다.
+              './autoscale.sh', // ecs 서비스의 오토스케일링 설정을 조정한다. 이 스크립트는 aws 어플리케이션 오토 스케일링 설정을 구성하여, 트래픽이나 사용량에 따라 서비스의 인스턴스 수를 자동으로 조절한다.
             ],
           },
         },
@@ -173,9 +178,10 @@ export class PipelineEcspressoConstruct extends Construct {
 
     const sourceOutput = new codepipeline.Artifact();
 
+    // 코드 파이프 라인 설정
     const sourceAction = new actions.S3SourceAction({
-      actionName: 'SourceBucket',
-      bucket: sourceBucket,
+      actionName: 'SourceBucket', // 파이프 라인 내에서 이 액션을 식별하는데 사용
+      bucket: sourceBucket, // 소스 파일을 포함하고 있는 s3 버킷의 참조
       bucketKey: 'image.zip',
       output: sourceOutput,
       trigger: actions.S3Trigger.NONE,
@@ -199,6 +205,9 @@ export class PipelineEcspressoConstruct extends Construct {
       actions: [deployAction],
     });
 
+    // 이벤트 브릿지를 통해서 코드 파이프 라인 트리거 설정
+    // s3 버킷에 새로운 객체가 생성될 때 이벤트를 발생시킨다.
+    // 즉, image.zip 파일이 업로드 될 때 마다 파이프 라인이 실행된다.
     new events.Rule(this, 'PipelineTriggerEventRule', {
       eventPattern: {
         account: [cdk.Stack.of(this).account],
