@@ -120,6 +120,9 @@ export class EcsAppConstruct extends Construct {
         ecsTaskExecutionRole: ecsCommon.ecsTaskExecutionRole,
       });
       this.bastionApp = bastionApp;
+    } else {
+      // 베스천 호스트가 생성되지 않았으므로, bastionApp은 초기화되지 않음
+      console.log('Bastion ECS tasks are not enabled.');
     }
   }
 }

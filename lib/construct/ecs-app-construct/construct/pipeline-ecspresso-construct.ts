@@ -42,7 +42,7 @@ export class PipelineEcspressoConstruct extends Construct {
     const nameSpaceArn = props.ecsNameSpace?.namespaceArn || '';
     const logGroupForServiceConnect = props.logGroupForServiceConnect?.logGroupName || '';
 
-    const sourceBucket = new s3.Bucket(this, 'PipelineSourceBucket', {
+    const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
       versioned: true,
       eventBridgeEnabled: true, // 이벤트 브릿지가 이벤트를 발생시킬 수 있도록 한다.
     });
@@ -226,7 +226,11 @@ export class PipelineEcspressoConstruct extends Construct {
     });
 
     cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-      name: 'sourceBucket',
+      // 밑에 이름은 클라우드 포메이션 출력에서 이 값을 찾기 위해 사용하는 이름이다.
+      // 이 이름을 통해 해당 값을 aws 콘솔에서 확인하거나, 다른 리소스에서 참조할 수 있다.
+      // 밑에처럼 동적으로 설정하지 않으면, cdk.Stack.of(this).exportValue(sourceBucket.bucketName 메소드를 사용하여,
+      // ('sourceBucket')으로 여러 번의 Export를 시도하기 때문
+      name: `${props.prefix}-${props.appName}-SourceBucketName`,
     });
   }
 }
