@@ -19,6 +19,7 @@ export interface WafStackProps extends cdk.StackProps {
   basicAuthUserName?: string;
   basicAuthUserPass?: string;
   allowIPList?: string[];
+  pjPrefix: string;
 }
 
 export class WafStack extends cdk.Stack {
