@@ -153,7 +153,7 @@ export class WafStack extends cdk.Stack {
     this.webAcl = webAcl;
 
     const wafLogBucket = new Bucket(this, 'WafLogBucket', {
-      bucketName: 'aws-waf-logs-hinagiku'.toLowerCase(),
+      bucketName: 'aws-waf-logs-hinagiku-dev'.toLowerCase(),
       encryption: BucketEncryption.S3_MANAGED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       lifecycleRules: [

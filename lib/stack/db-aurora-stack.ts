@@ -77,60 +77,54 @@ export class DbAuroraStack extends cdk.Stack {
       : {
           enablePerformanceInsights: props.enablePerformanceInsights,
         };
-
     // Create RDS MySQL Instance
-
-    // aurora provisoning mode //
-
-    // const cluster = new rds.DatabaseCluster(this, 'Aurora', {
-    //   // backtrackWindow: cdk.Duration.days(1),//it can be set only for MySQL
-    //   engine,
-    //   parameterGroup: parameterGroupForCluster,
-    //   credentials: rds.Credentials.fromGeneratedSecret(props.dbUser),
-    //   serverlessV2MaxCapacity: props.auroraMaxAcu,
-    //   serverlessV2MinCapacity: props.auroraMinAcu,
-    //   vpcSubnets: props.vpcSubnets,
-    //   vpc: props.vpc,
-    //   writer: ClusterInstance.provisioned('writer', {
-    //     instanceType: props.instanceTypeWriter,
-    //     parameterGroup: parameterGroupForInstance,
-    //     //最新版のCAを明示的に指定
-    //     caCertificate: rds.CaCertificate.of('rds-ca-rsa4096-g1'),
-    //     ...performanceInsightsConfigure,
-    //   }),
-    //   readers: [
-    //     ClusterInstance.provisioned('reader1', {
-    //       instanceType: props.instanceTypeReader,
-    //       // scaleWithWriterはServerless V2を選択時に設定可能なパラメータである
-    //       // 下記ドキュメント(https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_rds.ServerlessV2ClusterInstanceProps.html#scalewithwriter)を参考に要件に応じて設定
-    //       // true: The serverless v2 reader will scale to match the writer instance (provisioned or serverless)
-    //       // false: The serverless v2 reader will scale with the read workfload on the instance
-    //       // scaleWithWriter: true,
-    //       parameterGroup: parameterGroupForInstance,
-    //       //最新版のCAを明示的に指定
-    //       caCertificate: rds.CaCertificate.of('rds-ca-rsa4096-g1'),
-    //       ...performanceInsightsConfigure,
-    //     }),
-    //   ],
-    //   removalPolicy: cdk.RemovalPolicy.SNAPSHOT,
-    //   defaultDatabaseName: props.dbName,
-    //   storageEncrypted: true,
-    //   storageEncryptionKey: props.appKey,
-    //   // cloudwatchLogsExports: ['error', 'general', 'slowquery', 'audit'], // For Aurora MySQL
-    //   cloudwatchLogsExports: ['postgresql'], // For Aurora PostgreSQL
-    //   cloudwatchLogsRetention: logs.RetentionDays.THREE_MONTHS,
-    // });
-
-    const cluster = new rds.ServerlessCluster(this, 'AuroraServerless', {
-      engine: engine,
-      vpc: props.vpc,
-
-      scaling: {
-        minCapacity: rds.AuroraCapacityUnit.ACU_2,
-        maxCapacity: rds.AuroraCapacityUnit.ACU_16,
-      },
+    const cluster = new rds.DatabaseCluster(this, 'Aurora', {
+      // backtrackWindow: cdk.Duration.days(1),//it can be set only for MySQL
+      engine,
       parameterGroup: parameterGroupForCluster,
+      credentials: rds.Credentials.fromGeneratedSecret(props.dbUser),
+      serverlessV2MaxCapacity: props.auroraMaxAcu,
+      serverlessV2MinCapacity: props.auroraMinAcu,
+      vpcSubnets: props.vpcSubnets,
+      vpc: props.vpc,
+      writer: ClusterInstance.serverlessV2('writer', {
+        parameterGroup: parameterGroupForInstance,
+        //最新版のCAを明示的に指定
+        caCertificate: rds.CaCertificate.of('rds-ca-rsa4096-g1'),
+        ...performanceInsightsConfigure,
+      }),
+      readers: [
+        ClusterInstance.serverlessV2('reader1', {
+          // scaleWithWriterはServerless V2を選択時に設定可能なパラメータである
+          // 下記ドキュメント(https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_rds.ServerlessV2ClusterInstanceProps.html#scalewithwriter)を参考に要件に応じて設定
+          // true: The serverless v2 reader will scale to match the writer instance (provisioned or serverless)
+          // false: The serverless v2 reader will scale with the read workfload on the instance
+          // scaleWithWriter: true,
+          parameterGroup: parameterGroupForInstance,
+          //最新版のCAを明示的に指定
+          caCertificate: rds.CaCertificate.of('rds-ca-rsa4096-g1'),
+          ...performanceInsightsConfigure,
+        }),
+      ],
+      removalPolicy: cdk.RemovalPolicy.SNAPSHOT,
+      defaultDatabaseName: props.dbName,
+      storageEncrypted: true,
+      storageEncryptionKey: props.appKey,
+      // cloudwatchLogsExports: ['error', 'general', 'slowquery', 'audit'], // For Aurora MySQL
+      cloudwatchLogsExports: ['postgresql'], // For Aurora PostgreSQL
+      cloudwatchLogsRetention: logs.RetentionDays.THREE_MONTHS,
     });
+
+    // const cluster = new rds.ServerlessCluster(this, 'AuroraServerless', {
+    //   engine: engine,
+    //   vpc: props.vpc,
+
+    //   scaling: {
+    //     minCapacity: rds.AuroraCapacityUnit.ACU_2,
+    //     maxCapacity: rds.AuroraCapacityUnit.ACU_16,
+    //   },
+    //   parameterGroup: parameterGroupForCluster,
+    // });
 
     cluster.connections.allowDefaultPortFrom(props.appServerSecurityGroup);
     // For Bastion Container
