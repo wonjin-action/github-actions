@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-// import { DbAuroraStack } from '../lib/stack/db-aurora-stack';
+import { DbAuroraStack } from '../lib/stack/db-aurora-stack';
 import { WafStack } from '../lib/stack/waf-stack';
 // import { ElastiCacheRedisStack } from '../lib/stack/elasticache-redis-stack';
 import * as fs from 'fs';
@@ -91,10 +91,10 @@ const waf = new WafStack(app, `${pjPrefix}-Waf`, {
   ...config.WafParam,
 });
 
-new OidcStack(app, `${pjPrefix}-Oidc`, {
-  organizationName: config.OidcParam.OrganizationName,
-  repositoryNames: config.OidcParam.RepositoryNames,
-});
+// new OidcStack(app, `${pjPrefix}-Oidc`, {
+//   organizationName: config.OidcParam.OrganizationName,
+//   repositoryNames: config.OidcParam.RepositoryNames,
+// });
 
 const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   vpc: shareResources.vpc,
@@ -103,7 +103,7 @@ const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   prefix: pjPrefix,
   albCertificateIdentifier: config.AlbCertificateIdentifier,
   ecsFrontTasks: config.EcsFrontTasks,
-  // ecsBackTasks: config.EcsBackTasks,
+  ecsBackTasks: config.EcsBackTasks,
   env: deployEnv,
   crossRegionReferences: true,
   ecsBastionTasks: false,
@@ -120,20 +120,20 @@ new CloudfrontStack(app, `${pjPrefix}-CloudFront`, {
 });
 
 // Aurora
-// const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {
-//   vpc: shareResources.vpc,
-//   dbAllocatedStorage: 25,
-//   vpcSubnets: shareResources.vpc.selectSubnets({
-//     subnetGroupName: 'Protected',
-//   }),
-//   appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
-//   // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
-//   bastionSecurityGroup: webApp.ecs.bastionApp.securityGroup,
-//   appKey: shareResources.appKey,
-//   alarmTopic: shareResources.alarmTopic,
-//   ...config.AuroraParam,
-//   env: deployEnv,
-// });
+const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {
+  vpc: shareResources.vpc,
+  dbAllocatedStorage: 25,
+  vpcSubnets: shareResources.vpc.selectSubnets({
+    subnetGroupName: 'Protected',
+  }),
+  appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
+  // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
+  // bastionSecurityGroup: webApp.ecs.bastionApp.securityGroup,
+  appKey: shareResources.appKey,
+  alarmTopic: shareResources.alarmTopic,
+  ...config.AuroraParam,
+  env: deployEnv,
+});
 
 // new MonitorStack(app, `${pjPrefix}-MonitorStack`, {
 //   pjPrefix: `${pjPrefix}`,

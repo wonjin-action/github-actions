@@ -36,7 +36,6 @@ export class EcsAppConstruct extends Construct {
       prefix: props.prefix,
     });
     this.ecsCommon = ecsCommon;
-
     if (props.ecsFrontTasks) {
       const frontEcsApps = props.ecsFrontTasks.map((app) => {
         return new EcsappConstruct(this, `${props.prefix}-${app.appName}-FrontApp-Ecs-Resources`, {

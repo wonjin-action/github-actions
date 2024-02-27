@@ -39,7 +39,7 @@ export class PipelineEcspressoConstruct extends Construct {
     const nameSpaceArn = props.ecsNameSpace?.namespaceArn || '';
     const logGroupForServiceConnect = props.logGroupForServiceConnect?.logGroupName || '';
 
-    const sourceBucket = new s3.Bucket(this, 'PipelineSourceBucket', {
+    const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
       versioned: true,
       eventBridgeEnabled: true,
     });
@@ -120,10 +120,10 @@ export class PipelineEcspressoConstruct extends Construct {
           build: {
             commands: [
               //https://github.com/kayac/ecspresso
-              'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`',
-              'ls -lR',
-              'ecspresso deploy --config ecspresso.yml',
-              './autoscale.sh',
+              'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`', // In imaged definitions.json, the docker image url is read and assigned to the environment variable IMAGE_NAME
+              'ls -lR', // Outputs the current working directory and a list of all files and directories under it.
+              'ecspresso deploy --config ecspresso.yml', // Deploy the ecs service according to the 'ecspresso.yml' configuration file. ecspresso.yml is a file that defines the configuration of the ecs service.
+              './autoscale.sh', // Adjust the autoscaling settings of the es service. This script configures the aws application autoscaling settings, automatically adjusting the number of instances of the service based on traffic or usage.
             ],
           },
         },
@@ -173,6 +173,7 @@ export class PipelineEcspressoConstruct extends Construct {
 
     const sourceOutput = new codepipeline.Artifact();
 
+    // Code Pipeline Settings
     const sourceAction = new actions.S3SourceAction({
       actionName: 'SourceBucket',
       bucket: sourceBucket,
@@ -199,6 +200,9 @@ export class PipelineEcspressoConstruct extends Construct {
       actions: [deployAction],
     });
 
+    // Set code pipeline trigger via event bridge
+    // When a new object is created in the s3 bucket, it generates an event.
+    // That is, whenever the image.zip file is uploaded, the pipeline is executed.
     new events.Rule(this, 'PipelineTriggerEventRule', {
       eventPattern: {
         account: [cdk.Stack.of(this).account],
@@ -217,7 +221,8 @@ export class PipelineEcspressoConstruct extends Construct {
     });
 
     cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-      name: 'sourceBucket',
+      // Dynamically set the name for verification in cloud formation
+      name: `${props.prefix}-${props.appName}-SourceBucketName`,
     });
   }
 }

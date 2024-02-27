@@ -77,7 +77,6 @@ export class DbAuroraStack extends cdk.Stack {
       : {
           enablePerformanceInsights: props.enablePerformanceInsights,
         };
-
     // Create RDS MySQL Instance
     const cluster = new rds.DatabaseCluster(this, 'Aurora', {
       // backtrackWindow: cdk.Duration.days(1),//it can be set only for MySQL
@@ -88,16 +87,14 @@ export class DbAuroraStack extends cdk.Stack {
       serverlessV2MinCapacity: props.auroraMinAcu,
       vpcSubnets: props.vpcSubnets,
       vpc: props.vpc,
-      writer: ClusterInstance.provisioned('writer', {
-        instanceType: props.instanceTypeWriter,
+      writer: ClusterInstance.serverlessV2('writer', {
         parameterGroup: parameterGroupForInstance,
         //最新版のCAを明示的に指定
         caCertificate: rds.CaCertificate.of('rds-ca-rsa4096-g1'),
         ...performanceInsightsConfigure,
       }),
       readers: [
-        ClusterInstance.provisioned('reader1', {
-          instanceType: props.instanceTypeReader,
+        ClusterInstance.serverlessV2('reader1', {
           // scaleWithWriterはServerless V2を選択時に設定可能なパラメータである
           // 下記ドキュメント(https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_rds.ServerlessV2ClusterInstanceProps.html#scalewithwriter)を参考に要件に応じて設定
           // true: The serverless v2 reader will scale to match the writer instance (provisioned or serverless)
@@ -117,6 +114,7 @@ export class DbAuroraStack extends cdk.Stack {
       cloudwatchLogsExports: ['postgresql'], // For Aurora PostgreSQL
       cloudwatchLogsRetention: logs.RetentionDays.THREE_MONTHS,
     });
+
     cluster.connections.allowDefaultPortFrom(props.appServerSecurityGroup);
     // For Bastion Container
     if (props.bastionSecurityGroup) {
@@ -130,19 +128,19 @@ export class DbAuroraStack extends cdk.Stack {
     // ----------------------- Alarms for RDS -----------------------------
 
     // Aurora Cluster CPU Utilization
-    cluster
-      .metricCPUUtilization({
-        period: cdk.Duration.minutes(1),
-        statistic: cw.Stats.AVERAGE,
-      })
-      .createAlarm(this, 'AuroraCPUUtil', {
-        evaluationPeriods: 3,
-        datapointsToAlarm: 3,
-        threshold: 90,
-        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        actionsEnabled: true,
-      })
-      .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
+    // cluster
+    //   .metricCPUUtilization({
+    //     period: cdk.Duration.minutes(1),
+    //     statistic: cw.Stats.AVERAGE,
+    //   })
+    //   .createAlarm(this, 'AuroraCPUUtil', {
+    //     evaluationPeriods: 3,
+    //     datapointsToAlarm: 3,
+    //     threshold: 90,
+    //     comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+    //     actionsEnabled: true,
+    //   })
+    //   .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
 
     // Can't find instanceIdentifiers - implement later
     //
