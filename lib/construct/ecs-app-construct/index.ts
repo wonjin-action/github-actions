@@ -119,8 +119,6 @@ export class EcsAppConstruct extends Construct {
         ecsTaskExecutionRole: ecsCommon.ecsTaskExecutionRole,
       });
       this.bastionApp = bastionApp;
-    } else {
-      console.log('Bastion ECS tasks are not enabled.');
     }
   }
 }
