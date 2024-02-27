@@ -37,8 +37,6 @@ export class EcsAppConstruct extends Construct {
       prefix: props.prefix,
     });
     this.ecsCommon = ecsCommon;
-    console.log(`ECS Front Tasks: ${JSON.stringify(props.ecsFrontTasks, null, 2)}`);
-    console.log(`ECS Back Tasks: ${JSON.stringify(props.ecsBackTasks, null, 2)}`);
     if (props.ecsFrontTasks) {
       const frontEcsApps = props.ecsFrontTasks.map((app) => {
         return new EcsappConstruct(this, `${props.prefix}-${app.appName}-FrontApp-Ecs-Resources`, {
