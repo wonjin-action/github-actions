@@ -20,6 +20,7 @@ interface EcsAppConstructProps {
   ecsBastionTasks: boolean;
 }
 
+// 아래의 클래스를 인스턴스화 하면, 프론트와 백엔드 ecs가 만들어진다.
 export class EcsAppConstruct extends Construct {
   public readonly frontEcsApps: EcsappConstruct[];
   public readonly backEcsApps: EcsappConstruct[];
@@ -36,7 +37,8 @@ export class EcsAppConstruct extends Construct {
       prefix: props.prefix,
     });
     this.ecsCommon = ecsCommon;
-
+    console.log(`ECS Front Tasks: ${JSON.stringify(props.ecsFrontTasks, null, 2)}`);
+    console.log(`ECS Back Tasks: ${JSON.stringify(props.ecsBackTasks, null, 2)}`);
     if (props.ecsFrontTasks) {
       const frontEcsApps = props.ecsFrontTasks.map((app) => {
         return new EcsappConstruct(this, `${props.prefix}-${app.appName}-FrontApp-Ecs-Resources`, {
