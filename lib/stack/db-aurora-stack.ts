@@ -87,14 +87,14 @@ export class DbAuroraStack extends cdk.Stack {
       serverlessV2MinCapacity: props.auroraMinAcu,
       vpcSubnets: props.vpcSubnets,
       vpc: props.vpc,
-      writer: ClusterInstance.serverlessV2('writer', {
+      writer: ClusterInstance.provisioned('writer', {
         parameterGroup: parameterGroupForInstance,
         //最新版のCAを明示的に指定
         caCertificate: rds.CaCertificate.of('rds-ca-rsa4096-g1'),
         ...performanceInsightsConfigure,
       }),
       readers: [
-        ClusterInstance.serverlessV2('reader1', {
+        ClusterInstance.provisioned('reader1', {
           // scaleWithWriterはServerless V2を選択時に設定可能なパラメータである
           // 下記ドキュメント(https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_rds.ServerlessV2ClusterInstanceProps.html#scalewithwriter)を参考に要件に応じて設定
           // true: The serverless v2 reader will scale to match the writer instance (provisioned or serverless)
