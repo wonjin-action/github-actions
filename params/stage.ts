@@ -142,7 +142,7 @@ export const EcsFrontTasks: inf.IEcsAlbParam = [
 export const EcsBackTasks: inf.IEcsParam[] = [
   {
     appName: 'EcsBackend',
-    portNumber: 8080,
+    portNumber: 5000,
   },
 ];
 
