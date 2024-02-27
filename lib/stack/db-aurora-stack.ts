@@ -115,17 +115,6 @@ export class DbAuroraStack extends cdk.Stack {
       cloudwatchLogsRetention: logs.RetentionDays.THREE_MONTHS,
     });
 
-    // const cluster = new rds.ServerlessCluster(this, 'AuroraServerless', {
-    //   engine: engine,
-    //   vpc: props.vpc,
-
-    //   scaling: {
-    //     minCapacity: rds.AuroraCapacityUnit.ACU_2,
-    //     maxCapacity: rds.AuroraCapacityUnit.ACU_16,
-    //   },
-    //   parameterGroup: parameterGroupForCluster,
-    // });
-
     cluster.connections.allowDefaultPortFrom(props.appServerSecurityGroup);
     // For Bastion Container
     if (props.bastionSecurityGroup) {
