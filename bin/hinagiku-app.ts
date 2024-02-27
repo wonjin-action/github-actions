@@ -89,6 +89,7 @@ const waf = new WafStack(app, `${pjPrefix}-Waf`, {
   },
   crossRegionReferences: true,
   ...config.WafParam,
+  pjPrefix: pjPrefix,
 });
 
 new OidcStack(app, `${pjPrefix}-Oidc`, {

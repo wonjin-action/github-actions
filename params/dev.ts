@@ -143,12 +143,7 @@ export const AlbBgCertificateIdentifier: inf.ICertificateIdentifier = {
 export const EcsFrontTasks: inf.IEcsAlbParam = [
   {
     appName: 'EcsApp',
-    portNumber: 80,
-  },
-  {
-    appName: 'EcsApp2',
-    portNumber: 80,
-    path: '/path',
+    portNumber: 3000,
   },
 ];
 
@@ -177,11 +172,7 @@ export const EcsFrontBgTasks: inf.IEcsAlbParam = [
 export const EcsBackTasks: inf.IEcsParam[] = [
   {
     appName: 'EcsBackend',
-    portNumber: 8080,
-  },
-  {
-    appName: 'EcsBackend2',
-    portNumber: 8080,
+    portNumber: 5000,
   },
 ];
 
