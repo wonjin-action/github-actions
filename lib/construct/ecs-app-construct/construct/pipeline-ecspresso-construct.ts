@@ -1,6 +1,3 @@
-// 코드 파이프 라인과 코드 빌드 프로젝트를 설정한다.
-// 이것은 소스에서 부터 빌드, 배포 단계까지의 파이프 라인을 구성한다.
-
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
@@ -44,11 +41,10 @@ export class PipelineEcspressoConstruct extends Construct {
 
     const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
       versioned: true,
-      eventBridgeEnabled: true, // 이벤트 브릿지가 이벤트를 발생시킬 수 있도록 한다.
+      eventBridgeEnabled: true,
     });
     sourceBucket.grantRead(props.executionRole, '.env');
 
-    //  aws 코드 빌드 프로젝트가 생성되며, 이는 도커 이미지를 사용하여 ,ecs 서비스를 배포하는 빌드 작업을 정의한다.
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
@@ -122,13 +118,12 @@ export class PipelineEcspressoConstruct extends Construct {
             ],
           },
           build: {
-            //빌드 단계
             commands: [
               //https://github.com/kayac/ecspresso
-              'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`', // imagedefinitions.json에서 도커 이미지 url를 읽어 환경 변수 IMAGE_NAME에 할당한다.
-              'ls -lR', // 현재 작업 디렉터리와  그 하위의 모든 파일 및 디렉토리 목록을 출력한다.
-              'ecspresso deploy --config ecspresso.yml', // ecspresso.yml 설정 파일에 따라 ecs 서비스를 배포한다. ecspresso.yml은 ecs 서비스의 구성을 정의하는 파일이다.
-              './autoscale.sh', // ecs 서비스의 오토스케일링 설정을 조정한다. 이 스크립트는 aws 어플리케이션 오토 스케일링 설정을 구성하여, 트래픽이나 사용량에 따라 서비스의 인스턴스 수를 자동으로 조절한다.
+              'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`', // In imaged definitions.json, the docker image url is read and assigned to the environment variable IMAGE_NAME
+              'ls -lR', // Outputs the current working directory and a list of all files and directories under it.
+              'ecspresso deploy --config ecspresso.yml', // Deploy the ecs service according to the 'ecspresso.yml' configuration file. ecspresso.yml is a file that defines the configuration of the ecs service.
+              './autoscale.sh', // Adjust the autoscaling settings of the es service. This script configures the aws application autoscaling settings, automatically adjusting the number of instances of the service based on traffic or usage.
             ],
           },
         },
@@ -178,10 +173,10 @@ export class PipelineEcspressoConstruct extends Construct {
 
     const sourceOutput = new codepipeline.Artifact();
 
-    // 코드 파이프 라인 설정
+    // Code Pipeline Settings
     const sourceAction = new actions.S3SourceAction({
-      actionName: 'SourceBucket', // 파이프 라인 내에서 이 액션을 식별하는데 사용
-      bucket: sourceBucket, // 소스 파일을 포함하고 있는 s3 버킷의 참조
+      actionName: 'SourceBucket',
+      bucket: sourceBucket,
       bucketKey: 'image.zip',
       output: sourceOutput,
       trigger: actions.S3Trigger.NONE,
@@ -205,9 +200,9 @@ export class PipelineEcspressoConstruct extends Construct {
       actions: [deployAction],
     });
 
-    // 이벤트 브릿지를 통해서 코드 파이프 라인 트리거 설정
-    // s3 버킷에 새로운 객체가 생성될 때 이벤트를 발생시킨다.
-    // 즉, image.zip 파일이 업로드 될 때 마다 파이프 라인이 실행된다.
+    // Set code pipeline trigger via event bridge
+    // When a new object is created in the s3 bucket, it generates an event.
+    // That is, whenever the image.zip file is uploaded, the pipeline is executed.
     new events.Rule(this, 'PipelineTriggerEventRule', {
       eventPattern: {
         account: [cdk.Stack.of(this).account],
@@ -226,10 +221,7 @@ export class PipelineEcspressoConstruct extends Construct {
     });
 
     cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-      // 밑에 이름은 클라우드 포메이션 출력에서 이 값을 찾기 위해 사용하는 이름이다.
-      // 이 이름을 통해 해당 값을 aws 콘솔에서 확인하거나, 다른 리소스에서 참조할 수 있다.
-      // 밑에처럼 동적으로 설정하지 않으면, cdk.Stack.of(this).exportValue(sourceBucket.bucketName 메소드를 사용하여,
-      // ('sourceBucket')으로 여러 번의 Export를 시도하기 때문
+      // Dynamically set the name for verification in cloud formation
       name: `${props.prefix}-${props.appName}-SourceBucketName`,
     });
   }

@@ -20,7 +20,6 @@ interface EcsAppConstructProps {
   ecsBastionTasks: boolean;
 }
 
-// 아래의 클래스를 인스턴스화 하면, 프론트와 백엔드 ecs가 만들어진다.
 export class EcsAppConstruct extends Construct {
   public readonly frontEcsApps: EcsappConstruct[];
   public readonly backEcsApps: EcsappConstruct[];
@@ -121,7 +120,6 @@ export class EcsAppConstruct extends Construct {
       });
       this.bastionApp = bastionApp;
     } else {
-      // 베스천 호스트가 생성되지 않았으므로, bastionApp은 초기화되지 않음
       console.log('Bastion ECS tasks are not enabled.');
     }
   }
