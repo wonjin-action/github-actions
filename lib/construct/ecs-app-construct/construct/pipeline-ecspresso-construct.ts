@@ -220,9 +220,16 @@ export class PipelineEcspressoConstruct extends Construct {
       targets: [new targets.CodePipeline(pipeline)],
     });
 
-    cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-      // Dynamically set the name for verification in cloud formation
-      name: `${props.prefix}-${props.appName}-SourceBucketName`,
-    });
+    if (props.appName === 'EcsApp') {
+      cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
+        // Dynamically set the name for verification in cloud formation
+        name: 'sourceBucket',
+      });
+    } else {
+      cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
+        // Dynamically set the name for verification in cloud formation
+        name: `sourceBucket-${[props.prefix]}`,
+      });
+    }
   }
 }
