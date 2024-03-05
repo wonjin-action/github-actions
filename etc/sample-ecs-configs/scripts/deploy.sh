@@ -101,10 +101,12 @@ function push_image() {
 }
 
 function get_s3_bucket_name() {
+  local -r export_name="$1"
+
   echo "Setting Pipeline source S3 Bucket..."
   S3_BUCKET=$(aws cloudformation describe-stacks \
     --stack-name "$ECS_STACK_NAME" \
-    --query "Stacks[*].Outputs[?contains(not_null(ExportName, ''), 'sourceBucket')].OutputValue" \
+    --query "Stacks[*].Outputs[?contains(not_null(ExportName, ''), '$export_name')].OutputValue" \
     --output text)
   if [[ -z $S3_BUCKET ]]; then
       error "Could not get S3 Bucket name."
@@ -126,10 +128,11 @@ EOS
 }
 
 function upload_asset_to_s3() {
+  local -r config_path="$1"
   echo Deploying to S3 BUCKET...
   generate_imagedefinitions
 
-  local -r _config_dir="$SCRIPT_DIR/../config"
+  local -r _config_dir="$SCRIPT_DIR/../config/$config_path"
   zip -j image.zip \
     "$_config_dir/ecs-service-def.json" \
     "$_config_dir/ecs-task-def.json" \
@@ -151,6 +154,7 @@ function post_script() {
 function main() {
   local -r env="$1"
   local -r config_path="$2"
+  local -r export_name="$3"
   echo "Your environment is $env"
 
   . "$SCRIPT_DIR/../config/parameters/$env.conf"
@@ -158,19 +162,19 @@ function main() {
   generate_autoscale_script
   echo "$#"
 
-  if [[ "$#" -lt 5 ]]; then
-    local -r build_path="$3"
-    local -r dockerfile_path="$4"
+  if [[ "$#" -lt 6 ]]; then
+    local -r build_path="$4"
+    local -r dockerfile_path="$5"
     get_account_id
     tag="$(generate_image_tag)"
     IMAGE_URI="$(get_image_uri EcsAppRepositoryName "$tag")"
     login_ecr
-    push_image "aaa" "$build_path" "$dockerfile_path"
+    push_image "$IMAGE_URI" "$build_path" "$dockerfile_path"
   else
-    IMAGE_URI="$3"
+    IMAGE_URI="$4"
   fi
 
-  get_s3_bucket_name
+  get_s3_bucket_name "$export_name"
   upload_asset_to_s3 "$config_path"
   post_script
 }

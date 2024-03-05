@@ -20,7 +20,6 @@
   "desiredCount": 1,
   "enableECSManagedTags": false,
   "enableExecuteCommand": true,
-  "healthCheckGracePeriodSeconds": 60,
   "launchType": "",
   "networkConfiguration": {
     "awsvpcConfiguration": {
