@@ -92,10 +92,10 @@ const waf = new WafStack(app, `${pjPrefix}-Waf`, {
   pjPrefix: pjPrefix,
 });
 
-// new OidcStack(app, `${pjPrefix}-Oidc`, {
-//   organizationName: config.OidcParam.OrganizationName,
-//   repositoryNames: config.OidcParam.RepositoryNames,
-// });
+new OidcStack(app, `${pjPrefix}-Oidc`, {
+  organizationName: config.OidcParam.OrganizationName,
+  repositoryNames: config.OidcParam.RepositoryNames,
+});
 
 const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   vpc: shareResources.vpc,
