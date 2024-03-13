@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { DbAuroraStack } from '../lib/stack/db-aurora-stack';
 import { WafStack } from '../lib/stack/waf-stack';
-// import { ElastiCacheRedisStack } from '../lib/stack/elasticache-redis-stack';
+import { ElastiCacheRedisStack } from '../lib/stack/elasticache-redis-stack';
 import * as fs from 'fs';
 import { IConfig, IEnv } from '../params/interface';
 // import { MonitorStack } from '../lib/stack/monitor-stack';
@@ -155,16 +155,15 @@ const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {
 //   env: deployEnv,
 // });
 
-// new ElastiCacheRedisStack(app, `${pjPrefix}-ElastiCacheRedis`, {
-//   vpc: shareResources.vpc,
-//   appKey: shareResources.appKey,
-//   alarmTopic: shareResources.alarmTopic,
-//   appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
-//   // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
-//   bastionSecurityGroup: webApp.ecs.bastionApp.securityGroup,
-//   ...config.ElastiCacheRedisParam,
-//   env: deployEnv,
-// });
+new ElastiCacheRedisStack(app, `${pjPrefix}-Redis`, {
+  vpc: shareResources.vpc,
+  appKey: shareResources.appKey,
+  alarmTopic: shareResources.alarmTopic,
+  appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
+  bastionSecurityGroup: webApp.ecs.bastionApp?.securityGroup,
+  ...config.ElastiCacheRedisParam,
+  env: deployEnv,
+});
 
 // --------------------------------- Tagging  -------------------------------------
 
