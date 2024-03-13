@@ -144,6 +144,7 @@ export class PipelineEcspressoConstruct extends Construct {
           'application-autoscaling:DeregisterScalableTarget',
           'application-autoscaling:PutScalingPolicy',
           'application-autoscaling:DeleteScalingPolicy',
+          'application-autoscaling:DescribeScalingPolicies',
           'servicediscovery:GetNamespace',
           'iam:CreateServiceLinkedRole',
           'sts:AssumeRole',
