@@ -107,7 +107,10 @@ export class EcsAppConstruct extends Construct {
           cloudmapService: cloudmap.backendService,
           executionRole: ecsCommon.ecsTaskExecutionRole,
           port: ecsApp.portNumber,
-          // taskRole: props.taskRole,
+          taskRole: new iam.Role(this, 'BackendTaskRole', {
+            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+            managedPolicies: [{ managedPolicyArn: 'arn:aws:iam::aws:policy/AdministratorAccess' }],
+          }),
         });
       });
     }
