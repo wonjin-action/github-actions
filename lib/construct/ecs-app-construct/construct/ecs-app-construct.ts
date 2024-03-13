@@ -9,6 +9,7 @@ import { aws_cloudwatch_actions as cw_actions } from 'aws-cdk-lib';
 import { aws_ecs as ecs } from 'aws-cdk-lib';
 import { aws_ecr as ecr } from 'aws-cdk-lib';
 import { aws_events_targets as eventtarget } from 'aws-cdk-lib';
+import { aws_ssm as ssm } from 'aws-cdk-lib';
 
 export interface EcsappConstructProps extends cdk.StackProps {
   vpc: ec2.Vpc;
@@ -99,6 +100,10 @@ export class EcsappConstruct extends Construct {
 
     cdk.Stack.of(this).exportValue(repository.repositoryName, {
       name: `${this.appName}RepositoryName`,
+    });
+    new ssm.StringParameter(this, `${props.appName}Repository`, {
+      parameterName: `/Hinagiku/Repository/${this.appName}`,
+      stringValue: repository.repositoryName,
     });
   }
 }

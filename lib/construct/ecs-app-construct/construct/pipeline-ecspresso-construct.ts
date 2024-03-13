@@ -12,7 +12,7 @@ import { aws_logs as cwl } from 'aws-cdk-lib';
 import { aws_servicediscovery as sd } from 'aws-cdk-lib';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
-
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   prefix: string;
   appName: string;
@@ -219,16 +219,14 @@ export class PipelineEcspressoConstruct extends Construct {
       targets: [new targets.CodePipeline(pipeline)],
     });
 
-    if (props.appName === 'EcsApp') {
-      cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-        // Dynamically set the name for verification in cloud formation
-        name: 'sourceBucket',
-      });
-    } else {
-      cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-        // Dynamically set the name for verification in cloud formation
-        name: `sourceBucket-${[props.prefix]}`,
-      });
-    }
+    cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
+      // Dynamically set the name for verification in cloud formation
+      name: `sourceBucket-${props.appName}`,
+    });
+
+    new ssm.StringParameter(this, `${props.appName}TriggerBucketName`, {
+      parameterName: `/Hinagiku/TriggerBucket/${props.appName}`,
+      stringValue: sourceBucket.bucketName,
+    });
   }
 }
