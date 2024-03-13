@@ -59,11 +59,6 @@ export class EcsCommonConstruct extends Construct {
     });
     this.ecsCluster = ecsCluster;
 
-    const namespace = ecsCluster.addDefaultCloudMapNamespace({
-      name: props.prefix,
-    });
-    this.ecsNameSpace = namespace;
-
     // ----------------------- Event notification for ECS -----------------------------
     // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_cwe_events.html#ecs_service_events
     new cwe.Rule(this, 'ECSServiceActionEventRule', {
