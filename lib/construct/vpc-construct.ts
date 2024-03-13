@@ -39,6 +39,10 @@ export class Vpc extends Construct {
         },
       ],
     });
+    // export explicitly to avoid errors due to cross-stack references.
+    cdk.Stack.of(this).exportValue(vpc.privateSubnets[0].subnetId);
+    cdk.Stack.of(this).exportValue(vpc.privateSubnets[1].subnetId);
+    cdk.Stack.of(this).exportValue(vpc.privateSubnets[2].subnetId);
 
     //  --------------------------------------------------------------
     //  Bucket for VPC Flow log
