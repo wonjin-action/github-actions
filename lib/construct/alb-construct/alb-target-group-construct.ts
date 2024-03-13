@@ -26,6 +26,11 @@ export class AlbTarget extends Construct {
       protocol: elbv2.ApplicationProtocol.HTTP,
       deregistrationDelay: cdk.Duration.seconds(30),
       vpc: props.vpc,
+      healthCheck: {
+        path: '/login',
+        // TODO: Time to timeout must be reviewed.
+        timeout: cdk.Duration.seconds(29),
+      },
     });
     this.targetGroup = targetGroup;
 
