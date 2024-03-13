@@ -54,6 +54,8 @@ export class OidcStack extends cdk.Stack {
             'sts:GetCallerIdentity',
             's3:PutObject',
             ...ecrActions,
+            'ssm:GetParameterByPath',
+            'ssm:GetParameter',
           ],
           resources: ['*'],
         },
