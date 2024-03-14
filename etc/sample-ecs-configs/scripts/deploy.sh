@@ -5,6 +5,7 @@
 # shell setting
 #-----------------------------------------------------------------------------------#
 set -euoC pipefail
+trap finally EXIT
 
 
 #-----------------------------------------------------------------------------------#
@@ -158,6 +159,10 @@ function upload_asset_to_s3() {
 function post_script() {
   rm -f ./autoscale.sh ./imagedefinitions.json
   echo "Delete generated files."
+}
+
+function finally() {
+  rm -f ./autoscale.sh
 }
 
 function main() {
