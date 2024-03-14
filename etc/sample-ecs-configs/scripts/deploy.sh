@@ -169,7 +169,6 @@ function main() {
   . "$SCRIPT_DIR/../config/parameters/$env.conf"
 
   generate_autoscale_script
-  echo "$#"
 
   if [[ "$#" -lt 6 ]]; then
     local -r build_path="$4"
