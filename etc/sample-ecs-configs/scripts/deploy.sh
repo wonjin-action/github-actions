@@ -170,7 +170,7 @@ function main() {
 
   generate_autoscale_script
 
-  if [[ "$#" -lt 6 ]]; then
+  if [[ "$#" -gt 4 ]]; then
     local -r build_path="$4"
     local -r dockerfile_path="$5"
     get_account_id
