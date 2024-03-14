@@ -20,6 +20,7 @@ interface EcsAppConstructProps {
   ecsFrontTasks?: IEcsAlbParam;
   ecsBackTasks?: IEcsParam[];
   ecsBastionTasks: boolean;
+  ecsAuthTasks?: IEcsParam[];
 }
 
 export class EcsAppConstruct extends Construct {
@@ -27,6 +28,7 @@ export class EcsAppConstruct extends Construct {
   public readonly backEcsApps: EcsappConstruct[];
   public readonly ecsCommon: EcsCommonConstruct;
   public readonly bastionApp: BastionECSAppConstruct;
+  public readonly authEcsApps: EcsappConstruct[];
 
   constructor(scope: Construct, id: string, props: EcsAppConstructProps) {
     super(scope, id);
@@ -108,6 +110,44 @@ export class EcsAppConstruct extends Construct {
           executionRole: ecsCommon.ecsTaskExecutionRole,
           port: ecsApp.portNumber,
           taskRole: new iam.Role(this, 'BackendTaskRole', {
+            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+            managedPolicies: [{ managedPolicyArn: 'arn:aws:iam::aws:policy/AdministratorAccess' }],
+          }),
+        });
+      });
+    }
+
+    if (props.ecsAuthTasks != undefined) {
+      const authEcsApps = props.ecsAuthTasks.map((ecsApp) => {
+        return new EcsappConstruct(this, `${props.prefix}-${ecsApp.appName}-Auth-Ecs-Resources`, {
+          vpc: props.vpc,
+          ecsCluster: ecsCommon.ecsCluster,
+          appName: ecsApp.appName,
+          prefix: props.prefix,
+          appKey: props.appKey,
+          alarmTopic: props.alarmTopic,
+          allowFromSg: this.backEcsApps.map((ecsAlbApp) => ecsAlbApp.securityGroupForFargate),
+          portNumber: ecsApp.portNumber,
+        });
+      });
+      this.authEcsApps = authEcsApps;
+
+      //Pipeline for Backend Rolling
+      authEcsApps.forEach((ecsApp) => {
+        new PipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-AuthApp-Pipeline`, {
+          prefix: props.prefix,
+          appName: ecsApp.appName,
+          ecsCluster: ecsCommon.ecsCluster,
+          ecsServiceName: ecsApp.ecsServiceName,
+          securityGroup: ecsApp.securityGroupForFargate,
+          vpc: props.vpc,
+          logGroup: ecsApp.fargateLogGroup,
+          logGroupForServiceConnect: ecsApp.serviceConnectLogGroup,
+          cloudmapService: cloudmap.authService,
+          executionRole: ecsCommon.ecsTaskExecutionRole,
+          port: ecsApp.portNumber,
+          // TODO: must be reviewed permission of this role.
+          taskRole: new iam.Role(this, 'AuthTaskRole', {
             assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
             managedPolicies: [{ managedPolicyArn: 'arn:aws:iam::aws:policy/AdministratorAccess' }],
           }),

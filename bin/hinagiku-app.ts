@@ -105,6 +105,7 @@ const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   albCertificateIdentifier: config.AlbCertificateIdentifier,
   ecsFrontTasks: config.EcsFrontTasks,
   ecsBackTasks: config.EcsBackTasks,
+  ecsAuthTasks: config.EcsAuthTasks,
   env: deployEnv,
   crossRegionReferences: true,
   ecsBastionTasks: false,
