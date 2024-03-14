@@ -82,9 +82,9 @@ function generate_image_tag() {
 }
 
 function get_image_uri() {
-  local -r export_name="$1"
+  local -r app_name="$1"
   local -r tag="$2"
-  local -r repo_name=$(aws cloudformation describe-stacks --stack-name "$ECS_STACK_NAME" --query "Stacks[*].Outputs[?contains(not_null(ExportName, ''), '$export_name')].OutputValue" --output text)
+  local -r repo_name=$(aws ssm get-parameter --name "/$PARAMETER_PREFIX/Repository/$app_name" --query "Parameter.Value" --output text)
 
   if [[ -z $repo_name ]]; then
       error "Could not get ECR repo such as 'devblea-simplefrontstack-ecsapprepo1234'."
@@ -110,12 +110,12 @@ function push_image() {
 }
 
 function get_s3_bucket_name() {
-  local -r export_name="$1"
+  local -r app_name="$1"
 
   echo "Setting Pipeline source S3 Bucket..."
-  S3_BUCKET=$(aws cloudformation describe-stacks \
-    --stack-name "$ECS_STACK_NAME" \
-    --query "Stacks[*].Outputs[?contains(not_null(ExportName, ''), '$export_name')].OutputValue" \
+  S3_BUCKET=$(aws ssm get-parameter \
+    --name "/Hinagiku/TriggerBucket/$app_name" \
+    --query "Parameter.Value" \
     --output text)
   if [[ -z $S3_BUCKET ]]; then
       error "Could not get S3 Bucket name."
@@ -163,7 +163,7 @@ function post_script() {
 function main() {
   local -r env="$1"
   local -r config_path="$2"
-  local -r export_name="$3"
+  local -r app_name="$3"
   echo "Your environment is $env"
 
   . "$SCRIPT_DIR/../config/parameters/$env.conf"
@@ -176,14 +176,14 @@ function main() {
     local -r dockerfile_path="$5"
     get_account_id
     tag="$(generate_image_tag)"
-    IMAGE_URI="$(get_image_uri EcsAppRepositoryName "$tag")"
+    IMAGE_URI="$(get_image_uri "$app_name" "$tag")"
     login_ecr
     push_image "$IMAGE_URI" "$build_path" "$dockerfile_path"
   else
     IMAGE_URI="$4"
   fi
 
-  get_s3_bucket_name "$export_name"
+  get_s3_bucket_name "$app_name"
   upload_asset_to_s3 "$config_path"
   post_script
 }
