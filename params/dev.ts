@@ -194,6 +194,13 @@ export const EcsBackBgTasks: inf.IEcsAlbParam = [
   },
 ];
 
+export const EcsAuthTasks: inf.IEcsParam[] = [
+  {
+    appName: 'Authenticate',
+    portNumber: 8000,
+  },
+];
+
 export const VpcParam: inf.IVpcParam = {
   cidr: '10.100.0.0/16',
   maxAzs: 3,

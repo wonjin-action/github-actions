@@ -141,6 +141,7 @@ export interface IConfig {
   EcsFrontBgTasks: IEcsAlbParam;
   EcsBackTasks: IEcsParam[];
   EcsBackBgTasks: IEcsAlbParam;
+  EcsAuthTasks: IEcsParam[];
   VpcParam: IVpcParam;
   NotifierParam: INotifierParam;
   CloudFrontParam: ICloudFrontParam;
