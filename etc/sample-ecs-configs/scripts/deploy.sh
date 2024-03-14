@@ -20,17 +20,26 @@ DEPLOY_ENVS=("dev" "stg" "prd")
 #-----------------------------------------------------------------------------------#
 function usage() {
 cat <<EOS
-  Usage: $0 <env> [<image-uri>, ...]
+  Usage: $0 <env> <frontend/backend/authentication> <app-name> [<image-uri>/<build-contxt> <dockerfile-path>]
 
     env:
       [REQUIRED]
       This argument is used to specify the deployment environment,
         and dev/stg/prd only can be used.
 
+    app-name:
+      [REQUIRED]
+      This argument is used to identify the name of the S3 bucket that triggers the pipeline and the name of the ECR.
+
     image-uri:
       This argument is used to specify image uris,
         for example, 11111111111.dkr.ecr.us-east-1.amazonaws.com/repo-name:tag
 
+    build-contxt:
+      This argument is build context of docker build command
+
+    dockerfile-path:
+      This argument is the path to the dockerfile to be built.
 EOS
   exit 1
 }
