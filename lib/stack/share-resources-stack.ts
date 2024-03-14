@@ -55,6 +55,7 @@ export class ShareResourcesStack extends cdk.Stack {
     }
     // CMK for Apps
     const appKey = new KMSKey(this, `${props.pjPrefix}-AppKey`);
+    this.exportValue(appKey.kmsKey.keyId);
 
     this.appKey = appKey.kmsKey;
 
