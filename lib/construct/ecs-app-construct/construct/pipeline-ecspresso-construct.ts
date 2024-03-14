@@ -188,7 +188,9 @@ export class PipelineEcspressoConstruct extends Construct {
       project: deployProject,
     });
 
-    const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {});
+    const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
+      crossAccountKeys: false,
+    });
 
     pipeline.addStage({
       stageName: 'Source',
