@@ -5,6 +5,7 @@
 # shell setting
 #-----------------------------------------------------------------------------------#
 set -euoC pipefail
+trap finally EXIT
 
 
 #-----------------------------------------------------------------------------------#
@@ -20,17 +21,26 @@ DEPLOY_ENVS=("dev" "stg" "prd")
 #-----------------------------------------------------------------------------------#
 function usage() {
 cat <<EOS
-  Usage: $0 <env> [<image-uri>, ...]
+  Usage: $0 <env> <frontend/backend/authentication> <app-name> [<image-uri>/<build-contxt> <dockerfile-path>]
 
     env:
       [REQUIRED]
       This argument is used to specify the deployment environment,
         and dev/stg/prd only can be used.
 
+    app-name:
+      [REQUIRED]
+      This argument is used to identify the name of the S3 bucket that triggers the pipeline and the name of the ECR.
+
     image-uri:
       This argument is used to specify image uris,
         for example, 11111111111.dkr.ecr.us-east-1.amazonaws.com/repo-name:tag
 
+    build-contxt:
+      This argument is build context of docker build command
+
+    dockerfile-path:
+      This argument is the path to the dockerfile to be built.
 EOS
   exit 1
 }
@@ -73,9 +83,9 @@ function generate_image_tag() {
 }
 
 function get_image_uri() {
-  local -r export_name="$1"
+  local -r app_name="$1"
   local -r tag="$2"
-  local -r repo_name=$(aws cloudformation describe-stacks --stack-name "$ECS_STACK_NAME" --query "Stacks[*].Outputs[?contains(not_null(ExportName, ''), '$export_name')].OutputValue" --output text)
+  local -r repo_name=$(aws ssm get-parameter --name "/$PARAMETER_PREFIX/Repository/$app_name" --query "Parameter.Value" --output text)
 
   if [[ -z $repo_name ]]; then
       error "Could not get ECR repo such as 'devblea-simplefrontstack-ecsapprepo1234'."
@@ -101,12 +111,12 @@ function push_image() {
 }
 
 function get_s3_bucket_name() {
-  local -r export_name="$1"
+  local -r app_name="$1"
 
   echo "Setting Pipeline source S3 Bucket..."
-  S3_BUCKET=$(aws cloudformation describe-stacks \
-    --stack-name "$ECS_STACK_NAME" \
-    --query "Stacks[*].Outputs[?contains(not_null(ExportName, ''), '$export_name')].OutputValue" \
+  S3_BUCKET=$(aws ssm get-parameter \
+    --name "/Hinagiku/TriggerBucket/$app_name" \
+    --query "Parameter.Value" \
     --output text)
   if [[ -z $S3_BUCKET ]]; then
       error "Could not get S3 Bucket name."
@@ -151,30 +161,33 @@ function post_script() {
   echo "Delete generated files."
 }
 
+function finally() {
+  rm -f ./autoscale.sh
+}
+
 function main() {
   local -r env="$1"
   local -r config_path="$2"
-  local -r export_name="$3"
+  local -r app_name="$3"
   echo "Your environment is $env"
 
   . "$SCRIPT_DIR/../config/parameters/$env.conf"
 
   generate_autoscale_script
-  echo "$#"
 
-  if [[ "$#" -lt 6 ]]; then
+  if [[ "$#" -gt 4 ]]; then
     local -r build_path="$4"
     local -r dockerfile_path="$5"
     get_account_id
     tag="$(generate_image_tag)"
-    IMAGE_URI="$(get_image_uri EcsAppRepositoryName "$tag")"
+    IMAGE_URI="$(get_image_uri "$app_name" "$tag")"
     login_ecr
     push_image "$IMAGE_URI" "$build_path" "$dockerfile_path"
   else
     IMAGE_URI="$4"
   fi
 
-  get_s3_bucket_name "$export_name"
+  get_s3_bucket_name "$app_name"
   upload_asset_to_s3 "$config_path"
   post_script
 }

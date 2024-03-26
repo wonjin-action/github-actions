@@ -41,7 +41,7 @@ export class ElastiCacheRedisStack extends cdk.Stack {
     });
     // 1. 特定セキュリティグループＩＤからの許可 を使用する場合はこちらをコメントイン。
     // 例:ecs のsecurity group をインバウンドルールに追加
-    // securityGroupForRedis.connections.allowFrom(props.appServerSecurityGroup,ec2.Port.tcp(6379));
+    securityGroupForRedis.connections.allowFrom(props.appServerSecurityGroup, ec2.Port.tcp(6379));
     // For Bastion Container
     if (props.bastionSecurityGroup) {
       securityGroupForRedis.connections.allowFrom(props.bastionSecurityGroup, ec2.Port.tcp(6379));

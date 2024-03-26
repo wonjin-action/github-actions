@@ -11,6 +11,7 @@ interface CloudMapProps {
 export class CloudMap extends Construct {
   public readonly frontendService: Service;
   public readonly backendService: Service;
+  public readonly authService: Service;
 
   constructor(scope: Construct, id: string, props: CloudMapProps) {
     super(scope, id);
@@ -34,5 +35,12 @@ export class CloudMap extends Construct {
       dnsTtl: Duration.seconds(30),
     });
     this.frontendService = frontendService;
+
+    const authService = namespace.createService('AuthService', {
+      name: 'auth',
+      dnsRecordType: DnsRecordType.A,
+      dnsTtl: Duration.seconds(30),
+    });
+    this.authService = authService;
   }
 }

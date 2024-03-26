@@ -54,17 +54,17 @@ export const OpensearchParam: inf.IOpenSearchParam = {
 };
 
 export const ElastiCacheRedisParam: inf.IElastiCacheRedisParam = {
-  engineVersion: '6.2',
-  numNodeGroups: 3,
+  engineVersion: '7.1',
+  numNodeGroups: 1,
   replicasPerNodeGroup: 2,
-  minCapacity: 3,
+  minCapacity: 1,
   maxCapacity: 12,
   targetValue: 70,
   enableAutoScale: false,
   cacheNodeTypeEnableAutoScale: 'cache.m5.large',
   cacheNodeTypeDisableAutoScale: 'cache.t3.small',
   elastiCacheRedisCustomParam: {
-    cacheParameterGroupFamily: 'redis6.x',
+    cacheParameterGroupFamily: 'redis7',
     description: 'CustomParameterGroupForRedis',
     properties: {
       'cluster-enabled': 'yes',
@@ -143,6 +143,13 @@ export const EcsBackTasks: inf.IEcsParam[] = [
   {
     appName: 'EcsBackend',
     portNumber: 5000,
+  },
+];
+
+export const EcsAuthTasks: inf.IEcsParam[] = [
+  {
+    appName: 'Authenticate',
+    portNumber: 8000,
   },
 ];
 

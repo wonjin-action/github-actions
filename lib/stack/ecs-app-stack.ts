@@ -15,6 +15,7 @@ interface EcsAppStackProps extends cdk.StackProps {
   albCertificateIdentifier: ICertificateIdentifier;
   ecsFrontTasks?: IEcsAlbParam;
   ecsBackTasks?: IEcsParam[];
+  ecsAuthTasks?: IEcsParam[];
   ecsBastionTasks?: boolean;
 }
 
@@ -41,6 +42,7 @@ export class EcsAppStack extends cdk.Stack {
       albConstruct: albConstruct,
       ecsFrontTasks: props.ecsFrontTasks,
       ecsBackTasks: props.ecsBackTasks,
+      ecsAuthTasks: props.ecsAuthTasks,
       ecsBastionTasks: props.ecsBastionTasks ?? true,
     });
     this.ecs = app;
