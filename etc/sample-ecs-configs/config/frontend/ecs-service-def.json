@@ -42,7 +42,9 @@
   "propagateTags": "NONE",
   "runningCount": 0,
   "schedulingStrategy": "REPLICA",
-  "serviceConnectConfiguration": {
-    "enabled": false
-  }
+  "serviceRegistries": [
+    {
+      "registryArn": "{{ must_env `REGISTRY_ARN` }}"
+    }
+  ]
 }

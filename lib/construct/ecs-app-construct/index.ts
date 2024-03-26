@@ -8,6 +8,8 @@ import { PipelineEcspressoConstruct } from './construct/pipeline-ecspresso-const
 import { IEcsAlbParam, IEcsParam } from '../../../params/interface';
 import { BastionECSAppConstruct } from './construct/bastion-ecs-construct';
 import { AlbConstruct } from '../alb-construct';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import { CloudMap } from './construct/cloudmap';
 
 interface EcsAppConstructProps {
   vpc: ec2.Vpc;
@@ -36,6 +38,12 @@ export class EcsAppConstruct extends Construct {
       prefix: props.prefix,
     });
     this.ecsCommon = ecsCommon;
+
+    const cloudmap = new CloudMap(this, 'CloudMap', {
+      namespaceName: props.prefix,
+      vpc: props.vpc,
+    });
+
     if (props.ecsFrontTasks) {
       const frontEcsApps = props.ecsFrontTasks.map((app) => {
         return new EcsappConstruct(this, `${props.prefix}-${app.appName}-FrontApp-Ecs-Resources`, {
@@ -62,7 +70,7 @@ export class EcsAppConstruct extends Construct {
           securityGroup: ecsApp.securityGroupForFargate,
           vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
-          ecsNameSpace: ecsCommon.ecsNameSpace,
+          cloudmapService: cloudmap.frontendService,
           executionRole: ecsCommon.ecsTaskExecutionRole,
           port: ecsApp.portNumber,
           // taskRole: props.taskRole,
@@ -81,7 +89,6 @@ export class EcsAppConstruct extends Construct {
           alarmTopic: props.alarmTopic,
           allowFromSg: this.frontEcsApps.map((ecsAlbApp) => ecsAlbApp.securityGroupForFargate),
           portNumber: ecsApp.portNumber,
-          useServiceConnect: true,
         });
       });
       this.backEcsApps = backEcsApps;
@@ -97,10 +104,13 @@ export class EcsAppConstruct extends Construct {
           vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
           logGroupForServiceConnect: ecsApp.serviceConnectLogGroup,
-          ecsNameSpace: ecsCommon.ecsNameSpace,
+          cloudmapService: cloudmap.backendService,
           executionRole: ecsCommon.ecsTaskExecutionRole,
           port: ecsApp.portNumber,
-          // taskRole: props.taskRole,
+          taskRole: new iam.Role(this, 'BackendTaskRole', {
+            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+            managedPolicies: [{ managedPolicyArn: 'arn:aws:iam::aws:policy/AdministratorAccess' }],
+          }),
         });
       });
     }

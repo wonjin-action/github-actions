@@ -12,7 +12,7 @@ import { aws_logs as cwl } from 'aws-cdk-lib';
 import { aws_servicediscovery as sd } from 'aws-cdk-lib';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
-
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   prefix: string;
   appName: string;
@@ -24,7 +24,7 @@ export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   logGroup: cwl.LogGroup;
   port: number;
   logGroupForServiceConnect?: cwl.LogGroup;
-  ecsNameSpace?: sd.INamespace;
+  cloudmapService: sd.IService;
   executionRole: iam.Role;
   taskRole?: iam.Role;
 }
@@ -36,7 +36,6 @@ export class PipelineEcspressoConstruct extends Construct {
     //タスクロール,TargetGroupが指定されていない場合は、空文字をCodeBuildの環境変数として設定
     const taskRoleArn = props.taskRole?.roleArn || props.executionRole.roleArn;
     const targetGroupArn = props.targetGroup?.targetGroupArn || '';
-    const nameSpaceArn = props.ecsNameSpace?.namespaceArn || '';
     const logGroupForServiceConnect = props.logGroupForServiceConnect?.logGroupName || '';
 
     const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
@@ -93,8 +92,8 @@ export class PipelineEcspressoConstruct extends Construct {
         FAMILY: {
           value: `${props.prefix}-${props.appName}-Taskdef`,
         },
-        NAMESPACE: {
-          value: nameSpaceArn,
+        REGISTRY_ARN: {
+          value: props.cloudmapService.serviceArn,
         },
         ENVFILE_BUCKET_ARN: {
           value: sourceBucket.arnForObjects('.env'),
@@ -145,6 +144,7 @@ export class PipelineEcspressoConstruct extends Construct {
           'application-autoscaling:DeregisterScalableTarget',
           'application-autoscaling:PutScalingPolicy',
           'application-autoscaling:DeleteScalingPolicy',
+          'application-autoscaling:DescribeScalingPolicies',
           'servicediscovery:GetNamespace',
           'iam:CreateServiceLinkedRole',
           'sts:AssumeRole',
@@ -220,16 +220,14 @@ export class PipelineEcspressoConstruct extends Construct {
       targets: [new targets.CodePipeline(pipeline)],
     });
 
-    if (props.appName === 'EcsApp') {
-      cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-        // Dynamically set the name for verification in cloud formation
-        name: 'sourceBucket',
-      });
-    } else {
-      cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-        // Dynamically set the name for verification in cloud formation
-        name: `sourceBucket-${[props.prefix]}`,
-      });
-    }
+    cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
+      // Dynamically set the name for verification in cloud formation
+      name: `sourceBucket-${props.appName}`,
+    });
+
+    new ssm.StringParameter(this, `${props.appName}TriggerBucketName`, {
+      parameterName: `/Hinagiku/TriggerBucket/${props.appName}`,
+      stringValue: sourceBucket.bucketName,
+    });
   }
 }

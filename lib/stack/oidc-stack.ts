@@ -30,18 +30,7 @@ export class OidcStack extends cdk.Stack {
     //     },
     //   ],
     // });
-    // // InfraResources用ロール
-    // new OidcIamRoleConstruct(this, 'InfraResourcesRole', {
-    //   organizationName: props.organizationName,
-    //   repositoryName: props.repositoryNames.Infra,
-    //   openIdConnectProviderArn: oidcProvider.openIdConnectProviderArn,
-    //   statement: [
-    //     {
-    //       actions: ['cloudformation:DescribeStacks', 's3:PutObject'],
-    //       resources: ['*'],
-    //     },
-    //   ],
-    // });
+
     const ecrActions = [
       'ecr:GetDownloadUrlForLayer',
       'ecr:BatchGetImage',
@@ -65,6 +54,8 @@ export class OidcStack extends cdk.Stack {
             'sts:GetCallerIdentity',
             's3:PutObject',
             ...ecrActions,
+            'ssm:GetParameterByPath',
+            'ssm:GetParameter',
           ],
           resources: ['*'],
         },
