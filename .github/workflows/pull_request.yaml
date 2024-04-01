@@ -1,8 +1,12 @@
 name : pull-request-workflow
 on : push 
+  pull_request:
+    types : [opened] # 
 
 jobs : 
   pull-request-job: # 푸시 이벤트가 발생할 때, 트리거가 되서, 푸시 잡이라는 잡이 실행되고, 
+    
+    
     runs-on : ubuntu-latest
     steps : # 잡이 실행할 스텝을 정의 
     - name : step1 # step1이라는 이름이 표시된다. 
