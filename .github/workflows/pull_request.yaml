@@ -1,4 +1,4 @@
-name + pull-request-workflow
+name : pull-request-workflow 1
 on : push 
 
 jobs : 
@@ -8,6 +8,6 @@ jobs :
     - name : step1 # step1이라는 이름이 표시된다. 
       run : echo hello world # 첫번째 스텝에서 hello world가 출력되고 종료된다. 
     - name : step2 
-      run : 
+      run : |
         echo hello world 
         echo github action 
