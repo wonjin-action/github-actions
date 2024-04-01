@@ -1,0 +1,10 @@
+name : push-workflow 
+on : push # 푸시 이벤트에 의해서 워크플로우를 트리거하겠다라는 의미 
+
+
+jobs : 
+  push-job : # 푸시 이벤트가 발생할 때, 트리거가 되서, 푸시 잡이라는 잡이 실행되고, 
+    runs-on : ubuntu-latest
+    steps : # 잡이 실행할 스텝을 정의 
+    - name : step1 # step1이라는 이름이 표시된다. 
+      run : echo hello world # 첫번째 스텝에서 hello world가 출력되고 종료된다. 
