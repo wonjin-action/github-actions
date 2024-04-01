@@ -1,7 +1,8 @@
 name : pull-request-workflow
-on : push 
+on : 
+  push :  
   pull_request:
-    types : [opened] # 
+      types : [opened] # 
 
 jobs : 
   pull-request-job: # 푸시 이벤트가 발생할 때, 트리거가 되서, 푸시 잡이라는 잡이 실행되고, 
