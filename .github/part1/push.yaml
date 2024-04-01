@@ -1,4 +1,4 @@
-name : push-workflow 
+name : push-workflow 1
 on : push # 푸시 이벤트에 의해서 워크플로우를 트리거하겠다라는 의미 
 
 
