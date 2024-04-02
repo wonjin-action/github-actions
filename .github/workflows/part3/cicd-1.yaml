@@ -4,7 +4,7 @@ name : cicd-1 # 이 워크플로우의 이름을 설정한다.
 
 on : # 이 키는 해당 워크플로우가 어떤 이벤트에 의해 트리거될지 정의한다.
   pull_request: # 이벤트의 특정 타입에 대해 워크플로우를 트리거한다. 
-    type: [opened, synchronize , closd] # 새로운 PR이 생성될 때 트리거 , 새로운 커밋 혹은 기존 커밋이 수정될 때 , PR이 닫힐 때 워크플로우가 트리거 된다. 
+    types: [opened, synchronize , closed] # 새로운 PR이 생성될 때 트리거 , 새로운 커밋 혹은 기존 커밋이 수정될 때 , PR이 닫힐 때 워크플로우가 트리거 된다. 
     branches: [dev] # 이 워크플로우가 트리거 될 브랜치를 제한한다. 여기서는 dev 브랜치에 대한 PR에서만 워크플로우가 실행된다. 
     paths: # 워크플로우가 트리거 될 파일 또는 디렉토리의 경로를 지정한다. 
     - 'my-app/**' # my-app 디렉토리 내의 모든 변경 사항 ( 하위 디렉토리 포함 )에 대해 워크플로우를 트리거 한다. 
@@ -29,8 +29,8 @@ jobs : # test라는 하나의 작업을 정의한다.
    if : github.event.pull_request.merged == true 
    runs-on : ubuntu-latest
    steps:
-  - name : checkout
-    uses : actions/checkout@v4 
+    - name : checkout
+      uses : actions/checkout@v4 
 
 #  이미지 빌드 잡이 성공한 다음, 수행되는 작업 즉, CD 단계 
   deploy:
