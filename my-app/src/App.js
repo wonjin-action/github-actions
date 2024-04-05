@@ -16,7 +16,8 @@ function App() {
           rel="noopener noreferrer"
         >
 
-          Learn GithubAction cicd1-aws2
+
+          Learn GithubAction cicd3
 
         </a>
       </header>
