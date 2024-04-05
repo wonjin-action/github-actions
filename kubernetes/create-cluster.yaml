@@ -7,7 +7,7 @@ metadata:
   version: "1.27"
 
 iamIdentityMappings:
-  - arn: arn:aws:iam::${ACCOUNT_ID}:role/github-actions
+  - arn: arn:aws:iam::019817421975:role/github-actions
     groups:
       - system:masters
     username: github-actions
