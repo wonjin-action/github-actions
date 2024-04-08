@@ -1,5 +1,6 @@
 {
   "app": "npx ts-node --prefer-ts-exts bin/my-cdk-project.ts",
+  "output": "./custom-cdk-out"
   "watch": {
     "include": [
       "**"
