@@ -60,30 +60,14 @@ jobs:
   
   deploy:
     runs-on: ubuntu-latest
-    needs: [ image-build ]
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-    - name: checkout the code
-      uses: actions/checkout@v4
-    - name: Configure AWS Credentials
-      id: credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-region: ${{ vars.AWS_REGION }}
-        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-  
-    deploy-cdk:
-    runs-on: ubuntu-latest
     needs: [image-build]
     steps:
-    - name: Checkout the code
+    - name: checkout the code
       uses: actions/checkout@v4
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '20'
+        node-version: '20' # 노드 버전을 프로젝트에 맞게 조정
     - name: Install dependencies
       run: npm install
     - name: Install AWS CDK
@@ -99,14 +83,7 @@ jobs:
       env:
         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         AWS_REGION: ${{ vars.AWS_REGION }}
-
-
-
-    - name: deploy
-      id: status
-      run: |
-        --set image.tag=${{ github.sha }} \
-        --set image.repository=${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}
+    
     - name: notify
       if: always()
       uses: slackapi/slack-github-action@v1.24.0
@@ -127,4 +104,3 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-  
