@@ -121,7 +121,7 @@ export class Frontend extends cdk.Stack {
       }),
       memorySize: 256,
       timeout: Duration.seconds(30),
-      vpc : vpc , // 람다를 vpc 안에 넣음 
+      vpc : vpc , // 람다를 vpc 안에 넣음 -ha
     });
 
     // < API Gateway 정의 > 
