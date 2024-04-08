@@ -73,6 +73,8 @@ jobs:
       run: |
         cd my-cdk-project
         npm install
+        npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
+        npm install @aws-cdk/aws-apigatewayv2-alpha
     - name: Install AWS CDK
       run: npm install -g aws-cdk
     - name: Configure AWS Credentials
