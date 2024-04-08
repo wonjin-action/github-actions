@@ -69,7 +69,9 @@ jobs:
       with:
         node-version: '20' # 노드 버전을 프로젝트에 맞게 조정
     - name: Install dependencies
-      run: npm install
+      run: |
+        cd my-cdk-project
+        npm install
     - name: Install AWS CDK
       run: npm install -g aws-cdk
     - name: Configure AWS Credentials
