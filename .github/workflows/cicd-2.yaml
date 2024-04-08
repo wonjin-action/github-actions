@@ -80,7 +80,8 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_REGION }}
     - name: CDK Deploy
-      run: cdk deploy --require-approval never
+      run: cdk deploy --require-approval never --app "npx ts-node --prefer-ts-exts bin/my-cdk-project.ts"
+
       env:
         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         AWS_REGION: ${{ vars.AWS_REGION }}
