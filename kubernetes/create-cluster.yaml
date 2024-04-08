@@ -7,7 +7,10 @@ metadata:
   version: "1.27"
 
 iamIdentityMappings:
-  - arn: arn:aws:iam::019817421975:role/github-actions
+
+
+# eks 클러스터 내에서 특정 IAM 역할 예: arn:aws:iam::019817421975:role/github-actions 을 가진 사용자가 쿠버네티스 리소스에 대해 수행할 수 있는 작업을 결정한다. 
+  - arn: arn:aws:iam::019817421975:role/github-actions # 클러스터에 접근할 때 사용될 IAM 역할의 arn으로, 이 역할을 가진 사용자는 쿠버네티스 클러스터와 상호 작용할 수 있다. 
   
     groups:
       - system:masters
