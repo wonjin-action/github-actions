@@ -14,6 +14,9 @@ jobs:
     steps:
     - name: checkout the code
       uses: actions/checkout@v4
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 15
     - name: setup-node
       uses: actions/setup-node@v3
       with:
