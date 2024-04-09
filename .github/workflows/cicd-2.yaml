@@ -85,7 +85,7 @@ jobs:
         aws-region: ${{ vars.AWS_REGION }}
     
     - name: CDK Deploy
-      run: cdk deploy --require-approval never --app "npx ts-node --prefer-ts-exts bin/my-cdk-project.ts"
+      run: cdk deploy --require-approval never 
       working-directory: my-cdk-project
       env:
         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
