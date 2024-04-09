@@ -71,8 +71,9 @@ jobs:
         node-version: '20' # 노드 버전을 프로젝트에 맞게 조정
     - name: Install dependencies
       run: |
-        cd my-cdk-project
         npm install
+        npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
+        npm install @aws-cdk/aws-apigatewayv2-alpha
     - name: Install AWS CDK
       run: npm install -g aws-cdk
     - name: Configure AWS Credentials
@@ -84,7 +85,6 @@ jobs:
     
     - name: CDK Deploy
       run: cdk deploy --require-approval never --app "npx ts-node --prefer-ts-exts bin/my-cdk-project.ts"
-      working-directory: my-cdk-project
       env:
         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         AWS_REGION: ${{ vars.AWS_REGION }}
