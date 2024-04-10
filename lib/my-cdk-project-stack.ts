@@ -9,6 +9,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as servicediscovery from "aws-cdk-lib/aws-servicediscovery";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as log from "aws-cdk-lib/aws-logs";
+import * as path from 'path'; 
 import {
   ApplicationLoadBalancer,
   ApplicationProtocol,
