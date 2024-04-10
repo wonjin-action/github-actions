@@ -73,12 +73,12 @@ jobs:
         node-version: '20' # 노드 버전을 프로젝트에 맞게 조정
     - name: Install dependencies
       run: |
-        npm install
+        npm install 
         npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
         npm install @aws-cdk/aws-apigatewayv2-alpha
     - name: Install AWS CDK
       run: | 
-        npm install -g aws-cdk
+        npm install -g aws-cdk@latest
         npm update
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -86,9 +86,17 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_REGION }}
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 15
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
+    #   timeout-minutes: 15
+    - name: Bootstrap CDK
+      run: cdk bootstrap aws://ACCOUNT_ID/REGION
+      # run: cdk bootstrap aws://ACCOUNT_ID/REGION
+      env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'ap-northeast-1'
+    
     - name: CDK Deploy
       id: cdk_deploy
       run: | 
