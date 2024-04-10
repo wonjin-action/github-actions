@@ -77,7 +77,9 @@ jobs:
         npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
         npm install @aws-cdk/aws-apigatewayv2-alpha
     - name: Install AWS CDK
-      run: npm install -g aws-cdk
+      run: | 
+        npm install -g aws-cdk
+        npm update
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:

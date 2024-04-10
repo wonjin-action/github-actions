@@ -10,6 +10,7 @@ import * as servicediscovery from "aws-cdk-lib/aws-servicediscovery";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as log from "aws-cdk-lib/aws-logs";
 import * as path from 'path'; 
+import * as ecr from 'aws-cdk-lib/aws-ecr';
 import {
   ApplicationLoadBalancer,
   ApplicationProtocol,
@@ -110,15 +111,19 @@ export class Frontend extends cdk.Stack {
     backSG.addIngressRule(frontSG, Port.tcp(1235));
         // 벡엔드 보안 그룹 ( backSG )에 addaddIngressRule함수로, 인바운드 규칙 추가 
         // 포트 번호 1235는 임의 설정 
-        // 이미 널리 사용되고 있는 포트 ( 80, 443, 22 )등과의 충돌을 피하기 위해 
+        // 이미 널리 사용되고 있는 포트 ( 80, 443, 22 )등과의 충돌을 피하기 위해 import * as ecr from 'aws-cdk-lib/aws-ecr';
         
     ///// 프론트 엔드 /////
     
+
+    // < Refer to ECR > 
+    const repository = ecr.Repository.fromRepositoryName(this, 'Repository', 'my-app-dev');
     // < Lambda 정의 > 
     const handler = new DockerImageFunction(this, 'Handler', {
-      code: DockerImageCode.fromImageAsset(path.join(__dirname, '../'), {
+
+      code: DockerImageCode.fromEcr(repository, {
         // 람다 함수가 호출할 도커이미지 파일의 경로 
-        platform: Platform.LINUX_AMD64,
+        tag : 'latest'
       }),
       memorySize: 256,
       timeout: Duration.seconds(30),
@@ -157,7 +162,7 @@ export class Frontend extends cdk.Stack {
     // 컨테이너는 애플리케이션 자체의 세부 사항 설정 // 
     
     const backendContainer = backendTask.addContainer("BackendContainer", {
-      image: ecs.ContainerImage.fromAsset("./back/"),
+      image: ecs.ContainerImage.fromEcrRepository(repository, "latest"),
       // 이미지는 컨테이너가 사용할 이미지를 지정한다. 
       // 즉, 위의 경로에 도커 파일 또는 다른 필요한 파일들이 포함되어 있어야 한다. 
       // 이 파일들을 사용하여, 도커 이미지가 생성된다. 
