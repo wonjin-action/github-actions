@@ -14,9 +14,6 @@ jobs:
     steps:
     - name: checkout the code
       uses: actions/checkout@v4
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 15
     - name: setup-node
       uses: actions/setup-node@v3
       with:
@@ -68,6 +65,8 @@ jobs:
     steps:
     - name: checkout the code
       uses: actions/checkout@v4
+  
+    
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
@@ -85,9 +84,9 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_REGION }}
-
-
-    
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 15
     - name: CDK Deploy
       id: cdk_deploy
       run: | 
