@@ -116,7 +116,7 @@ export class Frontend extends cdk.Stack {
     
     // < Lambda 정의 > 
     const handler = new DockerImageFunction(this, 'Handler', {
-      code: DockerImageCode.fromImageAsset(path.join(__dirname, '../../'), {
+      code: DockerImageCode.fromImageAsset(path.join(__dirname, '.'), {
         // 람다 함수가 호출할 도커이미지 파일의 경로 
         platform: Platform.LINUX_AMD64,
       }),
