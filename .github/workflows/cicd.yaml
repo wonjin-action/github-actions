@@ -27,11 +27,11 @@ jobs:
           ${{ runner.os }}-node-
     - name: Install dependencies
       run: |
-        cd my-app
+        cd next-app
         npm ci
     - name: npm build
       run: |
-        cd my-app
+        cd next-app
         npm run build
 
   image-build:
@@ -103,7 +103,7 @@ jobs:
       id: cdk_deploy
       run: | 
         pwd
-        cdk deploy --require-approval never --app "npx ts-node --prefer-ts-exts bin/my-cdk-project.ts"
+        cdk deploy --require-approval never 
       env:
         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         AWS_REGION: ${{ vars.AWS_REGION }}
