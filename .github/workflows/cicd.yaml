@@ -32,11 +32,12 @@ jobs:
     - name: npm build
       run: |
         cd next-app
+        npm install
         npm run build
     - name: Install CDK dependencies
       run: | 
         cd next-app/cdk 
-        npm install
+        
         npm install aws-cdk-lib
         npm install -g aws-cdk
        
