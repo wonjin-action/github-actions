@@ -31,7 +31,7 @@ jobs:
         npm ci
     - name: npm build
       run: |
-        cd next-app
+        cd next-app/cdk
         npm install
         npm run build
     - name: Install CDK dependencies
