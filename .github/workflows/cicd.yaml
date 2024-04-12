@@ -34,8 +34,11 @@ jobs:
         cd next-app
         npm run build
         npm install -g aws-cdk
-        npm install aws-cdk-lib
         npm update
+        cd cdk 
+        npm install aws-cdk-lib
+        
+       
         
   image-build:
     if: github.event.pull_request.merged == true
