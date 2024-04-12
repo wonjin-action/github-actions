@@ -35,7 +35,7 @@ jobs:
         npm run build
         npm install -g aws-cdk
         npm update
-        cd cdk 
+        cd next-app/cdk 
         npm install aws-cdk-lib
         
        
