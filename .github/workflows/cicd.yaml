@@ -107,7 +107,7 @@ jobs:
       env:
         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         AWS_REGION: ${{ vars.AWS_REGION }}
-      working_directory : next-app/cdk/bin
+      working-directory : next-app/cdk/bin
     - name: notify
       if: always()
       uses: slackapi/slack-github-action@v1.24.0
