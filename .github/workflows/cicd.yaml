@@ -67,9 +67,14 @@ jobs:
         mask-password: 'true'
     - name: docker build & push
       run: |
+        pwd
         docker build -f Dockerfile --tag ${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }} .
         docker push ${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }}
       working-directory : next-app/
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 15
+      
   deploy:
     runs-on: ubuntu-latest
     needs: [image-build]
