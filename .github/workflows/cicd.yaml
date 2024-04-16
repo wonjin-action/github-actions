@@ -98,6 +98,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18' # 노드 버전을 프로젝트에 맞게 조정
+    
+        
     - name: Install dependencies
       run: |
         export NODE_ENV=development
@@ -109,10 +111,7 @@ jobs:
       env:
         NODE_ENV: development
       
-    - name: Install AWS CDK
-      run: | 
-        npm install -g aws-cdk@latest
-        npm update
+   
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -125,10 +124,12 @@ jobs:
     #   uses: mxschmitt/action-tmate@v3
     #   timeout-minutes: 15
     - name: Bootstrap CDK
+
       
       run: | 
         pwd
         cdk bootstrap aws://019817421975/ap-northeast-1 --verbose
+
 
       # run: cdk bootstrap  aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
       
