@@ -125,7 +125,9 @@ jobs:
     #   uses: mxschmitt/action-tmate@v3
     #   timeout-minutes: 15
     - name: Bootstrap CDK
-      run: cdk bootstrap  aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
+      run : cdk bootstrap aws://019817421975/ap-northeast-1
+      # run: cdk bootstrap  aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
+      
       # run: cdk bootstrap aws://ACCOUNT_ID/REGION
       env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
