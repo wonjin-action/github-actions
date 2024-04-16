@@ -102,7 +102,6 @@ jobs:
       run: |
         npm install 
         npm install aws-cdk-lib # 추가 
-        npm install @types/aws-cdk-lib --save-dev 
         npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
         npm install @aws-cdk/aws-apigatewayv2-alpha
       working-directory : next-app/
