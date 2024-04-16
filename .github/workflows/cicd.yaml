@@ -62,7 +62,7 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
     - name: Install dependencies for Docker
       run: |
-        npm install 
+        npm ci
         npm install aws-cdk-lib # 추가 
         npm install npm install aws-cdk-lib --save-dev
         npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
