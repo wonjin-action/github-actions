@@ -125,14 +125,14 @@ jobs:
     #   timeout-minutes: 15
     - name: Test AWS Credentials
       run: aws sts get-caller-identity
+    - name: Grant execute permission to CDK
+      run: chmod +x $(npm config get prefix)/next-app/cdk
 
     
     - name: Bootstrap CDK
-
-      
       run: | 
         pwd
-        cdk bootstrap aws://019817421975/ap-northeast-1 
+        npx cdk bootstrap aws://019817421975/ap-northeast-1 
 
 
       # run: cdk bootstrap  aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
