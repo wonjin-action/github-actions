@@ -123,6 +123,10 @@ jobs:
     # - name: Setup tmate session
     #   uses: mxschmitt/action-tmate@v3
     #   timeout-minutes: 15
+    - name: Test AWS Credentials
+      run: aws sts get-caller-identity
+
+    
     - name: Bootstrap CDK
 
       
