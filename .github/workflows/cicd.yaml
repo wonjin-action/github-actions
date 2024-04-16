@@ -100,11 +100,15 @@ jobs:
         node-version: '18' # 노드 버전을 프로젝트에 맞게 조정
     - name: Install dependencies
       run: |
-        npm install 
+        export NODE_ENV=development
+        npm ci 
         npm install aws-cdk-lib # 추가 
         npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
         npm install @aws-cdk/aws-apigatewayv2-alpha
       working-directory : next-app/
+      env:
+        NODE_ENV: development
+      
     - name: Install AWS CDK
       run: | 
         npm install -g aws-cdk@latest
