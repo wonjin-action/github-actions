@@ -128,7 +128,7 @@ jobs:
       
       run: | 
         pwd
-        cdk bootstrap aws://019817421975/ap-northeast-1 --verbose
+        cdk bootstrap aws://019817421975/ap-northeast-1 
 
 
       # run: cdk bootstrap  aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
@@ -174,4 +174,5 @@ jobs:
     - name: Setup tmate session
       if: always()
       uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 60
       timeout-minutes: 15
