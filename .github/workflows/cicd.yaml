@@ -124,7 +124,9 @@ jobs:
     #   uses: mxschmitt/action-tmate@v3
     #   timeout-minutes: 15
     - name: Test AWS Credentials
-      run: aws sts get-caller-identity
+      run: |
+        aws sts get-caller-identity
+        aws iam list-account-aliases
     
 
     
