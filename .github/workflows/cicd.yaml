@@ -133,11 +133,11 @@ jobs:
     - name: Bootstrap CDK
       run: | 
         pwd
-        npx cdk bootstrap aws://019817421975/ap-northeast-1 
+        npx cdk bootstrap 
 
 
       # run: cdk bootstrap  aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
-      
+      # aws://019817421975/ap-northeast-1 
       # run: cdk bootstrap aws://ACCOUNT_ID/REGION
       env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
