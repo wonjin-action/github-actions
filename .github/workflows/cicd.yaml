@@ -108,7 +108,7 @@ jobs:
         npm install aws-cdk-lib # 추가 
         npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
         npm install @aws-cdk/aws-apigatewayv2-alpha
-        aws sts get-caller-identity
+    
       working-directory : next-app/cdk
      
 
@@ -126,8 +126,7 @@ jobs:
     #   uses: mxschmitt/action-tmate@v3
     #   timeout-minutes: 15
     - name: Test AWS Credentials
-      run: |
-        aws sts get-caller-identity
+      run: aws sts get-caller-identity
         
     
 
