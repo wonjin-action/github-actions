@@ -127,13 +127,14 @@ jobs:
     - name: Test AWS Credentials
       run: |
         aws sts get-caller-identity
-        aws iam list-account-aliases
+        
     
 
     
     - name: Bootstrap CDK
       run: | 
         pwd
+        aws iam list-account-aliases
         npx cdk bootstrap 
 
 
