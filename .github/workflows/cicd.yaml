@@ -110,11 +110,7 @@ jobs:
         npm install @aws-cdk/aws-apigatewayv2-alpha
         aws sts get-caller-identity
       working-directory : next-app/cdk
-      env:
-        NODE_ENV: development
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: 'ap-northeast-1'
+     
 
       
    
@@ -146,10 +142,10 @@ jobs:
       # run: cdk bootstrap  aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
       # aws://019817421975/ap-northeast-1 
       # run: cdk bootstrap aws://ACCOUNT_ID/REGION
-      env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'ap-northeast-1'
+      # env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_DEFAULT_REGION: 'ap-northeast-1'
       working-directory : next-app/cdk
 
     - name: CDK Deploy
