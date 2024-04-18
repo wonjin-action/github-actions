@@ -151,8 +151,8 @@ jobs:
       id: cdk_deploy
       run: | 
         pwd
-        cdk deploy 
-      working-directory : next-app/cdk/
+        npx cdk deploy 
+      working-directory : next-app/cdk
     - name: notify
       if: always()
       uses: slackapi/slack-github-action@v1.24.0
