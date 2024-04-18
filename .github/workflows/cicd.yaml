@@ -151,7 +151,7 @@ jobs:
       id: cdk_deploy
       run: | 
         pwd
-        npx cdk deploy 
+        npx cdk deploy --require-approval never
       working-directory : next-app/cdk
     - name: notify
       if: always()
