@@ -4,8 +4,9 @@ on:
     types: [opened, synchronize, closed]
     branches: [dev]
     paths:
-    - 'my-app/**'
-    - 'workflows/cicd-2.yaml'
+    - '**/*'
+
+
 
 jobs:
   test:
@@ -17,7 +18,7 @@ jobs:
     - name: setup-node
       uses: actions/setup-node@v3
       with:
-        node-version: 20
+        node-version: 18
     - name: Cache Node.js modules
       uses: actions/cache@v3
       with:
@@ -27,12 +28,23 @@ jobs:
           ${{ runner.os }}-node-
     - name: Install dependencies
       run: |
-        cd my-app
+        cd next-app
         npm ci
     - name: npm build
       run: |
-        cd my-app
+        cd next-app/cdk
+        npm install
         npm run build
+    - name: Install CDK dependencies
+      run: |
+        cd next-app/cdk
+
+        npm install aws-cdk-lib
+        npm install -g aws-cdk
+
+
+
+
 
   image-build:
     if: github.event.pull_request.merged == true
@@ -49,6 +61,16 @@ jobs:
       with:
         aws-region: ${{ vars.AWS_REGION }}
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+    - name: Install dependencies for Docker
+      run: |
+        npm ci
+        npm install aws-cdk-lib # 추가
+        npm install npm install aws-cdk-lib --save-dev
+        npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
+        npm install @aws-cdk/aws-apigatewayv2-alpha
+      working-directory : next-app/
+
+
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
@@ -56,30 +78,42 @@ jobs:
         mask-password: 'true'
     - name: docker build & push
       run: |
+        pwd
         docker build -f Dockerfile --tag ${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }} .
         docker push ${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }}
-  
+      working-directory : next-app/
+    # - name: Setup tmate session
+    #   if: always()
+    #   uses: mxschmitt/action-tmate@v3
+    #   timeout-minutes: 15
+
   deploy:
     runs-on: ubuntu-latest
     needs: [image-build]
     steps:
     - name: checkout the code
       uses: actions/checkout@v4
-  
-    
+
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '20' # 노드 버전을 프로젝트에 맞게 조정
+        node-version: '18' # 노드 버전을 프로젝트에 맞게 조정
+
+
     - name: Install dependencies
       run: |
-        npm install 
+        export NODE_ENV=development
+        npm ci
+        npm install aws-cdk-lib # 추가
         npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
         npm install @aws-cdk/aws-apigatewayv2-alpha
-    - name: Install AWS CDK
-      run: | 
-        npm install -g aws-cdk@latest
-        npm update
+
+      working-directory : next-app/cdk
+
+
+
+
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -91,41 +125,58 @@ jobs:
     # - name: Setup tmate session
     #   uses: mxschmitt/action-tmate@v3
     #   timeout-minutes: 15
+    - name: Test AWS Credentials
+      run: aws sts get-caller-identity
+
+
+
+
     - name: Bootstrap CDK
-      run: cdk bootstrap 
+      run: |
+        pwd
+        aws iam list-account-aliases
+        npx cdk bootstrap
+
+
+      # run: cdk bootstrap  aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
+      # aws://019817421975/ap-northeast-1
       # run: cdk bootstrap aws://ACCOUNT_ID/REGION
-      env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'ap-northeast-1'
-    
+      # env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_DEFAULT_REGION: 'ap-northeast-1'
+      working-directory : next-app/cdk
+
     - name: CDK Deploy
       id: cdk_deploy
-      run: | 
+      run: |
         pwd
-        cdk deploy --require-approval never --app "npx ts-node --prefer-ts-exts bin/my-cdk-project.ts"
-      env:
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-        AWS_REGION: ${{ vars.AWS_REGION }}
-        
-    - name: notify
+        npx cdk deploy --require-approval never
+      working-directory : next-app/cdk
+    # - name: notify
+    #   if: always()
+    #   uses: slackapi/slack-github-action@v1.24.0
+    #   with:
+    #     payload: |
+    #       {
+    #         "text": "message",
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": "Environment : dev, Deploy Result : ${{ steps.cdk_deploy.outcome }}, Repository : ${{ github.repository }}."
+    #               # 수정된 참조: steps.cdk_deploy.outcome
+    #             }
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+    - name: Setup tmate session
       if: always()
-      uses: slackapi/slack-github-action@v1.24.0
-      with:
-        payload: |
-          {
-            "text": "message",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "Environment : dev, Deploy Result : ${{ steps.cdk_deploy.outcome }}, Repository : ${{ github.repository }}."
-                  # 수정된 참조: steps.cdk_deploy.outcome
-                }
-              }
-            ]
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 60
+
