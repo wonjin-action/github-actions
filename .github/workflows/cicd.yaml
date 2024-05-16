@@ -1,135 +1,128 @@
 name: cicd-1
 on:
-  workflow_dispatch:
+  workflow_dispatch: 
   pull_request:
     types: [opened, synchronize, closed]
     branches: [dev]
     paths:
-    - 'next-app/*'
-  
+      - 'next-app/*'
 
 jobs:
   test:
     if: github.event.action == 'opened' || github.event.action == 'synchronize'
     runs-on: ubuntu-latest
     steps:
-    - name: checkout the code
-      uses: actions/checkout@v4
-    - name: setup-node
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
-    - name: Cache Node.js modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-    - name: Install dependencies
-      run: |
-        cd next-app
-        npm ci
-    - name: npm build
-      run: |
-        cd next-app/cdk
-        npm install
-        npm run build
-    - name: Install CDK dependencies
-      run: |
-        cd next-app/cdk
-        npm install aws-cdk-lib
-        npm install -g aws-cdk
+      - name: checkout the code
+        uses: actions/checkout@v4
+      - name: setup-node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: |
+          cd next-app
+          npm ci
+      - name: npm build
+        run: |
+          cd next-app/cdk
+          npm install
+          npm run build
+      - name: Install CDK dependencies
+        run: |
+          cd next-app/cdk
+          npm install aws-cdk-lib
+          npm install -g aws-cdk
 
   image-build:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
-    - name: Setup AWS CLI
-      run: |
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
-    - name: checkout the code
-      uses: actions/checkout@v4
-    - name: Configure AWS Credentials
-      id: credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-region: ${{ vars.AWS_REGION }}
-        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-    - name: Install dependencies for Docker
-      run: |
-        npm ci
-        npm install aws-cdk-lib --save-dev
-        npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
-        npm install @aws-cdk/aws-apigatewayv2-alpha
-      working-directory: next-app/
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-      with:
-        mask-password: 'true'
-    - name: Get Ecr Repo URL
-      run: |
-            echo REPO_URL=$(aws ecr describe-repositories --repository-names hinagiku-dev-ecs-hinagikudevecsapphinagikudevecsbackendbackappecsresourcesrepoce5391e0-lm3igs4fy1sc --query 'repositories[].repositoryUri' --output text) >> $GITHUB_ENV
-            
-    - name: docker build & push
-      run: |
-        pwd
-        docker build -f Dockerfile --tag ${{ env.REPO_URL }}:${{ github.sha }} .
-        docker push ${{ env.REPO_URL }}:${{ github.sha }}
-      working-directory: next-app/
-    # - name: Save Docker image URL
-    #   run: |
-    #     echo "DOCKER_IMAGE_URL=${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }}" >> $GITHUB_ENV
+      - name: checkout the code
+        uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        id: credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      - name: Install dependencies for Docker
+        run: |
+          npm ci
+          npm install aws-cdk-lib --save-dev
+          npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
+          npm install @aws-cdk/aws-apigatewayv2-alpha
+        working-directory: next-app/
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: 'true'
+      - name: Get Ecr Repo URL
+        run: |
+          echo REPO_URL=$(aws ecr describe-repositories --repository-names hinagiku-dev-ecs-hinagikudevecsapphinagikudevecsbackendbackappecsresourcesrepoce5391e0-lm3igs4fy1sc --query 'repositories[].repositoryUri' --output text) >> $GITHUB_ENV
+      - name: docker build & push
+        run: |
+          pwd
+          docker build -f Dockerfile --tag ${{ env.REPO_URL }}:${{ github.sha }} .
+          docker push ${{ env.REPO_URL }}:${{ github.sha }}
+        working-directory: next-app/
+      # - name: Save Docker image URL
+      #   run: |
+      #     echo "DOCKER_IMAGE_URL=${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }}" >> $GITHUB_ENV
 
   deploy:
     runs-on: ubuntu-latest
     needs: [image-build]
     steps:
-    - name: checkout the code
-      uses: actions/checkout@v4
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-    - name: Install dependencies
-      run: |
-        export NODE_ENV=development
-        npm ci
-        npm install aws-cdk-lib --save-dev
-        npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
-        npm install @aws-cdk/aws-apigatewayv2-alpha
-      working-directory: next-app/cdk
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ vars.AWS_REGION }}
-        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-        role-skip-session-tagging: true
-    - name: Test AWS Credentials
-      run: aws sts get-caller-identity
-    - name: Prepare Lambda Deployment Package
-      run: |
-        echo $REPO_URL > docker_image_url.txt
-        zip -r lambda_package.zip docker_image_url.txt lambda_function_config.json ../script/lambda.sh
-      working-directory: infra/lambda
-    - name: Get S3 Bucket Name from SSM
-      id: get_s3_bucket_name
-      run: |
-        BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
-        echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
-    - name: Upload to S3
-      run: |
-        aws s3 cp lambda_package.zip s3://$BUCKET_NAME/lambda_package.zip
-      working-directory: infra/lambda
-    - name: Setup tmate session
-      if: always()
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 60
+      - name: checkout the code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: |
+          export NODE_ENV=development
+          npm ci
+          npm install aws-cdk-lib --save-dev
+          npm install @aws-cdk/aws-apigatewayv2-integrations-alpha
+          npm install @aws-cdk/aws-apigatewayv2-alpha
+        working-directory: next-app/cdk
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-skip-session-tagging: true
+      - name: Test AWS Credentials
+        run: aws sts get-caller-identity
+      - name: Prepare Lambda Deployment Package
+        run: |
+          echo $REPO_URL > docker_image_url.txt
+          zip -r lambda_package.zip docker_image_url.txt lambda_function_config.json ../script/lambda.sh
+        working-directory: infra/lambda
+      - name: Get S3 Bucket Name from SSM
+        id: get_s3_bucket_name
+        run: |
+          BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
+          echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
+      - name: Upload to S3
+        run: |
+          aws s3 cp lambda_package.zip s3://$BUCKET_NAME/lambda_package.zip
+        working-directory: infra/lambda
+      - name: Setup tmate session
+        if: always()
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 60
