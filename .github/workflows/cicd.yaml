@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, closed]
     branches: [dev]
     paths:
-      - 'next-app/*'
+      - '*/**'
 
 jobs:
   test:
