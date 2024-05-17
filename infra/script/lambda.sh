@@ -1,7 +1,8 @@
 #!/bin/bash
 
+echo "Current directory is: $(pwd)"
 # Load the configuration from the JSON file
-LAMBDA_CONFIG_FILE="../lambda/lamda_function_config.json"
+LAMBDA_CONFIG_FILE="../../lambda/lamda_function_config.json"
 LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
 
 # Extract values from the JSON configuration
