@@ -6,7 +6,8 @@ on:
     branches: [dev]
     paths:
       - '*/**'
-
+# 나중에 환경 변수를 전달하도록해서 환경 변수를 기반으로, 스택이름을 생성된 
+# 스택을 기반으로 파라미터 스토어의 값을 참조할 수 있도록 동적으로 만든다. 
 jobs:
   test:
     if: github.event.action == 'opened' || github.event.action == 'synchronize'
@@ -67,13 +68,19 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         with:
           mask-password: 'true'
-      - name: Get Ecr Repo URL
+      - name: Get Ecr Repo URL and ImageTag
         run: |
           echo REPO_URL=$(aws ecr describe-repositories --repository-names hinagiku-dev-ecs-hinagikudevecsapphinagikudevecsbackendbackappecsresourcesrepoce5391e0-lm3igs4fy1sc --query 'repositories[].repositoryUri' --output text) >> $GITHUB_ENV
+          function generate_image_tag() {
+            local -r tag=$(tar cf - "$SCRIPT_DIR/../*" > /dev/null 2>&1 | md5sum | cut -c 1-8)
+            echo "$tag"
+          }
+          tag=$(generate_image_tag)
+          echo "TAG=$tag" >> $GITHUB_ENV
       - name: docker build & push
         run: |
           pwd
-          docker build -f Dockerfile --tag ${{ env.REPO_URL }}:${{ github.sha }} .
+          docker build -f Dockerfile --tag ${{ env.TAG }} .
           docker push ${{ env.REPO_URL }}:${{ github.sha }}
         working-directory: next-app/
       # - name: Save Docker image URL
@@ -110,8 +117,9 @@ jobs:
         run: aws sts get-caller-identity
       - name: Prepare Lambda Deployment Package
         run: |
-          echo $REPO_URL > docker_image_url.txt
-          zip -r lambda_package.zip docker_image_url.txt lambda_function_config.json ../script/lambda.sh
+          echo $REPO_URL > docker_image_info.txt
+          echo $TAG >> docker_image_info.txt
+          zip -r image.zip docker_image_info.txt lambda_function_config.json ../script/lambda.sh
         working-directory: infra/lambda
       - name: Get S3 Bucket Name from SSM
         id: get_s3_bucket_name
