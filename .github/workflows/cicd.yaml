@@ -80,8 +80,8 @@ jobs:
       - name: docker build & push
         run: |
           pwd
-          docker build -f Dockerfile --tag ${{ env.TAG }} .
-          docker push ${{ env.REPO_URL }}:${{ github.sha }}
+          docker build -f Dockerfile --tag ${{ env.REPO_URL }}:${{ env.TAG }} .
+          docker push ${{ env.REPO_URL }}:${{ env.TAG }}
         working-directory: next-app/
       # - name: Save Docker image URL
       #   run: |
