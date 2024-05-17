@@ -128,7 +128,7 @@ jobs:
           echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
       - name: Upload to S3
         run: |
-          aws s3 cp lambda_package.zip s3://$BUCKET_NAME/lambda_package.zip
+          aws s3 cp lambda_package.zip s3://$BUCKET_NAME/image.zip
         working-directory: infra/lambda
       - name: Setup tmate session
         if: always()
