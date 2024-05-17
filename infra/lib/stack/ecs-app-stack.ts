@@ -12,7 +12,7 @@ interface EcsAppStackProps extends cdk.StackProps {
   appKey: kms.IKey;
   alarmTopic: sns.Topic;
   prefix: string;
-  albCertificateIdentifier: ICertificateIdentifier;
+  // albCertificateIdentifier?: ICertificateIdentifier;
   ecsFrontTasks?: IEcsAlbParam;
   ecsBackTasks?: IEcsParam[];
   ecsAuthTasks?: IEcsParam[];
@@ -21,25 +21,25 @@ interface EcsAppStackProps extends cdk.StackProps {
 
 export class EcsAppStack extends cdk.Stack {
   public readonly ecs: EcsAppConstruct;
-  public readonly alb: AlbConstruct;
+  // public readonly alb: AlbConstruct;
 
   constructor(scope: Construct, id: string, props: EcsAppStackProps) {
     super(scope, id, props);
 
-    const albConstruct = new AlbConstruct(this, `${props.prefix}-Alb`, {
-      vpc: props.vpc,
-      alarmTopic: props.alarmTopic,
-      albCertificateIdentifier: props.albCertificateIdentifier,
-      ecsApps: props.ecsFrontTasks,
-    });
-    this.alb = albConstruct;
+    // const albConstruct = new AlbConstruct(this, `${props.prefix}-Alb`, {
+    //   vpc: props.vpc,
+    //   alarmTopic: props.alarmTopic,
+    //   albCertificateIdentifier: props.albCertificateIdentifier,
+    //   ecsApps: props.ecsFrontTasks,
+    // });
+    // this.alb = albConstruct;
 
     const app = new EcsAppConstruct(this, `${props.prefix}-EcsApp`, {
       vpc: props.vpc,
       appKey: props.appKey,
       alarmTopic: props.alarmTopic,
       prefix: props.prefix,
-      albConstruct: albConstruct,
+      // albConstruct: albConstruct,
       ecsFrontTasks: props.ecsFrontTasks,
       ecsBackTasks: props.ecsBackTasks,
       ecsAuthTasks: props.ecsAuthTasks,

@@ -16,7 +16,7 @@ interface EcsAppConstructProps {
   appKey: kms.IKey;
   alarmTopic: sns.Topic;
   prefix: string;
-  albConstruct: AlbConstruct;
+  albConstruct?: AlbConstruct;
   ecsFrontTasks?: IEcsAlbParam;
   ecsBackTasks?: IEcsParam[];
   ecsBastionTasks: boolean;
@@ -55,7 +55,7 @@ export class EcsAppConstruct extends Construct {
           prefix: props.prefix,
           appKey: props.appKey,
           alarmTopic: props.alarmTopic,
-          allowFromSg: [props.albConstruct.appAlbSecurityGroup],
+          // allowFromSg: [props.albConstruct.appAlbSecurityGroup],
           portNumber: app.portNumber,
         });
       });
@@ -68,7 +68,7 @@ export class EcsAppConstruct extends Construct {
           appName: ecsApp.appName,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
-          targetGroup: props.albConstruct.targetGroupConstructs[index].targetGroup,
+          // targetGroup: props.albConstruct.targetGroupConstructs[index].targetGroup,
           securityGroup: ecsApp.securityGroupForFargate,
           vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
