@@ -9,6 +9,12 @@ FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r '.FunctionName')
 MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r '.MemorySize')
 TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 
+# Import Docker Info for Iambda Backend 
+
+source ./lambda/docker_image_info.txt
+echo "docker image url : ${DOCKER_IMAGE_URL}"
+echo "Image tag is ${TAG}"
+
 # 동적으로 가져오기 -> 사용자에게 값을 입력받지 않는다.
 REGION=$(aws configure get region)
 
@@ -102,13 +108,13 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     sleep 30  # 30초 대기
     aws lambda update-function-code \
     --function-name $FUNCTION_NAME \
-    --image-uri "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:latest2"
+    --image-uri "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${DOCKER_IMAGE_URL}:${TAG}"
 else
     echo "Creating new Lambda function..."
     aws lambda create-function \
     --function-name $FUNCTION_NAME \
     --package-type Image \
-    --code ImageUri="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:latest" \
+    --code ImageUri="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${DOCKER_IMAGE_URL}:${TAG}" \
     --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
     --memory-size $MEMORY_SIZE \
     --timeout $TIMEOUT
