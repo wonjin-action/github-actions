@@ -14,6 +14,10 @@ TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 # Import Docker Info for Iambda Backend 
 
 source ./lambda/docker_image_info.txt
+
+DOCKER_IMAGE_URL=$(jq -r '.DOCKER_IMAGE_URL' $LAMBDA_CONFIG_FILE)
+TAG=$(jq -r '.TAG' $LAMBDA_CONFIG_FILE)
+
 echo "docker image url : ${DOCKER_IMAGE_URL}"
 echo "Image tag is ${TAG}"
 
