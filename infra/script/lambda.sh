@@ -3,7 +3,19 @@
 WORKING_DIR=$(pwd)
 echo "Current directory is: $WORKING_DIR"
 # Load the configuration from the JSON file
-LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/lambda/lambda_function_config.json"
+
+LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/infra/lambda/lamda_function_config.json"
+
+if [ -f "$LAMBDA_CONFIG_FILE" ]; then
+    echo "Found lambda configuration file: $LAMBDA_CONFIG_FILE"
+else
+    echo "Error: lambda configuration file not found: $LAMBDA_CONFIG_FILE"
+    exit 1
+fi
+LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
+
+
+
 LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
 
 # Extract values from the JSON configuration
