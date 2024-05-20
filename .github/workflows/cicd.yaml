@@ -83,8 +83,8 @@ jobs:
           echo "TAG=$TAG" >> $GITHUB_ENV
       - name: Prepare Lambda Deployment Package
         run: |
-          echo "{\"DOCKER_IMAGE_URL\": \"$REPO_URL\", \"TAG\": \"$TAG\"}" > docker_image_info.json
-          cat docker_image_info.json
+          jq -n --arg url "$REPO_URL" --arg tag "$TAG" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > infra/lambda/docker_image_info.json
+          cat infra/lambda/docker_image_info.json
         working-directory: infra/lambda
       - name: Save environment variables as artifact
         uses: actions/upload-artifact@v3
@@ -115,6 +115,15 @@ jobs:
           export TAG=$(echo $DOCKER_IMAGE_INFO | jq -r '.TAG')
           echo "REPO_URL=$REPO_URL"
           echo "TAG=$TAG"
+        env:
+          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          BUCKET_NAME: ${{ env.BUCKET_NAME }}
+          REPO_URL: ${{ env.REPO_URL }}
+          TAG: ${{ env.TAG }}
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -150,14 +159,19 @@ jobs:
         run: |
           pwd
           jq -n --arg url "$REPO_URL" --arg tag "$TAG" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
-          cat infra/lambda/docker_image_info.json
+          cat docker_image_info.json
           zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh
           ls -l
         working-directory: infra/lambda
+        env:
+          REPO_URL: ${{ env.REPO_URL }}
+          TAG: ${{ env.TAG }}
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
         working-directory: infra/lambda
+        env:
+          BUCKET_NAME: ${{ env.BUCKET_NAME }}
       - name: Setup tmate session
         if: always()
         uses: mxschmitt/action-tmate@v3
