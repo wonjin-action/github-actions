@@ -1,6 +1,7 @@
 #!/bin/bash
 
-echo "Current directory is: $(pwd)"
+WORKING_DIR=$(pwd)
+echo "Current directory is: $WORKING_DIR"
 # Load the configuration from the JSON file
 LAMBDA_CONFIG_FILE="../../lambda/lamda_function_config.json"
 LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
