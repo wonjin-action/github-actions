@@ -71,17 +71,20 @@ jobs:
       - name: Get ECR Repo URL and Image Tag
         run: |
           REPO_URL=$(aws ecr describe-repositories --repository-names hinagiku-dev-ecs-hinagikudevecsapphinagikudevecsbackendbackappecsresourcesrepoce5391e0-lm3igs4fy1sc --query 'repositories[].repositoryUri' --output text)
+          echo "REPO_URL=$REPO_URL"
           echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
+
           function generate_image_tag() {
-            local -r tag=$(tar cf - "$SCRIPT_DIR/../*" > /dev/null 2>&1 | md5sum | cut -c 1-8)
+            local -r tag=$(tar cf - ./* > /dev/null 2>&1 | md5sum | cut -c 1-8)
             echo "$tag"
           }
           TAG=$(generate_image_tag)
+          echo "TAG=$TAG"
           echo "TAG=$TAG" >> $GITHUB_ENV
       - name: Prepare Lambda Deployment Package
         run: |
           echo "{\"DOCKER_IMAGE_URL\": \"$REPO_URL\", \"TAG\": \"$TAG\"}" > docker_image_info.json
-          echo "$(cat docker_image_info.json)"
+          cat docker_image_info.json
         working-directory: infra/lambda
       - name: Save environment variables as artifact
         uses: actions/upload-artifact@v3
