@@ -48,8 +48,8 @@ jobs:
       id-token: write
       contents: read
     outputs:
-      REPO_URL: ${{ steps.get_ecr_repo_url.outputs.REPO_URL }}
-      TAG: ${{ steps.generate_image_tag.outputs.TAG }}
+      REPO_URL: ${{ steps.get_ecr_repo_url_and_tag.outputs.REPO_URL }}
+      TAG: ${{ steps.get_ecr_repo_url_and_tag.outputs.TAG }}
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
@@ -73,7 +73,7 @@ jobs:
         with:
           mask-password: 'true'
       - name: Get ECR Repo URL and Image Tag
-        id: get_ecr_repo_url
+        id: get_ecr_repo_url_and_tag
         run: |
           REPO_URL=$(aws ecr describe-repositories --repository-names hinagiku-dev-ecs-hinagikudevecsapphinagikudevecsbackendbackappecsresourcesrepoce5391e0-lm3igs4fy1sc --query 'repositories[].repositoryUri' --output text)
           echo "REPO_URL=$REPO_URL"
@@ -90,7 +90,7 @@ jobs:
         id: prepare_lambda_deployment
         run: |
           echo "Create docker_image_info.json in $(pwd)"
-          jq -n --arg url "${{ steps.get_ecr_repo_url.outputs.REPO_URL }}" --arg tag "${{ steps.get_ecr_repo_url.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
+          jq -n --arg url "${{ steps.get_ecr_repo_url_and_tag.outputs.REPO_URL }}" --arg tag "${{ steps.get_ecr_repo_url_and_tag.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
         working-directory: infra/lambda
       - name: Save environment variables as artifact
@@ -101,8 +101,8 @@ jobs:
       - name: Docker build & push
         id: docker_build_push
         run: |
-          docker build -f Dockerfile --tag ${{ steps.get_ecr_repo_url.outputs.REPO_URL }}:${{ steps.get_ecr_repo_url.outputs.TAG }} .
-          docker push ${{ steps.get_ecr_repo_url.outputs.REPO_URL }}:${{ steps.get_ecr_repo_url.outputs.TAG }}
+          docker build -f Dockerfile --tag ${{ steps.get_ecr_repo_url_and_tag.outputs.REPO_URL }}:${{ steps.get_ecr_repo_url_and_tag.outputs.TAG }} .
+          docker push ${{ steps.get_ecr_repo_url_and_tag.outputs.REPO_URL }}:${{ steps.get_ecr_repo_url_and_tag.outputs.TAG }}
         working-directory: next-app/
 
   deploy:
