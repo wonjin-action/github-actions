@@ -148,7 +148,7 @@ jobs:
         
       - name: Prepare Lambda Deployment Package
         run: |
-          cd infra/lambda
+          pwd
           echo "{\"DOCKER_IMAGE_URL\": \"$REPO_URL\", \"TAG\": \"$TAG\"}" > docker_image_info.json
           cat docker_image_info.json
           zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh
