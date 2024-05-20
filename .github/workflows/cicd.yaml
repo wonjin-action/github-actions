@@ -1,7 +1,7 @@
 name: cicd-1
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, closed]
     branches: [dev]
@@ -47,6 +47,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    outputs:
+      REPO_URL: ${{ steps.get_ecr_repo_url.outputs.REPO_URL }}
+      TAG: ${{ steps.generate_image_tag.outputs.TAG }}
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
@@ -57,6 +60,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       - name: Install dependencies for Docker
+        id: install_dependencies
         run: |
           npm ci
           npm install aws-cdk-lib --save-dev
@@ -69,10 +73,11 @@ jobs:
         with:
           mask-password: 'true'
       - name: Get ECR Repo URL and Image Tag
+        id: get_ecr_repo_url
         run: |
           REPO_URL=$(aws ecr describe-repositories --repository-names hinagiku-dev-ecs-hinagikudevecsapphinagikudevecsbackendbackappecsresourcesrepoce5391e0-lm3igs4fy1sc --query 'repositories[].repositoryUri' --output text)
           echo "REPO_URL=$REPO_URL"
-          echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
+          echo "REPO_URL=$REPO_URL" >> $GITHUB_OUTPUT
 
           function generate_image_tag() {
             local -r tag=$(tar cf - ./* > /dev/null 2>&1 | md5sum | cut -c 1-8)
@@ -80,11 +85,12 @@ jobs:
           }
           TAG=$(generate_image_tag)
           echo "TAG=$TAG"
-          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
       - name: Prepare Lambda Deployment Package
+        id: prepare_lambda_deployment
         run: |
           echo "Create docker_image_info.json in $(pwd)"
-          jq -n --arg url "$REPO_URL" --arg tag "$TAG" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
+          jq -n --arg url "${{ steps.get_ecr_repo_url.outputs.REPO_URL }}" --arg tag "${{ steps.get_ecr_repo_url.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
         working-directory: infra/lambda
       - name: Save environment variables as artifact
@@ -93,9 +99,10 @@ jobs:
           name: docker_image_info
           path: infra/lambda/docker_image_info.json
       - name: Docker build & push
+        id: docker_build_push
         run: |
-          docker build -f Dockerfile --tag ${{ env.REPO_URL }}:${{ env.TAG }} .
-          docker push ${{ env.REPO_URL }}:${{ env.TAG }}
+          docker build -f Dockerfile --tag ${{ steps.get_ecr_repo_url.outputs.REPO_URL }}:${{ steps.get_ecr_repo_url.outputs.TAG }} .
+          docker push ${{ steps.get_ecr_repo_url.outputs.REPO_URL }}:${{ steps.get_ecr_repo_url.outputs.TAG }}
         working-directory: next-app/
 
   deploy:
@@ -114,8 +121,8 @@ jobs:
           DOCKER_IMAGE_INFO=$(cat ./infra/lambda/docker_image_info.json)
           export REPO_URL=$(echo $DOCKER_IMAGE_INFO | jq -r '.DOCKER_IMAGE_URL')
           export TAG=$(echo $DOCKER_IMAGE_INFO | jq -r '.TAG')
-          echo "REPO_URL=$REPO_URL"
-          echo "TAG=$TAG"
+          echo "REPO_URL=${{ needs.image-build.outputs.REPO_URL }}"
+          echo "TAG=${{ needs.image-build.outputs.TAG }}"
         env:
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -123,8 +130,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           BUCKET_NAME: ${{ env.BUCKET_NAME }}
-          REPO_URL: ${{ env.REPO_URL }}
-          TAG: ${{ env.TAG }}
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -159,20 +164,16 @@ jobs:
       - name: Prepare Lambda Deployment Package
         run: |
           pwd
-          jq -n --arg url "$REPO_URL" --arg tag "$TAG" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
+          jq -n --arg url "${{ needs.image-build.outputs.REPO_URL }}" --arg tag "${{ needs.image-build.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
           zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh
           ls -l
         working-directory: infra/lambda
-        env:
-          REPO_URL: ${{ env.REPO_URL }}
-          TAG: ${{ env.TAG }}
+  
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
         working-directory: infra/lambda
-        env:
-          BUCKET_NAME: ${{ env.BUCKET_NAME }}
       - name: Setup tmate session
         if: always()
         uses: mxschmitt/action-tmate@v3
