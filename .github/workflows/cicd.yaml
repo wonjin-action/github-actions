@@ -1,4 +1,5 @@
 name: cicd-1
+
 on:
   workflow_dispatch: 
   pull_request:
@@ -6,16 +7,15 @@ on:
     branches: [dev]
     paths:
       - '*/**'
-# 나중에 환경 변수를 전달하도록해서 환경 변수를 기반으로, 스택이름을 생성된 
-# 스택을 기반으로 파라미터 스토어의 값을 참조할 수 있도록 동적으로 만든다. 
+
 jobs:
   test:
     if: github.event.action == 'opened' || github.event.action == 'synchronize'
     runs-on: ubuntu-latest
     steps:
-      - name: checkout the code
+      - name: Checkout the code
         uses: actions/checkout@v4
-      - name: setup-node
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -30,7 +30,7 @@ jobs:
         run: |
           cd next-app
           npm ci
-      - name: npm build
+      - name: Build with npm
         run: |
           cd next-app/cdk
           npm install
@@ -48,7 +48,7 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: checkout the code
+      - name: Checkout the code
         uses: actions/checkout@v4
       - name: Configure AWS Credentials
         id: credentials
@@ -68,31 +68,50 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         with:
           mask-password: 'true'
-      - name: Get Ecr Repo URL and ImageTag
+      - name: Get ECR Repo URL and Image Tag
         run: |
-          echo REPO_URL=$(aws ecr describe-repositories --repository-names hinagiku-dev-ecs-hinagikudevecsapphinagikudevecsbackendbackappecsresourcesrepoce5391e0-lm3igs4fy1sc --query 'repositories[].repositoryUri' --output text) >> $GITHUB_ENV
+          REPO_URL=$(aws ecr describe-repositories --repository-names hinagiku-dev-ecs-hinagikudevecsapphinagikudevecsbackendbackappecsresourcesrepoce5391e0-lm3igs4fy1sc --query 'repositories[].repositoryUri' --output text)
+          echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
           function generate_image_tag() {
             local -r tag=$(tar cf - "$SCRIPT_DIR/../*" > /dev/null 2>&1 | md5sum | cut -c 1-8)
             echo "$tag"
           }
-          tag=$(generate_image_tag)
-          echo "TAG=$tag" >> $GITHUB_ENV
-      - name: docker build & push
+          TAG=$(generate_image_tag)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+      - name: Prepare Lambda Deployment Package
         run: |
-          pwd
+          echo "{\"DOCKER_IMAGE_URL\": \"$REPO_URL\", \"TAG\": \"$TAG\"}" > docker_image_info.json
+          echo "$(cat docker_image_info.json)"
+        working-directory: infra/lambda
+      - name: Save environment variables as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker_image_info
+          path: infra/lambda/docker_image_info.json
+      - name: Docker build & push
+        run: |
           docker build -f Dockerfile --tag ${{ env.REPO_URL }}:${{ env.TAG }} .
           docker push ${{ env.REPO_URL }}:${{ env.TAG }}
         working-directory: next-app/
-      # - name: Save Docker image URL
-      #   run: |
-      #     echo "DOCKER_IMAGE_URL=${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }}" >> $GITHUB_ENV
 
   deploy:
     runs-on: ubuntu-latest
     needs: [image-build]
     steps:
-      - name: checkout the code
+      - name: Checkout the code
         uses: actions/checkout@v4
+      - name: Download environment variables artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docker_image_info
+          path: './infra/lambda'
+      - name: Load environment variables
+        run: |
+          DOCKER_IMAGE_INFO=$(cat ./infra/lambda/docker_image_info.json)
+          export REPO_URL=$(echo $DOCKER_IMAGE_INFO | jq -r '.DOCKER_IMAGE_URL')
+          export TAG=$(echo $DOCKER_IMAGE_INFO | jq -r '.TAG')
+          echo "REPO_URL=$REPO_URL"
+          echo "TAG=$TAG"
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -115,17 +134,16 @@ jobs:
           role-skip-session-tagging: true
       - name: Test AWS Credentials
         run: aws sts get-caller-identity
-      - name: Prepare Lambda Deployment Package
-        run: |
-          echo "{\"DOCKER_IMAGE_URL\": \"$REPO_URL\", \"TAG\": \"$TAG\"}" > docker_image_info.json
-          echo "$( cat docker_image_info.json)"
-          zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh
-        working-directory: infra/lambda
       - name: Get S3 Bucket Name from SSM
         id: get_s3_bucket_name
         run: |
           BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
           echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
+      - name: Prepare Lambda Deployment Package
+        run: |
+          echo "{\"DOCKER_IMAGE_URL\": \"$REPO_URL\", \"TAG\": \"$TAG\"}" > docker_image_info.json
+          zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh
+        working-directory: infra/lambda
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
