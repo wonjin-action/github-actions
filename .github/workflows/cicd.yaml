@@ -84,7 +84,7 @@ jobs:
       - name: Prepare Lambda Deployment Package
         run: |
           echo "Create docker_image_info.json in $(pwd)"
-          jq -n --arg url "$REPO_URL" --arg tag "$TAG" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > infra/lambda/docker_image_info.json
+          jq -n --arg url "$REPO_URL" --arg tag "$TAG" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
         working-directory: infra/lambda
       - name: Save environment variables as artifact
