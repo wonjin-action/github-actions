@@ -15,9 +15,6 @@ fi
 LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
 
 
-
-LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
-
 # Extract values from the JSON configuration
 FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r '.FunctionName')
 MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r '.MemorySize')
