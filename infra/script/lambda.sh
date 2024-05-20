@@ -3,7 +3,7 @@
 WORKING_DIR=$(pwd)
 echo "Current directory is: $WORKING_DIR"
 # Load the configuration from the JSON file
-LAMBDA_CONFIG_FILE="../../lambda/lamda_function_config.json"
+LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/lambda/lambda_function_config.json"
 LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
 
 # Extract values from the JSON configuration
@@ -11,9 +11,8 @@ FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r '.FunctionName')
 MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r '.MemorySize')
 TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 
-# Import Docker Info for Iambda Backend 
-
-source ./lambda/docker_image_info.txt
+# Import Docker Info for Lambda Backend 
+source $CODEBUILD_SRC_DIR/lambda/docker_image_info.txt
 
 DOCKER_IMAGE_URL=$(jq -r '.DOCKER_IMAGE_URL' $LAMBDA_CONFIG_FILE)
 TAG=$(jq -r '.TAG' $LAMBDA_CONFIG_FILE)
