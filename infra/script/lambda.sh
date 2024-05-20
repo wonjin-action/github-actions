@@ -12,7 +12,7 @@ else
     echo "Error: lambda configuration file not found: $LAMBDA_CONFIG_FILE"
     exit 1
 fi
-LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
+LAMBDA_CONFIG=$(cat LAMBDA_CONFIG_FILE)
 
 
 # Extract values from the JSON configuration
