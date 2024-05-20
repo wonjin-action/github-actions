@@ -142,10 +142,17 @@ jobs:
         run: |
           BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
           echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
+          
+      - name: List files in infra/lambda
+        run: ls -l infra/lambda
+        
       - name: Prepare Lambda Deployment Package
         run: |
+          cd infra/lambda
           echo "{\"DOCKER_IMAGE_URL\": \"$REPO_URL\", \"TAG\": \"$TAG\"}" > docker_image_info.json
+          cat docker_image_info.json
           zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh
+          ls -l
         working-directory: infra/lambda
       - name: Upload to S3
         run: |
