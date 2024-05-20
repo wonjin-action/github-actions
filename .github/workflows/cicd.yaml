@@ -117,9 +117,9 @@ jobs:
         run: aws sts get-caller-identity
       - name: Prepare Lambda Deployment Package
         run: |
-          echo $REPO_URL > docker_image_info.txt
-          echo $TAG >> docker_image_info.txt
-          zip -r image.zip docker_image_info.txt lambda_function_config.json ../script/lambda.sh
+          echo "{\"DOCKER_IMAGE_URL\": \"$REPO_URL\", \"TAG\": \"$TAG\"}" > docker_image_info.json
+          echo "$( cat docker_image_info.json)"
+          zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh
         working-directory: infra/lambda
       - name: Get S3 Bucket Name from SSM
         id: get_s3_bucket_name
