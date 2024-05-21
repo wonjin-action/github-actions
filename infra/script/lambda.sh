@@ -8,7 +8,7 @@ echo "Current directory is: $WORKING_DIR"
 
 < If you start a script locally > 
 
-# LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/infra/lambda/lamda_function_config.json"
+# LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/infra/lambda/lambda_function_config.json"
 
 END
 
@@ -26,7 +26,7 @@ else
 fi
 
 
-LAMBDA_CONFIG=$(cat LAMBDA_CONFIG_FILE)
+LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
 
 
 # Extract values from the JSON configuration
@@ -35,8 +35,6 @@ MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r '.MemorySize')
 TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 
 # Import Docker Info for Iambda Backend 
-
-source ./lambda/docker_image_info.txt
 
 DOCKER_IMAGE_URL=$(jq -r '.DOCKER_IMAGE_URL' $DOCKER_INFO)
 TAG=$(jq -r '.TAG' $DOCKER_INFO)
@@ -70,7 +68,7 @@ ROLE_ARN=""
 if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
     ROLE_ARN=$(aws iam create-role \
     --role-name $ROLE_NAME \
-    --assume-role-policy-document file://trust_policy_for_lambda.json \
+    --assume-role-policy-document file://unzip_folder/trust_policy_for_lambda.json \
     --query 'Role.Arn' \
     --output text)
     echo "Created new IAM Role: $ROLE_NAME"
