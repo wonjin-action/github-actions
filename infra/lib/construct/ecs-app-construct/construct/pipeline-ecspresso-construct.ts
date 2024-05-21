@@ -154,7 +154,7 @@ export class PipelineEcspressoConstruct extends Construct {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
-          'ecs:RegisterTaskDefinition',
+           'ecs:RegisterTaskDefinition',
           'ecs:ListTaskDefinitions',
           'ecs:DescribeTaskDefinition',
           'ecs:CreateService',
@@ -169,6 +169,13 @@ export class PipelineEcspressoConstruct extends Construct {
           'servicediscovery:GetNamespace',
           'iam:CreateServiceLinkedRole',
           'sts:AssumeRole',
+          'lambda:*', // 나중에 수정 필요 ,
+          's3:GetObject',
+          'ssm:GetParameter',
+          'cloudformation:DescribeStacks',
+          'apigateway:GET',
+          'iam:AttachRolePolicy'
+
         ],
         resources: ['*'],
       }),
