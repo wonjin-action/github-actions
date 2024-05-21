@@ -4,7 +4,19 @@ WORKING_DIR=$(pwd)
 echo "Current directory is: $WORKING_DIR"
 # Load the configuration from the JSON file
 
-LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/infra/lambda/lamda_function_config.json"
+<< 'END' 
+
+< If you start a script locally > 
+
+# LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/infra/lambda/lamda_function_config.json"
+
+END
+
+
+LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lamda_function_config.json"
+
+
+DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
 
 if [ -f "$LAMBDA_CONFIG_FILE" ]; then
     echo "Found lambda configuration file: $LAMBDA_CONFIG_FILE"
@@ -12,6 +24,8 @@ else
     echo "Error: lambda configuration file not found: $LAMBDA_CONFIG_FILE"
     exit 1
 fi
+
+
 LAMBDA_CONFIG=$(cat LAMBDA_CONFIG_FILE)
 
 
@@ -20,11 +34,12 @@ FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r '.FunctionName')
 MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r '.MemorySize')
 TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 
-# Import Docker Info for Lambda Backend 
-source $CODEBUILD_SRC_DIR/lambda/docker_image_info.txt
+# Import Docker Info for Iambda Backend 
 
-DOCKER_IMAGE_URL=$(jq -r '.DOCKER_IMAGE_URL' $LAMBDA_CONFIG_FILE)
-TAG=$(jq -r '.TAG' $LAMBDA_CONFIG_FILE)
+source ./lambda/docker_image_info.txt
+
+DOCKER_IMAGE_URL=$(jq -r '.DOCKER_IMAGE_URL' $DOCKER_INFO)
+TAG=$(jq -r '.TAG' $DOCKER_INFO)
 
 echo "docker image url : ${DOCKER_IMAGE_URL}"
 echo "Image tag is ${TAG}"
