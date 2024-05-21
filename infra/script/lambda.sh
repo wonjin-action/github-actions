@@ -13,7 +13,7 @@ echo "Current directory is: $WORKING_DIR"
 END
 
 
-LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lamda_function_config.json"
+LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
 
 
 DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
