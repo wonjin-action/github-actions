@@ -43,13 +43,14 @@ echo "docker image url : ${DOCKER_IMAGE_URL}"
 echo "Image tag is ${TAG}"
 
 # 동적으로 가져오기 -> 사용자에게 값을 입력받지 않는다.
-REGION=$(aws configure get region)
+REGION=$(aws configure get region --region ap-northeast-1)
 
-# ECR Repository Name 조회
-REPO_NAME=$(aws ssm get-parameter --name "/Hinagiku/Repository/${FUNCTION_NAME}" --query "Parameter.Value" --output text)
+# # ECR Repository Name 조회
+# REPO_NAME=$(aws ecr describe-repositories --repository-names  --region ap-northeast-1
+#  --output text)
 
 echo "AWS Region: $REGION"
-echo "Repository Name: $REPO_NAME"
+# echo "Repository Name: $REPO_NAME"
 
 API_ID=$(aws cloudformation describe-stacks --stack-name Hinagiku-Dev-apigateway --query "Stacks[0].Outputs[?OutputKey=='ApiId'].OutputValue" --output text)
 echo "API Gateway ID: $API_ID"
@@ -68,7 +69,7 @@ ROLE_ARN=""
 if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
     ROLE_ARN=$(aws iam create-role \
     --role-name $ROLE_NAME \
-    --assume-role-policy-document file://unzip_folder/trust_policy_for_lambda.json \
+    --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
     --query 'Role.Arn' \
     --output text)
     echo "Created new IAM Role: $ROLE_NAME"
