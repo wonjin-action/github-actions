@@ -90,6 +90,10 @@ aws iam attach-role-policy \
 --role-name lambda-execution-role \
 --policy-arn arn:aws:ecr:region:${ACCOUNT_ID}:repository/${REPO_URL}
 
+
+REPO_NAME=$(echo $REPO_URL | awk -F'/' '{print $2}')
+          echo "Repository Name: $REPO_NAME"
+
 ECR_POLICY=$(cat <<EOF
 {
     "Version": "2012-10-17",
@@ -113,10 +117,12 @@ EOF
 )
 
 aws ecr set-repository-policy \
-    --repository-name ${REPO_URL} \
+    --repository-name ${REPO_NAME} \
     --policy-text "$ECR_POLICY"
 
-
+# # aws ecr set-repository-policy \
+#     --repository-name <repository-name> \
+#     --policy-text file://path/to/ecr-policy.json
 
 
 
