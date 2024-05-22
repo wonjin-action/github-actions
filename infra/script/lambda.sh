@@ -39,10 +39,10 @@ TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 
 # Import Docker Info for Iambda Backend 
 
-DOCKER_IMAGE_URL=$(jq -r '.DOCKER_IMAGE_URL' $DOCKER_INFO)
+REPO_URL=$(jq -r '.DOCKER_IMAGE_URL' $DOCKER_INFO)
 TAG=$(jq -r '.TAG' $DOCKER_INFO)
 
-echo "docker image url : ${DOCKER_IMAGE_URL}"
+echo "docker image url : ${REPO_URL}"
 echo "Image tag is ${TAG}"
 
 # 동적으로 가져오기 -> 사용자에게 값을 입력받지 않는다.
@@ -50,12 +50,6 @@ echo "Image tag is ${TAG}"
 
 REGION=$AWS_DEFAULT_REGION
 
-
-# REGION=
-# "ap-northeast-1"
-# # ECR Repository Name 조회
-REPO_NAME=$(aws ecr describe-repositories --repository-names  --region ap-northeast-1
- --output text)
 
 echo "AWS Region: $REGION"
 # echo "Repository Name: $REPO_NAME"
@@ -87,23 +81,30 @@ aws iam attach-role-policy \
 
 # If you want to create a user-managed policy 
 
-# aws iam create-policy \ 
-#     --policy-name ECR-Access-For-Lambda \ 
-#     --policy-document \ 
-#     {
-#     "Version": "2012-10-17",
-#     "Statement": [
-#         {
-#             "Sid": "AllowDescribeRepoImage",
-#             "Effect": "Allow",
-#             "Action": [
-#                 "ecr:DescribeImages",
-#                 "ecr:DescribeRepositories"
-#             ],
-#             "Resource": ["arn:aws:ecr:region:${ACCOUNT_ID}:repository/$REPO_NAME"]
-#         }
-#     ]
-# }
+aws iam create-policy \ 
+    --policy-name ECR-Access-For-Lambda \ 
+    --policy-document \ 
+    {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowDescribeRepoImage",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetRepositoryPolicy",
+                "ecr:SetRepositoryPolicy"
+            ],
+            "Resource": ["arn:aws:ecr:region:${ACCOUNT_ID}:repository/${REPO_URL}"]
+        }
+    ]
+}
+
+aws iam attach-role-policy \
+--role-name ECR-Access-For-Lambda \
+--policy-arn arn:aws:ecr:region:${ACCOUNT_ID}:repository/${REPO_URL}
+
 
 # IAM 역할 생성 또는 사용
 ROLE_NAME="lambda-execution-role"
@@ -175,13 +176,13 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     sleep 30  # 30초 대기
     aws lambda update-function-code \
     --function-name $FUNCTION_NAME \
-    --image-uri "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${DOCKER_IMAGE_URL}:${TAG}"
+    --image-uri "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_URL}:${TAG}"
 else
     echo "Creating new Lambda function..."
     aws lambda create-function \
     --function-name $FUNCTION_NAME \
     --package-type Image \
-    --code ImageUri="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${DOCKER_IMAGE_URL}:${TAG}" \
+    --code ImageUri="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_URL}:${TAG}" \
     --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
     --memory-size $MEMORY_SIZE \
     --timeout $TIMEOUT
