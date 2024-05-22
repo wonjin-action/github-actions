@@ -71,6 +71,23 @@ echo "Statement ID: ${STATEMENT_ID}"
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
+
+# Attach permission to IAM Role
+aws iam attach-role-policy \
+--role-name lambda-execution-role \
+--policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+
+aws iam attach-role-policy \
+--role-name lambda-execution-role \
+--policy-arn arn:aws:iam::aws:policy/iam:CreateRole
+
+aws iam attach-role-policy \
+--role-name lambda-execution-role \
+--policy-arn arn:aws:iam::aws:policy/apigateway:POST
+
+
+
+
 # IAM 역할 생성 또는 사용
 ROLE_NAME="lambda-execution-role"
 ROLE_ARN=""
@@ -127,10 +144,7 @@ if ! aws apigatewayv2 get-routes --api-id "$API_ID" --output json | jq -e '.Item
     aws apigatewayv2 update-stage --api-id $API_ID --stage-name dev --auto-deploy true
 fi
 
-# Attach permission to IAM Role
-aws iam attach-role-policy \
---role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+
 
 # Lambda 함수 생성 또는 업데이트
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
