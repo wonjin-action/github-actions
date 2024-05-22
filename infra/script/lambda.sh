@@ -102,8 +102,12 @@ aws iam create-policy \
 }
 
 aws iam attach-role-policy \
---role-name ECR-Access-For-Lambda \
+--role-name lambda-execution-role \
 --policy-arn arn:aws:ecr:region:${ACCOUNT_ID}:repository/${REPO_URL}
+
+
+
+
 
 
 # IAM 역할 생성 또는 사용
