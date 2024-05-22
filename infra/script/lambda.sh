@@ -84,7 +84,7 @@ aws iam attach-role-policy \
 aws iam create-policy \ 
     --policy-name ECR-Access-For-Lambda \ 
     --policy-document \ 
-    {
+    '{
     "Version": "2012-10-17",
     "Statement": [
         {
@@ -99,7 +99,7 @@ aws iam create-policy \
             "Resource": ["arn:aws:ecr:region:${ACCOUNT_ID}:repository/${REPO_URL}"]
         }
     ]
-}
+}'
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
