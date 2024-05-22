@@ -83,23 +83,8 @@ aws iam attach-role-policy \
 
 aws iam create-policy \ 
     --policy-name ECR-Access-For-Lambda \ 
-    --policy-document \ 
-    '{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "AllowDescribeRepoImage",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetRepositoryPolicy",
-                "ecr:SetRepositoryPolicy"
-            ],
-            "Resource": ["arn:aws:ecr:region:${ACCOUNT_ID}:repository/${REPO_URL}"]
-        }
-    ]
-}'
+    --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/Lambda_iam_policy.json
+    --description "This policy grants access to ECR for Lambda"   
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
