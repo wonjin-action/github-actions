@@ -81,11 +81,12 @@ aws iam attach-role-policy \
 
 # If you want to create a user-managed policy 
 
-aws iam create-policy \ 
-    --policy-name ECR-Access-For-Lambda \ 
+aws iam create-policy \
+    --policy-name ECR-Access-For-Lambda \
     --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/Lambda_iam_policy.json \
-    --description "This policy grants access to ECR for Lambda"   
+    --description "This policy grants access to ECR for Lambda"
 
+  
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
 --policy-arn arn:aws:ecr:region:${ACCOUNT_ID}:repository/${REPO_URL}
