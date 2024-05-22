@@ -72,10 +72,10 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
 
-# Attach permission to IAM Role
+# Attach permission to IAM Role - AWS Managed Policy 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+--policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
@@ -85,8 +85,25 @@ aws iam attach-role-policy \
 --role-name lambda-execution-role \
 --policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator 
 
+# If you want to create a user-managed policy 
 
-
+# aws iam create-policy \ 
+#     --policy-name ECR-Access-For-Lambda \ 
+#     --policy-document \ 
+#     {
+#     "Version": "2012-10-17",
+#     "Statement": [
+#         {
+#             "Sid": "AllowDescribeRepoImage",
+#             "Effect": "Allow",
+#             "Action": [
+#                 "ecr:DescribeImages",
+#                 "ecr:DescribeRepositories"
+#             ],
+#             "Resource": ["arn:aws:ecr:region:${ACCOUNT_ID}:repository/$REPO_NAME"]
+#         }
+#     ]
+# }
 
 # IAM 역할 생성 또는 사용
 ROLE_NAME="lambda-execution-role"
