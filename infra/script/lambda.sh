@@ -79,11 +79,11 @@ aws iam attach-role-policy \
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/iam:CreateRole
+--policy-arn arn:aws:iam::aws:policy/IAMFullAccess 
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/apigateway:POST
+--policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator 
 
 
 
