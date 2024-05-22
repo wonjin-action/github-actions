@@ -69,7 +69,7 @@ echo "Current AWS Account ID: $ACCOUNT_ID"
 # Attach permission to IAM Role - AWS Managed Policy 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+--policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
@@ -83,13 +83,38 @@ aws iam attach-role-policy \
 
 aws iam create-policy \ 
     --policy-name ECR-Access-For-Lambda \ 
-    --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/Lambda_iam_policy.json
+    --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/Lambda_iam_policy.json \
     --description "This policy grants access to ECR for Lambda"   
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
 --policy-arn arn:aws:ecr:region:${ACCOUNT_ID}:repository/${REPO_URL}
 
+ECR_POLICY=$(cat <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowLambdaECRAccess",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "lambda.amazonaws.com"
+            },
+            "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage"
+            ],
+            "Resource": "arn:aws:ecr:${REGION}:${ACCOUNT_ID}:repository/${REPO_URL}"
+        }
+    ]
+}
+EOF
+)
+
+aws ecr set-repository-policy \
+    --repository-name ${REPO_URL} \
+    --policy-text "$ECR_POLICY"
 
 
 
