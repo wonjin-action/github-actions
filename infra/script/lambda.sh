@@ -28,6 +28,9 @@ fi
 
 LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
 
+# Configure Enivironment Variable
+
+export AWS_DEFAULT_REGION="ap-northeast-1"
 
 # Extract values from the JSON configuration
 FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r '.FunctionName')
@@ -43,11 +46,16 @@ echo "docker image url : ${DOCKER_IMAGE_URL}"
 echo "Image tag is ${TAG}"
 
 # 동적으로 가져오기 -> 사용자에게 값을 입력받지 않는다.
-REGION=$(aws configure get region --region ap-northeast-1)
+# REGION=$(aws configure get region --region ap-northeast-1)
 
+REGION=$AWS_DEFAULT_REGION
+
+
+# REGION=
+# "ap-northeast-1"
 # # ECR Repository Name 조회
-# REPO_NAME=$(aws ecr describe-repositories --repository-names  --region ap-northeast-1
-#  --output text)
+REPO_NAME=$(aws ecr describe-repositories --repository-names  --region ap-northeast-1
+ --output text)
 
 echo "AWS Region: $REGION"
 # echo "Repository Name: $REPO_NAME"
