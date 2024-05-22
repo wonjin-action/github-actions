@@ -12,6 +12,11 @@ echo "Current directory is: $WORKING_DIR"
 
 END
 
+# Setting Permission for CodeBuild 
+
+aws iam create-role --role-name CodeBuildServiceRole --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust-policy-codebuild.json
+
+aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
 
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
 
@@ -118,31 +123,10 @@ aws iam attach-role-policy \
 REPO_NAME=$(echo $REPO_URL | awk -F'/' '{print $2}')
           echo "Repository Name: $REPO_NAME"
 
-ECR_POLICY=$(cat <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "AllowLambdaECRAccess",
-            "Effect": "Allow",
-            "Principal": {
-                "Service": "lambda.amazonaws.com"
-            },
-            "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:BatchGetImage"
-            ],
-            "Resource": "arn:aws:ecr:${REGION}:${ACCOUNT_ID}:repository/${REPO_URL}"
-        }
-    ]
-}
-EOF
-)
 
-aws ecr set-repository-policy \
-    --repository-name ${REPO_NAME} \
-    --policy-text "$ECR_POLICY"
+# aws ecr set-repository-policy \
+#     --repository-name ${REPO_NAME} \
+#     --policy-text "$ECR_POLICY"
 
 # # aws ecr set-repository-policy \
 #     --repository-name <repository-name> \
