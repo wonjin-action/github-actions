@@ -66,14 +66,37 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
 
-# Attach permission to IAM Role - AWS Managed Policy 
-aws iam attach-role-policy \
---role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+# IAM 역할 생성 또는 사용
+ROLE_NAME="lambda-execution-role"
+ROLE_ARN=""
+if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
+    ROLE_ARN=$(aws iam create-role \
+    --role-name $ROLE_NAME \
+    --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
+    --query 'Role.Arn' \
+    --output text)
+    echo "Created new IAM Role: $ROLE_NAME"
+else
+    echo "Using existing IAM Role: $ROLE_NAME"
+fi
+
+# Lambda 함수 ARN 생성
+LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Configuration.FunctionArn' --output text)
+
+
+
+
+# Attach permission to IAM Role - AWS Managed Policy
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
 --policy-arn arn:aws:iam::aws:policy/IAMFullAccess 
+
+
+aws iam attach-role-policy \
+--role-name lambda-execution-role \
+--policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
@@ -125,24 +148,6 @@ aws ecr set-repository-policy \
 #     --repository-name <repository-name> \
 #     --policy-text file://path/to/ecr-policy.json
 
-
-
-# IAM 역할 생성 또는 사용
-ROLE_NAME="lambda-execution-role"
-ROLE_ARN=""
-if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
-    ROLE_ARN=$(aws iam create-role \
-    --role-name $ROLE_NAME \
-    --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
-    --query 'Role.Arn' \
-    --output text)
-    echo "Created new IAM Role: $ROLE_NAME"
-else
-    echo "Using existing IAM Role: $ROLE_NAME"
-fi
-
-# Lambda 함수 ARN 생성
-LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Configuration.FunctionArn' --output text)
 
 # Allow API Gateway for invoking lambda (Resource-based Policy)
 aws lambda add-permission \
