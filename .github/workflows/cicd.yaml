@@ -177,6 +177,7 @@ jobs:
             ../script/ecspresso.yml 
           
           ls -l
+          dos2unix ../script/lambda.sh 
         working-directory: infra/lambda
   
       - name: Upload to S3
