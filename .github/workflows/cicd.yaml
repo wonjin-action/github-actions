@@ -90,8 +90,7 @@ jobs:
         id: prepare_lambda_deployment
         run: |
           echo "Create docker_image_info.json in $(pwd)"
-          jq -n --arg url "${{ steps.get_ecr_repo_url_and_tag.outputs.REPO_URL }}" --arg tag "${{ steps.get_ecr_repo_url_and_tag.outputs.TAG }}" \
-            '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
+          jq -n --arg url "${{ steps.get_ecr_repo_url_and_tag.outputs.REPO_URL }}" --arg tag "${{ steps.get_ecr_repo_url_and_tag.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
         working-directory: infra/lambda
       - name: Save environment variables as artifact
@@ -149,51 +148,34 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-      - name: CDK Bootstrap
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-skip-session-tagging: true
+      - name: Test AWS Credentials
+        run: aws sts get-caller-identity
+      - name: Get S3 Bucket Name from SSM
+        id: get_s3_bucket_name
         run: |
-          cdk bootstrap \
-          aws://$AWS_ACCOUNT_ID/$AWS_REGION \
-          --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess \
-          --require-approval never
-        working-directory: next-app/cdk
-      - name: CDK Deploy
-        run: |
-          cdk deploy "*" --require-approval never
-        working-directory: next-app/cdk
-      - name: Install dos2unix
-        run: sudo apt-get install dos2unix
+          BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
+          echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
+          
+      - name: List files in infra/lambda
+        run: ls -l infra/lambda
+        
       - name: Prepare Lambda Deployment Package
         run: |
           pwd
-          jq -n --arg url "${{ needs.image-build.outputs.REPO_URL }}" --arg tag "${{ needs.image-build.outputs.TAG }}" \
-            '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
+          jq -n --arg url "${{ needs.image-build.outputs.REPO_URL }}" --arg tag "${{ needs.image-build.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
-          
-          zip -r image.zip \
-            docker_image_info.json \
-            lambda_function_config.json \
-            ../script/lambda.sh \
-            trust_policy_for_lambda.json \
-            Lambda_iam_policy.json \
-            ../script/ecs-service-def.json \
-            ../script/ecs-task-def.json \
-            ../script/ecspresso.yml
-          
+          zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh trust_policy_for_lambda.json Lambda_iam_policy.json ../script/ecs-service-def.json ../script/ecs-task-def.json ../script/ecspresso.yml 
+    
           ls -l
-          dos2unix ../script/lambda.sh
         working-directory: infra/lambda
-      - name: Unzip deployment package
-        run: unzip image.zip -d unzip_folder/
+  
+      - name: Upload to S3
+        run: |
+          aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
         working-directory: infra/lambda
-      - name: export IMAGE_NAME
-        run: |
-          imageUri=$(jq -r .DOCKER_IMAGE_URL docker_image_info.json)
-          imageTag=$(jq -r .TAG docker_image_info.json)
-          echo "imageUri: $imageUri, imageTag: $imageTag"
-          export IMAGE_NAME=$imageUri:$imageTag
-          echo "export IMAGE_NAME=$imageUri:$imageTag" >> $GITHUB_ENV
-        working-directory: infra/lambda/unzip_folder
-      - name: Deploy to ECS using ecspresso
-        run: |
-          ecspresso deploy --config ecspresso.yml
-        working-directory: infra/lambda/unzip_folder
+      - name: Setup tmate session
+        if: always()
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 60
