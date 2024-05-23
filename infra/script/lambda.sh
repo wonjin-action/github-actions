@@ -14,9 +14,28 @@ END
 
 # Setting Permission for CodeBuild 
 
-aws iam create-role --role-name CodeBuildServiceRole --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust-policy-codebuild.json
 
-aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
+
+
+# 역할에 연결된 정책 확인
+# aws iam list-attached-role-policies --role-name CodeBuildServiceRole
+
+# 특정 정책의 내용 확인 (인라인 정책인 경우)
+# aws iam get-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy
+
+
+# aws iam create-role \
+#     --role-name lambda-execution-role \
+#     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust-policy-codebuild.json
+
+
+# aws iam attach-role-policy \
+#     --role-name CodeBuildServiceRole \
+#     --policy-arn arn:aws:iam::019817421975:policy/
+
+
+
+# aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
 
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
 
@@ -186,13 +205,13 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     sleep 30  # 30초 대기
     aws lambda update-function-code \
     --function-name $FUNCTION_NAME \
-    --image-uri "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_URL}:${TAG}"
+    --image-uri "${REPO_URL}:${TAG}"
 else
     echo "Creating new Lambda function..."
     aws lambda create-function \
     --function-name $FUNCTION_NAME \
     --package-type Image \
-    --code ImageUri="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_URL}:${TAG}" \
+    --code ImageUri="${REPO_URL}:${TAG}" \
     --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
     --memory-size $MEMORY_SIZE \
     --timeout $TIMEOUT
