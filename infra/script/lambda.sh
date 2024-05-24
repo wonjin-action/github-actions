@@ -166,7 +166,8 @@ INTEGRATION_ID=$(aws apigatewayv2 create-integration \
     --integration-uri $LAMBDA_ARN \
     --payload-format-version 2.0 \
     --query 'IntegrationId' \
-    --output text)
+    --output text \
+    --region $REGION)
 echo "Integration ID: $INTEGRATION_ID"
 
 # Create API Gateway route
@@ -174,11 +175,12 @@ if ! aws apigatewayv2 get-routes --api-id "$API_ID" --output json | jq -e '.Item
     aws apigatewayv2 create-stage \
     --api-id $API_ID \
     --stage-name dev \
-    --auto-deploy true
+    --auto-deploy true \
+    --region $REGION
 fi
 
 if ! aws apigatewayv2 get-routes --api-id "$API_ID" --output json | jq -e '.Items[] | select(.RouteKey == "ANY /{proxy+}")' >/dev/null; then
-    aws apigatewayv2 update-stage --api-id $API_ID --stage-name dev --auto-deploy true
+    aws apigatewayv2 update-stage --api-id $API_ID --stage-name dev --auto-deploy true --region $REGION
 fi
 
 
@@ -190,7 +192,8 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     --function-name $FUNCTION_NAME \
     --memory-size $MEMORY_SIZE \
     --timeout $TIMEOUT \
-    --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role"
+    --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
+    --region $REGION
     echo "Lambda configuration updated successfully."
     sleep 30  # 30초 대기
     aws lambda update-function-code \
