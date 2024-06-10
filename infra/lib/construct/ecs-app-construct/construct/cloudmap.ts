@@ -1,3 +1,6 @@
+import * as cdk from 'aws-cdk-lib';
+import * as servicediscovery from 'aws-cdk-lib/aws-servicediscovery';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Duration } from 'aws-cdk-lib';
 import { IVpc } from 'aws-cdk-lib/aws-ec2';
 import { PrivateDnsNamespace, DnsRecordType, Service } from 'aws-cdk-lib/aws-servicediscovery';
@@ -12,15 +15,17 @@ export class CloudMap extends Construct {
   public readonly frontendService: Service;
   public readonly backendService: Service;
   public readonly authService: Service;
+  public readonly namespace: PrivateDnsNamespace;
 
   constructor(scope: Construct, id: string, props: CloudMapProps) {
     super(scope, id);
 
     // Service Discovery NameSpace.
-    const namespace = new PrivateDnsNamespace(this, 'Namespace', {
+    const namespace = new PrivateDnsNamespace(this, 'Namespace-1', {
       name: props.namespaceName,
       vpc: props.vpc,
     });
+    this.namespace = namespace;
 
     const backendService = namespace.createService('BackendService', {
       name: 'backend',
@@ -42,5 +47,14 @@ export class CloudMap extends Construct {
       dnsTtl: Duration.seconds(30),
     });
     this.authService = authService;
+
+    new ssm.StringParameter(this, 'lambdaApp-serviceId', {
+      parameterName: '/Lambda/serviceId',
+      stringValue: frontendService.serviceId,
+    });
+    new ssm.StringParameter(this, 'lambdaApp-namespace', {
+      parameterName: '/Lambda/namespace',
+      stringValue: namespace.namespaceId,
+    });
   }
 }

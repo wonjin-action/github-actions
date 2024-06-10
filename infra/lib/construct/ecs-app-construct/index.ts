@@ -10,6 +10,11 @@ import { BastionECSAppConstruct } from './construct/bastion-ecs-construct';
 import { AlbConstruct } from '../alb-construct';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { CloudMap } from './construct/cloudmap';
+import { ServiceDiscovery } from 'aws-cdk-lib/aws-appmesh';
+import * as cdk from 'aws-cdk-lib';
+import { SsmAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
+import * as ssm from 'aws-cdk-lib';
+import { NamespaceType } from 'aws-cdk-lib/aws-servicediscovery';
 
 interface EcsAppConstructProps {
   vpc: ec2.Vpc;
@@ -29,6 +34,7 @@ export class EcsAppConstruct extends Construct {
   public readonly ecsCommon: EcsCommonConstruct;
   public readonly bastionApp: BastionECSAppConstruct;
   public readonly authEcsApps: EcsappConstruct[];
+  public readonly cloudmap: CloudMap;
 
   constructor(scope: Construct, id: string, props: EcsAppConstructProps) {
     super(scope, id);
@@ -44,6 +50,12 @@ export class EcsAppConstruct extends Construct {
     const cloudmap = new CloudMap(this, 'CloudMap', {
       namespaceName: props.prefix,
       vpc: props.vpc,
+    });
+    this.cloudmap = cloudmap;
+
+    ////////////////////////////////////// 클라우드 맵 리소스가 생성되지 않았음 ///
+    new cdk.CfnOutput(this, 'NamespaceId', {
+      value: cloudmap.namespace.namespaceName, // Hinagiku-Dev라는 값으로 출력
     });
 
     if (props.ecsFrontTasks) {
@@ -170,5 +182,9 @@ export class EcsAppConstruct extends Construct {
       });
       this.bastionApp = bastionApp;
     }
+    //   new cdk.CfnOutput(this, 'CloudMapNamespaceId', {
+    //     value: cloudmap.frontendService,
+    //     exportName: 'CloudMapNamespaceId',
+    // }
   }
 }
