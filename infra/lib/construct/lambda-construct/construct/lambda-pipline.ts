@@ -16,6 +16,7 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { EcsCommonConstruct } from '../../ecs-app-construct/construct/ecs-common-construct';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import { LambdaFrontConstruct } from '../index-lamba';
+import { PipelineEcspressoConstruct } from '../../ecs-app-construct/construct/pipeline-ecspresso-construct';
 
 export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   prefix: string;
@@ -58,10 +59,9 @@ export class Pipeline_lambdaConstruct extends Construct {
       managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
     });
 
-    const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
-      versioned: true,
-      eventBridgeEnabled: true,
-    });
+    const sourceBucket_name = cdk.Fn.importValue('bucketName'); // ecs 코드파이프라인에서 생성된 버킷 참조하기
+    const sourceBucket = s3.Bucket.fromBucketArn(this, 'SourceBucket', sourceBucket_name);
+
     sourceBucket.grantRead(props.executionRole, '.env'); // ecs 클러스터가 s3에 대해서 읽을 수 있도록 권한을 부여한다.
     // sourceBucket.grantRead -> To allow access Permisson for s3 bucket
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {

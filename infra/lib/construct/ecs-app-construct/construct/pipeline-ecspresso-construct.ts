@@ -30,6 +30,7 @@ export interface PipelineEcspressoConstructProps extends cdk.StackProps {
 }
 
 export class PipelineEcspressoConstruct extends Construct {
+  public readonly sourceBucket: s3.Bucket;
   constructor(scope: Construct, id: string, props: PipelineEcspressoConstructProps) {
     super(scope, id);
 
@@ -42,6 +43,13 @@ export class PipelineEcspressoConstruct extends Construct {
       versioned: true,
       eventBridgeEnabled: true,
     });
+    this.sourceBucket = sourceBucket;
+
+    new cdk.CfnOutput(this, 'sourceBucket', {
+      value: this.sourceBucket.bucketName,
+      exportName: `bucketName-${props.appName}`,
+    });
+
     sourceBucket.grantRead(props.executionRole, '.env');
 
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
