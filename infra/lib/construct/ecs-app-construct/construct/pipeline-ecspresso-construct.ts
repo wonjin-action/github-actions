@@ -118,32 +118,11 @@ export class PipelineEcspressoConstruct extends Construct {
           },
           build: {
             commands: [
-                // Lambda 함수 구성 파일 경로 설정
-    'LAMBDA_CONFIG_FILE="../../../../lambda/lambda_function_config.json"',
-    'LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)',
-              
-    // JSON 구성 파일에서 값 추출
-    'FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r ".FunctionName")',
-    'MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r ".MemorySize")',
-    'TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r ".Timeout")',
-
-    // S3에서 Lambda 함수 코드 다운로드
-    'aws s3 cp s3://your-source-bucket/lambda_function.zip .',
-              
-    // Lambda 함수 업데이트 또는 생성
-    'if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then',
-    '  echo "Updating existing Lambda function...";',
-    '  aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://lambda_function.zip;',
-    'else',
-    '  echo "Creating new Lambda function...";',
-    '  aws lambda create-function --function-name $FUNCTION_NAME --runtime nodejs14.x --role arn:aws:iam::your-account-id:role/your-lambda-role --handler index.handler --zip-file fileb://lambda_function.zip;',
-    'fi',
-
-    // ecspresso 설정 및 배포
-    'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`',
-    'ls -lR',
-    'ecspresso deploy --config ecspresso.yml',
-    './autoscale.sh'
+              //https://github.com/kayac/ecspresso
+              'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`', // In imaged definitions.json, the docker image url is read and assigned to the environment variable IMAGE_NAME
+              'ls -lR', // Outputs the current working directory and a list of all files and directories under it.
+              'ecspresso deploy --config ecspresso.yml', // Deploy the ecs service according to the 'ecspresso.yml' configuration file. ecspresso.yml is a file that defines the configuration of the ecs service.
+              './autoscale.sh', // Adjust the autoscaling settings of the es service. This script configures the aws application autoscaling settings, automatically adjusting the number of instances of the service based on traffic or usage.
             ],
           },
         },
@@ -154,7 +133,7 @@ export class PipelineEcspressoConstruct extends Construct {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
-           'ecs:RegisterTaskDefinition',
+          'ecs:RegisterTaskDefinition',
           'ecs:ListTaskDefinitions',
           'ecs:DescribeTaskDefinition',
           'ecs:CreateService',
@@ -169,13 +148,6 @@ export class PipelineEcspressoConstruct extends Construct {
           'servicediscovery:GetNamespace',
           'iam:CreateServiceLinkedRole',
           'sts:AssumeRole',
-          'lambda:*', // 나중에 수정 필요 ,
-          's3:GetObject',
-          'ssm:GetParameter',
-          'cloudformation:DescribeStacks',
-          'apigateway:GET',
-          'iam:AttachRolePolicy'
-
         ],
         resources: ['*'],
       }),

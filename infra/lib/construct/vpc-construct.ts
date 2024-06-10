@@ -4,6 +4,7 @@ import { aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { aws_s3 as s3 } from 'aws-cdk-lib';
 import { aws_kms as kms } from 'aws-cdk-lib';
 import { aws_iam as iam } from 'aws-cdk-lib';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 
 export interface VpcProps {
   vpcCidr: string;
@@ -43,6 +44,20 @@ export class Vpc extends Construct {
     cdk.Stack.of(this).exportValue(vpc.privateSubnets[0].subnetId);
     cdk.Stack.of(this).exportValue(vpc.privateSubnets[1].subnetId);
     cdk.Stack.of(this).exportValue(vpc.privateSubnets[2].subnetId);
+
+    vpc.publicSubnets.forEach((subnet, index) => {
+      new ssm.StringParameter(this, `PublicSubnetParam${index}`, {
+        parameterName: `PublicSubnet-${index}`,
+        stringValue: subnet.subnetId,
+      });
+    });
+
+    vpc.privateSubnets.forEach((subnet, index) => {
+      new ssm.StringParameter(this, `PrivateSubnetParam${index}`, {
+        parameterName: `PrivateSubnet-${index}`,
+        stringValue: subnet.subnetId,
+      });
+    });
 
     //  --------------------------------------------------------------
     //  Bucket for VPC Flow log

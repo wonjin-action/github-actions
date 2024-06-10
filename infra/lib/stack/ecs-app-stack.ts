@@ -6,6 +6,8 @@ import * as sns from 'aws-cdk-lib/aws-sns';
 import { IEcsAlbParam, IEcsParam, ICertificateIdentifier } from '../../params/interface';
 import { EcsAppConstruct } from '../construct/ecs-app-construct';
 import { AlbConstruct } from '../construct/alb-construct';
+import { LambdaFrontConstruct } from '../construct/lambda-construct/index-lamba';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 
 interface EcsAppStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
@@ -21,6 +23,7 @@ interface EcsAppStackProps extends cdk.StackProps {
 
 export class EcsAppStack extends cdk.Stack {
   public readonly ecs: EcsAppConstruct;
+  public readonly lambda: LambdaFrontConstruct;
   // public readonly alb: AlbConstruct;
 
   constructor(scope: Construct, id: string, props: EcsAppStackProps) {
@@ -46,5 +49,24 @@ export class EcsAppStack extends cdk.Stack {
       ecsBastionTasks: props.ecsBastionTasks ?? true,
     });
     this.ecs = app;
+
+    // Security Group FOR lambda
+
+    const lamba_securityGroup = new ec2.SecurityGroup(this, 'LambdaSecurityGroup', {
+      vpc: props.vpc,
+      description: 'Allow ',
+      allowAllOutbound: true,
+    });
+
+    lamba_securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80));
+
+    const lambdaApp = new LambdaFrontConstruct(this, `${props.prefix}-LambdaApp`, {
+      vpc: props.vpc,
+      prefix: props.prefix,
+      securityGroup: lamba_securityGroup,
+      alarmTopic: props.alarmTopic,
+      cloudmap: app.cloudmap, // EcsAppConstruct라는 클래스에 cloudmap 인스턴스를 생성하므로, EcsAppConstruct의 인스턴스 변수에서 cloudmap을 참조한다.
+    });
+    this.lambda = lambdaApp;
   }
 }

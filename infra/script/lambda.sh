@@ -4,15 +4,15 @@ WORKING_DIR=$(pwd)
 echo "Current directory is: $WORKING_DIR"
 # Load the configuration from the JSON file
 
-<< 'END' 
+<< 'END'
 
-< If you start a script locally > 
+< If you start a script locally >
 
 # LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/infra/lambda/lambda_function_config.json"
 
 END
 
-# Setting Permission for CodeBuild 
+# Setting Permission for CodeBuild
 
 
 
@@ -33,6 +33,23 @@ END
 #     --role-name CodeBuildServiceRole \
 #     --policy-arn arn:aws:iam::019817421975:policy/
 
+
+
+
+
+
+
+
+SECURITY_GROUP_ID=$(aws ssm get-parameter --name '/Lambda/Lambda-SecurityGroup' --query "Parameter.Value" --output text )
+ROLE_ARN=$(aws ssm get-parameter --name '/Lambda/Lambda-Role' --query "Parameter.Value" --output text )
+NAME_SPACE_ID=$(aws ssm get-parameter --name '/Lambda/namespace' --query "Parameter.Value" --output text)
+SERVICE_ID=$(aws ssm get-parameter --name '/Lambda/serviceId' --query "Parameter.Value" --output text)
+INSTANCE_ID='Lambda_App'
+SUBNET_ID=$(aws ssm get-parameter --name "/PublicSubnet-0" --query "Parameter.Value" --output text)
+
+echo "VPC ID: $VPC_ID"
+echo "Security Group ID: $SECURITY_GROUP_ID"
+echo "Role ARN: $ROLE_ARN"
 
 
 # aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
@@ -61,7 +78,7 @@ FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r '.FunctionName')
 MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r '.MemorySize')
 TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 
-# Import Docker Info for Iambda Backend 
+# Import Docker Info for Iambda Backend
 
 REPO_URL=$(jq -r '.DOCKER_IMAGE_URL' $DOCKER_INFO)
 TAG=$(jq -r '.TAG' $DOCKER_INFO)
@@ -114,7 +131,7 @@ LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Con
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/IAMFullAccess 
+--policy-arn arn:aws:iam::aws:policy/IAMFullAccess
 
 
 aws iam attach-role-policy \
@@ -124,9 +141,9 @@ aws iam attach-role-policy \
 
 aws iam attach-role-policy \
 --role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator 
+--policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
 
-# If you want to create a user-managed policy 
+# If you want to create a user-managed policy
 
 
 REPO_NAME=$(echo $REPO_URL | awk -F'/' '{print $2}')
@@ -208,7 +225,35 @@ else
     --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
     --memory-size $MEMORY_SIZE \
     --timeout $TIMEOUT
+    --vpc-config SubnetIds=$SUBNET_ID,SecurityGroupIds=$SECURITY_GROUP_ID
+
 fi
+
+### Api Gateway의 엔드포인트를 CloudMap의 서비스 인스턴스로 등록
+
+# import Value from SSM
+
+
+
+
+aws servicediscovery create-service \
+    --name myservice \
+    --namespace-id  ${namespace} \
+    --dns-config "NamespaceId=${NAME_SPACE_ID},RoutingPolicy=MULTIVALUE,DnsRecords=[{Type=A,TTL=60}]"
+
+aws servicediscovery register-instance \
+    --service-id ${SERVICE_ID} \
+    --instance-id $INSTANCE_ID \
+    --attributes=AWS_INSTANCE_IPV4=172.2.1.3,AWS_INSTANCE_PORT=8080 # attribute 플래그를 사용하여 특정 서비스 인스턴스를 클라우드 맵에 등록하는데 사용
+
+<< 'END'
+    # 인스턴스 포트 8080으로 설정하는것은 해당 서비스 인스턴스가 트래픽을 수신할 포트 번호를 지정한다.
+    # 일반적으로 포트 8080은 HTTP 트래픽을 위한 대체 포트로 사용되며, 기본 HTTP 포트인 80과 같은 역할을 수행한다.
+    # 이 설정은 API 게이트웨이 엔드포인트가 람다 함수를 호출할 때 사용되는 내부 네트워크 설정의 일부
+    # 포트 번호를 8080으로 설정함으로써, CloudMap은 이 포트에서 들어오는 트래픽을 해당 Lambda 함수로 라우팅하도록 구성
+
+END
+
 
 # 환경 변수 설정
 # aws lambda update-function-configuration \
