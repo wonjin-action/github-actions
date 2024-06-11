@@ -157,7 +157,7 @@ export class Pipeline_lambdaConstruct extends Construct {
               // 最新バージョンは表示しつつ、installは固定バージョンを使用
               'pwd',
 
-              // 'aws s3 cp s3://${SourceBucket}/image.zip image.zip',
+              'aws s3 cp s3://${SourceBucket}/image.zip image.zip',
 
               'mkdir -p ./unzip_folder',
 
