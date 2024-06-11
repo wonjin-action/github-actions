@@ -59,28 +59,15 @@ export class Pipeline_lambdaConstruct extends Construct {
       managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
     });
 
-    // const producer = new PipelineEcspressoConstruct(this,'pipe',{
+ 
 
-    // })
-
-    //////////////// intergrate s3 bucket
-    // const sourceBucket_name = ssm.StringParameter.valueForStringParameter(this,`/Hinagiku/TriggerBucket/${props.prefix}`).toLowerCase();
-
-    // const sourceBucket = s3.Bucket.fromBucketName(this,'bucket-for-lambda',sourceBucket_name);
-
-    ///////////////// cfn out put 활용 //////////
-
-    // const sourceBucketName = cdk.Fn.importValue(`bucketName-${props.prefix}`);
-
-    // const sourceBucket = s3.Bucket.fromBucketName(this, 'ReferencedBucket', sourceBucketName);
-
-    /// seperate s3 Bucket
     const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
       versioned: true,
       eventBridgeEnabled: true,
     });
 
     console.log(`소스 버킷 : ${sourceBucket}`);
+
 
     sourceBucket.grantRead(props.executionRole, '.env'); // ecs 클러스터가 s3에 대해서 읽을 수 있도록 권한을 부여한다.
     // sourceBucket.grantRead -> To allow access Permisson for s3 bucket

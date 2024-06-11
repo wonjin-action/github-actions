@@ -45,12 +45,6 @@ export class PipelineEcspressoConstruct extends Construct {
     });
     this.sourceBucket = sourceBucket;
 
-    /////////////////  //////////////////////////
-
-    // new cdk.CfnOutput(this, 'sourceBucket', {
-    //   value: sourceBucket.bucketName,
-    //   exportName: `bucketName-${props.prefix}`,
-    // });
 
     sourceBucket.grantRead(props.executionRole, '.env');
 
