@@ -327,11 +327,10 @@ export class Pipeline_lambdaConstruct extends Construct {
       stringValue: props.executionRole.roleArn,
     });
 
-    new ssm.StringParameter(this, `Lambda-TriggerBucketName`, {
+    new ssm.StringParameter(this, 'Lambda-TriggerBucketName', {
       // parameterName: `/Hinagiku/TriggerBucket/${props.appName}`,
-      parameterName: `/Hinagiku/TriggerBucket/Lambda-Bucket`,
-
-      stringValue: sourceBucket.bucketName.toLowerCase(),
+      parameterName: '/Hinagiku/TriggerBucket/Lambda-Bucket',
+      stringValue: sourceBucket.bucketName,
     });
 
     console.log(`CodeBuild project role ARN: ${deployProject.role?.roleArn}`);
