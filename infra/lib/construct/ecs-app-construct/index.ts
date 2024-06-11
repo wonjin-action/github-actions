@@ -76,7 +76,7 @@ export class EcsAppConstruct extends Construct {
       //Pipeline for Frontend Rolling
       frontEcsApps.forEach((ecsApp, index) => {
         new PipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Pipeline`, {
-          prefix: props.prefix + index + 'front',
+          prefix: props.prefix,
           appName: ecsApp.appName,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
@@ -110,7 +110,7 @@ export class EcsAppConstruct extends Construct {
       //Pipeline for Backend Rolling
       backEcsApps.forEach((ecsApp, index) => {
         new PipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-BackApp-Pipeline`, {
-          prefix: props.prefix + index + 'back',
+          prefix: props.prefix,
           appName: ecsApp.appName,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
@@ -147,7 +147,7 @@ export class EcsAppConstruct extends Construct {
       //Pipeline for Backend Rolling
       authEcsApps.forEach((ecsApp, index) => {
         new PipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-AuthApp-Pipeline`, {
-          prefix: props.prefix + index + 'auth',
+          prefix: props.prefix,
           appName: ecsApp.appName,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
