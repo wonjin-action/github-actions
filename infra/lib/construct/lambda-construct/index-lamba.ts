@@ -17,6 +17,7 @@ import { CloudMap } from '../../construct/ecs-app-construct/construct/cloudmap';
 import { Pipeline_lambdaConstruct } from './construct/lambda-pipline';
 import { EcsCommonConstruct } from '../../construct/ecs-app-construct/construct/ecs-common-construct';
 import * as sns from 'aws-cdk-lib/aws-sns';
+import { PipelineEcspressoConstruct } from '../ecs-app-construct/construct/pipeline-ecspresso-construct';
 
 // codepipeline에 보안 그룹, iam 역할, vpc 등을 환경 변수로 전달하면,
 // 별도의 연결 작업 없이 코드 빌드 환경 안에서 해당 환경 변수를 사용할 수 있다.
@@ -49,6 +50,7 @@ interface LambdaConstructProps extends cdk.StackProps {
   securityGroup: ec2.SecurityGroup;
   cloudmap: CloudMap; // app 파일에서 상위스택과 하위 스택을 연결한다.
   // cloudmap 이 클래스로 되어 있기 때문에 클래스 타입인 CloudMap로 설정
+  // appname : string
 }
 
 export class LambdaFrontConstruct extends Construct {
@@ -99,6 +101,7 @@ export class LambdaFrontConstruct extends Construct {
     //   });
 
     new Pipeline_lambdaConstruct(this, `${props.prefix}-FrontApp-Pipeline`, {
+      // appName : props.appname ,
       prefix: props.prefix,
       cloudmapService: props.cloudmap.frontendService,
       securityGroup: props.securityGroup, // 람다 함수 보안그룹

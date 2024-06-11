@@ -45,10 +45,12 @@ export class PipelineEcspressoConstruct extends Construct {
     });
     this.sourceBucket = sourceBucket;
 
-    new cdk.CfnOutput(this, 'sourceBucket', {
-      value: this.sourceBucket.bucketName,
-      exportName: `bucketName-${props.appName}`,
-    });
+    /////////////////  //////////////////////////
+
+    // new cdk.CfnOutput(this, 'sourceBucket', {
+    //   value: sourceBucket.bucketName,
+    //   exportName: `bucketName-${props.prefix}`,
+    // });
 
     sourceBucket.grantRead(props.executionRole, '.env');
 
@@ -237,7 +239,14 @@ export class PipelineEcspressoConstruct extends Construct {
 
     new ssm.StringParameter(this, `${props.appName}TriggerBucketName`, {
       parameterName: `/Hinagiku/TriggerBucket/${props.appName}`,
-      stringValue: sourceBucket.bucketName,
+      // parameterName: `/Hinagiku/TriggerBucket/${props.prefix}`,
+
+      stringValue: sourceBucket.bucketName.toLowerCase(),
     });
+
+    // new cdk.CfnOutput(this, 'BucketNameOutput', {
+    //   value: sourceBucket.bucketName,
+    //   exportName: `BucketName-${props.prefix}`,
+    // });
   }
 }
