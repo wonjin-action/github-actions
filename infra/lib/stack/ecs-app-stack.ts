@@ -61,6 +61,7 @@ export class EcsAppStack extends cdk.Stack {
     lamba_securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80));
 
     const lambdaApp = new LambdaFrontConstruct(this, `${props.prefix}-LambdaApp`, {
+      // appname : app.
       vpc: props.vpc,
       prefix: props.prefix,
       securityGroup: lamba_securityGroup,

@@ -59,8 +59,15 @@ export class Pipeline_lambdaConstruct extends Construct {
       managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
     });
 
-    const sourceBucket_name = cdk.Fn.importValue('bucketName'); // ecs 코드파이프라인에서 생성된 버킷 참조하기
-    const sourceBucket = s3.Bucket.fromBucketArn(this, 'SourceBucket', sourceBucket_name);
+ 
+
+    const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
+      versioned: true,
+      eventBridgeEnabled: true,
+    });
+
+    console.log(`소스 버킷 : ${sourceBucket}`);
+
 
     sourceBucket.grantRead(props.executionRole, '.env'); // ecs 클러스터가 s3에 대해서 읽을 수 있도록 권한을 부여한다.
     // sourceBucket.grantRead -> To allow access Permisson for s3 bucket
@@ -137,7 +144,7 @@ export class Pipeline_lambdaConstruct extends Construct {
               // 最新バージョンは表示しつつ、installは固定バージョンを使用
               'pwd',
 
-              'aws s3 cp s3://${SourceBucket}/image.zip image.zip',
+              // 'aws s3 cp s3://${SourceBucket}/image.zip image.zip',
 
               'mkdir -p ./unzip_folder',
 
@@ -305,6 +312,13 @@ export class Pipeline_lambdaConstruct extends Construct {
     const roleParam = new ssm.StringParameter(this, 'Lambda-Role', {
       parameterName: '/Lambda/Lambda-Role',
       stringValue: props.executionRole.roleArn,
+    });
+
+    new ssm.StringParameter(this, `Lambda-TriggerBucketName`, {
+      // parameterName: `/Hinagiku/TriggerBucket/${props.appName}`,
+      parameterName: `/Hinagiku/TriggerBucket/Lambda-Bucket`,
+
+      stringValue: sourceBucket.bucketName.toLowerCase(),
     });
 
     console.log(`CodeBuild project role ARN: ${deployProject.role?.roleArn}`);

@@ -74,7 +74,7 @@ export class EcsAppConstruct extends Construct {
       this.frontEcsApps = frontEcsApps;
 
       //Pipeline for Frontend Rolling
-      frontEcsApps.forEach((ecsApp, index) => {
+      frontEcsApps.forEach((ecsApp) => {
         new PipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Pipeline`, {
           prefix: props.prefix,
           appName: ecsApp.appName,
