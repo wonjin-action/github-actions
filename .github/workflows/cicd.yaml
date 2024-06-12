@@ -156,6 +156,7 @@ jobs:
         id: get_s3_bucket_name
         run: |
           BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/Lambda-Bucket" --query "Parameter.Value" --output text)
+          BACKEND_BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/Lambda-Bucket" --query "Parameter.Value" --output text)
           echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
           
       - name: List files in infra/lambda
@@ -174,6 +175,7 @@ jobs:
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
+          aws s3 cp image.zip s3://$BACKEND_BUCKET_NAME/image.zip
         working-directory: infra/lambda
       - name: Setup tmate session
         if: always()
