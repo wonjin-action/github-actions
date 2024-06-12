@@ -167,7 +167,7 @@ jobs:
         id: get_s3_bucket_name
         run: |
           BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/Lambda-Bucket" --query "Parameter.Value" --output text)
-          BACKEND_BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/Lambda-Bucket" --query "Parameter.Value" --output text)
+          BACKEND_BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
           echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
           echo "BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME" >> $GITHUB_ENV
           
