@@ -45,11 +45,12 @@ ROLE_ARN=$(aws ssm get-parameter --name '/Lambda/Lambda-Role' --query "Parameter
 NAME_SPACE_ID=$(aws ssm get-parameter --name '/Lambda/namespace' --query "Parameter.Value" --output text)
 SERVICE_ID=$(aws ssm get-parameter --name '/Lambda/serviceId' --query "Parameter.Value" --output text)
 INSTANCE_ID='Lambda_App'
-SUBNET_ID=$(aws ssm get-parameter --name "/PublicSubnet-0" --query "Parameter.Value" --output text)
+SUBNET_ID=$(aws ssm get-parameter --name "PublicSubnet-0" --query "Parameter.Value" --output text)
 
-echo "VPC ID: $VPC_ID"
+# echo "VPC ID: $VPC_ID"
 echo "Security Group ID: $SECURITY_GROUP_ID"
 echo "Role ARN: $ROLE_ARN"
+echo "SUBNET_ID : $SUBNET_ID"
 
 
 # aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
