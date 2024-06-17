@@ -212,6 +212,7 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     --timeout $TIMEOUT \
     --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
     --region $REGION
+    --vpc-config SubnetIds=$SUBNET_ID,SecurityGroupIds=$SECURITY_GROUP_ID
     echo "Lambda configuration updated successfully."
     sleep 30  # 30초 대기
     aws lambda update-function-code \
