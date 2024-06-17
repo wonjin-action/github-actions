@@ -20,18 +20,10 @@
   "desiredCount": 1,
   "enableECSManagedTags": false,
   "enableExecuteCommand": true,
-  "healthCheckGracePeriodSeconds": 60,
   "launchType": "",
-  "loadBalancers": [
-    {
-      "containerName": "frontend",
-      "containerPort": 3000,
-      "targetGroupArn": "{{ must_env `TARGET_GROUP_ARN` }}"
-    }
-  ],
   "networkConfiguration": {
     "awsvpcConfiguration": {
-      "assignPublicIp": "DISABLED",
+      "assignPublicIp": "ENABLED",
       "securityGroups": ["{{ must_env `SECURITY_GROUP` }}"],
       "subnets": ["{{ must_env `SUBNET_1` }}", "{{ must_env `SUBNET_2` }}", "{{ must_env `SUBNET_3` }}"]
     }
@@ -42,7 +34,9 @@
   "propagateTags": "NONE",
   "runningCount": 0,
   "schedulingStrategy": "REPLICA",
-  "serviceConnectConfiguration": {
-    "enabled": false
-  }
+  "serviceRegistries": [
+    {
+      "registryArn": "{{ must_env `REGISTRY_ARN` }}"
+    }
+  ]
 }
