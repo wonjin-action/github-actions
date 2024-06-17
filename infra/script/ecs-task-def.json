@@ -10,14 +10,14 @@
         "options": {
           "awslogs-group": "{{ must_env `LOG_GROUP` }}",
           "awslogs-region": "ap-northeast-1",
-          "awslogs-stream-prefix": "frontend-"
+          "awslogs-stream-prefix": "backend-"
         }
       },
-      "name": "frontend",
+      "name": "backend",
       "portMappings": [
         {
-          "containerPort": 3000,
-          "hostPort": 3000,
+          "containerPort": 5000,
+          "hostPort": 5000,
           "protocol": "tcp"
         }
       ],
