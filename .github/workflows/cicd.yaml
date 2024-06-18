@@ -181,7 +181,7 @@ jobs:
           cat docker_image_info.json
           zip -r image.zip docker_image_info.json lambda_function_config.json -j ../script/lambda.sh trust_policy_for_lambda.json Lambda_iam_policy.json ../script/ecs-service-def.json ../script/ecs-task-def.json ../script/ecspresso.yml ../script/autoscale_sample.sh
           echo "zipped image.zip : "
-          $unzip -l image.zip
+          unzip -l image.zip
           
         working-directory: infra/lambda
   
