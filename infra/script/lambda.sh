@@ -44,7 +44,7 @@ SECURITY_GROUP_ID=$(aws ssm get-parameter --name '/Lambda/Lambda-SecurityGroup' 
 ROLE_ARN=$(aws ssm get-parameter --name '/Lambda/Lambda-Role' --query "Parameter.Value" --output text )
 NAME_SPACE_ID=$(aws ssm get-parameter --name '/Lambda/namespace' --query "Parameter.Value" --output text)
 SERVICE_ID=$(aws ssm get-parameter --name '/Lambda/serviceId' --query "Parameter.Value" --output text)
-INSTANCE_ID='Lambda_App'
+INSTANCE_ID='Lambda_App' ########### 동적으로 람다 함수를 가져올 수 있도록 수정 필요 ##################
 SUBNET_ID=$(aws ssm get-parameter --name "PublicSubnet-0" --query "Parameter.Value" --output text)
 
 # echo "VPC ID: $VPC_ID"
@@ -108,19 +108,39 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
 
-# IAM 역할 생성 또는 사용
-ROLE_NAME="lambda-execution-role"
-ROLE_ARN=""
-if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
-    ROLE_ARN=$(aws iam create-role \
-    --role-name $ROLE_NAME \
-    --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
-    --query 'Role.Arn' \
-    --output text)
-    echo "Created new IAM Role: $ROLE_NAME"
-else
-    echo "Using existing IAM Role: $ROLE_NAME"
-fi
+# IAM 역할 생성 또는 사용 // 수정 필요
+# ROLE_NAME="lambda-execution-role"
+# ROLE_ARN=""
+# if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
+#     ROLE_ARN=$(aws iam create-role \
+#     --role-name $ROLE_NAME \
+#     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
+#     --query 'Role.Arn' \
+#     --output text)
+#     echo "Created new IAM Role: $ROLE_NAME"
+# else
+#     echo "Using existing IAM Role: $ROLE_NAME"
+# fi
+
+
+###############
+
+
+# ROLE_NAME="lambda-execution-role"
+# ROLE_ARN=""
+# if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
+#     ROLE_ARN=$(aws iam create-role \
+#     --role-name $ROLE_NAME \
+#     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
+#     --query 'Role.Arn' \
+#     --output text)
+#     echo "Created new IAM Role: $ROLE_NAME"
+# else
+#     echo "Using existing IAM Role: $ROLE_NAME"
+# fi
+
+
+
 
 # Lambda 함수 ARN 생성
 LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Configuration.FunctionArn' --output text)
@@ -130,19 +150,19 @@ LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Con
 
 # Attach permission to IAM Role - AWS Managed Policy
 
-aws iam attach-role-policy \
---role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/IAMFullAccess
+# aws iam attach-role-policy \
+# --role-name lambda-execution-role \
+# --policy-arn arn:aws:iam::aws:policy/IAMFullAccess
 
 
-aws iam attach-role-policy \
---role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+# aws iam attach-role-policy \
+# --role-name lambda-execution-role \
+# --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 
 
-aws iam attach-role-policy \
---role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
+# aws iam attach-role-policy \
+# --role-name lambda-execution-role \
+# --policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
 
 # If you want to create a user-managed policy
 
@@ -210,7 +230,7 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
         --function-name $FUNCTION_NAME \
         --memory-size $MEMORY_SIZE \
         --timeout $TIMEOUT \
-        --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
+        --role $ROLE_ARN \
         --region $REGION \
         --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
     echo "Lambda configuration updated successfully."
@@ -224,7 +244,7 @@ else
     --function-name $FUNCTION_NAME \
     --package-type Image \
     --code ImageUri="${REPO_URL}:${TAG}" \
-    --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
+    --role $ROLE_ARN \
     --memory-size $MEMORY_SIZE \
     --timeout $TIMEOUT \
     --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
