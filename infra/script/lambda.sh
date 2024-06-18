@@ -238,10 +238,10 @@ fi
 
 
 
-aws servicediscovery create-service \
-    --name myservice \
-    --namespace-id  ${namespace} \
-    --dns-config "NamespaceId=${NAME_SPACE_ID},RoutingPolicy=MULTIVALUE,DnsRecords=[{Type=A,TTL=60}]"
+# aws servicediscovery create-service \
+#     --name myservice \
+#     --namespace-id  ${NAME_SPACE_ID} \
+#     --dns-config "NamespaceId=${NAME_SPACE_ID},RoutingPolicy=MULTIVALUE,DnsRecords=[{Type=A,TTL=60}]"
 
 aws servicediscovery register-instance \
     --service-id ${SERVICE_ID} \
