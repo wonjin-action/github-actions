@@ -260,7 +260,7 @@ fi
 ### 테스트용 람다 함수 with Python
 
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
-    echo "Updating existing Lambda function...";
+    echo "Updating existing Lambda function..."
     # aws lambda update-function-configuration \
     #     --function-name $FUNCTION_NAME \
     #     --handler lambda_test.lambda_handler \
@@ -279,20 +279,20 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
         --timeout $TIMEOUT \
         --role $ROLE_ARN \
         --region $REGION \
-        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}" \
+        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
     echo "Lambda configuration updated successfully."
 
 
     sleep 30  # 30초 대기
     aws lambda update-function-code \
         --function-name $FUNCTION_NAME \
-        --zip-file fileb://../lambda/lambda_test-package.zip
+        --zip-file fileb://lambda_test-package.zip
 
 else
     echo "Creating new Lambda function..."
     aws lambda create-function \
     --function-name $FUNCTION_NAME \
-    --zip-file fileb://../lambda/lambda_test-package.zip \
+    --zip-file fileb://lambda_test-package.zip \
     --handler lambda_test.lambda_handler \
     --role $ROLE_ARN \
     --memory-size $MEMORY_SIZE \
