@@ -2,6 +2,9 @@
 
 WORKING_DIR=$(pwd)
 echo "Current directory is: $WORKING_DIR"
+# Load the configuration from the JSON file
+
+echo "existed file list is : $(ls -l) via lambda.sh"
 
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
 
