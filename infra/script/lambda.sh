@@ -44,44 +44,37 @@ echo "Role ARN: $ROLE_ARN"
 echo "SUBNET_ID : $SUBNET_ID"
 
 
+# Lambda 함수 삭제 (기존 이미지 패키지)
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
-    echo "Updating existing Lambda function..."
-    aws lambda update-function-configuration \
-        --function-name $FUNCTION_NAME \
-        --handler lambda_test.lambda_handler \
-        --memory-size $MEMORY_SIZE \
-        --timeout $TIMEOUT \
-        --role $ROLE_ARN \
-        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}" \
-        --runtime python3.8
+    echo "Deleting existing Lambda function..."
+    aws lambda delete-function --function-name $FUNCTION_NAME
     if [ $? -ne 0 ]; then
-        echo "Error: Failed to update Lambda configuration"
+        echo "Error: Failed to delete existing Lambda function"
         exit 1
     fi
-    echo "Lambda configuration updated successfully."
-    sleep 30  # 30초 대기
-    aws lambda update-function-code \
-        --function-name $FUNCTION_NAME \
-        --zip-file fileb://lambda_test-package.zip
-     if [ $? -ne 0 ]; then
-        echo "Error: Failed to update Lambda function code"
-        exit 1
-    fi
-else
-    echo "Creating new Lambda function..."
-    aws lambda create-function \
-        --function-name $FUNCTION_NAME \
-        --zip-file fileb://lambda_test-package.zip \
-        --handler lambda_test.lambda_handler \
-        --role $ROLE_ARN \
-        --memory-size $MEMORY_SIZE \
-        --timeout $TIMEOUT \
-        --runtime python3.8 \
-        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
-    if [ $? -ne 0 ]; then
-        echo "Error: Failed to create Lambda function"
-        exit 1
-    fi
+    echo "Deleted existing Lambda function."
+fi
+
+# Lambda 함수 생성
+ZIP_FILE_PATH="lambda_test-package.zip"
+if [ ! -f "$ZIP_FILE_PATH" ]; then
+    echo "Error: Lambda package zip file not found: $ZIP_FILE_PATH"
+    exit 1
+fi
+
+echo "Creating new Lambda function..."
+aws lambda create-function \
+    --function-name $FUNCTION_NAME \
+    --zip-file fileb://$ZIP_FILE_PATH \
+    --handler lambda_test.lambda_handler \
+    --role $ROLE_ARN \
+    --memory-size $MEMORY_SIZE \
+    --timeout $TIMEOUT \
+    --runtime python3.8 \
+    --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to create Lambda function"
+    exit 1
 fi
 
 check_update_status() {
@@ -105,6 +98,8 @@ if [ $? -ne 0 ]; then
     echo "Error: Failed to add permission to Lambda"
     exit 1
 fi
+
+LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Configuration.FunctionArn' --output text)
 
 INTEGRATION_ID=$(aws apigatewayv2 create-integration \
     --api-id $API_ID \
