@@ -80,6 +80,7 @@ export class Pipeline_lambdaConstruct extends Construct {
       eventBridgeEnabled: true,
     });
 
+
     sourceBucket.grantRead(props.executionRole, '.env'); // ecs 클러스터가 s3에 대해서 읽을 수 있도록 권한을 부여한다.
     // sourceBucket.grantRead -> To allow access Permisson for s3 bucket
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
@@ -178,10 +179,12 @@ export class Pipeline_lambdaConstruct extends Construct {
       }),
     });
     // console.log(`소스 버킷 이름 : ${sourceBucket.bucketName}`)
-    new cdk.CfnOutput(this, 'SourceBucketName', {
+
+     new cdk.CfnOutput(this, 'SourceBucketName', {
       value: sourceBucket.bucketName,
       description: 'The name of the source bucket',
     });
+
 
     deployProject.addToRolePolicy(
       new iam.PolicyStatement({

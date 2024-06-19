@@ -53,12 +53,23 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
-      - name: Configure AWS Credentials
-        id: credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      # - name: Configure AWS Credentials
+      #   id: credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      # Not Use OIDC 
+      - name: Configure AWS credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set region ${{ vars.AWS_REGION }}
+      
       - name: Install dependencies for Docker
         id: install_dependencies
         run: |
@@ -155,8 +166,10 @@ jobs:
       - name: Get S3 Bucket Name from SSM
         id: get_s3_bucket_name
         run: |
-          BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
+          BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/Lambda-Bucket" --query "Parameter.Value" --output text)
+          BACKEND_BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
           echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
+          echo "BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME" >> $GITHUB_ENV
           
       - name: List files in infra/lambda
         run: ls -l infra/lambda
@@ -166,14 +179,16 @@ jobs:
           pwd
           jq -n --arg url "${{ needs.image-build.outputs.REPO_URL }}" --arg tag "${{ needs.image-build.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
-          zip -r image.zip docker_image_info.json lambda_function_config.json ../script/lambda.sh trust_policy_for_lambda.json Lambda_iam_policy.json ../script/ecs-service-def.json ../script/ecs-task-def.json ../script/ecspresso.yml ../script/autoscale_sample.sh
-    
-          ls -l
+          zip -r image.zip docker_image_info.json lambda_function_config.json -j ../script/lambda.sh trust_policy_for_lambda.json Lambda_iam_policy.json ../script/ecs-service-def.json ../script/ecs-task-def.json ../script/ecspresso.yml ../script/autoscale_sample.sh
+          echo "zipped image.zip : "
+          unzip -l image.zip
+          
         working-directory: infra/lambda
   
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
+          aws s3 cp image.zip s3://$BACKEND_BUCKET_NAME/image.zip
         working-directory: infra/lambda
       - name: Setup tmate session
         if: always()

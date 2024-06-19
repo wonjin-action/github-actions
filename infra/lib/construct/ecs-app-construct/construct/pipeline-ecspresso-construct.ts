@@ -45,18 +45,6 @@ export class PipelineEcspressoConstruct extends Construct {
     });
     this.sourceBucket = sourceBucket;
 
-    // const codeBuildRole = new iam.Role(this, 'CodeBuildRole', {
-    //   assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
-    //   managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
-    // });
-
-    /////////////////  //////////////////////////
-
-    // new cdk.CfnOutput(this, 'sourceBucket', {
-    //   value: sourceBucket.bucketName,
-    //   exportName: `bucketName-${props.prefix}`,
-    // });
-
     sourceBucket.grantRead(props.executionRole, '.env');
 
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
