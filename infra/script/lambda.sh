@@ -261,7 +261,18 @@ fi
 
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     echo "Updating existing Lambda function...";
-    aws lambda update-function-configuration \
+    # aws lambda update-function-configuration \
+    #     --function-name $FUNCTION_NAME \
+    #     --handler lambda_test.lambda_handler \
+    #     --memory-size $MEMORY_SIZE \
+    #     --timeout $TIMEOUT \
+    #     --role $ROLE_ARN \
+    #     --region $REGION \
+    #     --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}" \
+    #     --runtime python3.8
+    # echo "Lambda configuration updated successfully."
+
+     aws lambda update-function-configuration \
         --function-name $FUNCTION_NAME \
         --handler lambda_test.lambda_handler \
         --memory-size $MEMORY_SIZE \
@@ -269,12 +280,13 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
         --role $ROLE_ARN \
         --region $REGION \
         --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}" \
-        --runtime python3.8
     echo "Lambda configuration updated successfully."
+
+
     sleep 30  # 30초 대기
     aws lambda update-function-code \
-    --function-name $FUNCTION_NAME \
-    --zip-file fileb://../lambda/lambda_test-package.zip 
+        --function-name $FUNCTION_NAME \
+        --zip-file fileb://../lambda/lambda_test-package.zip
 
 else
     echo "Creating new Lambda function..."
@@ -285,6 +297,7 @@ else
     --role $ROLE_ARN \
     --memory-size $MEMORY_SIZE \
     --timeout $TIMEOUT \
+    --region $REGION \
     --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
 
 fi
