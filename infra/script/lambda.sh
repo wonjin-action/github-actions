@@ -43,11 +43,6 @@ echo "Security Group ID: $SECURITY_GROUP_ID"
 echo "Role ARN: $ROLE_ARN"
 echo "SUBNET_ID : $SUBNET_ID"
 
-ZIP_FILE_PATH="lambda_test-package.zip"
-if [ ! -f "$ZIP_FILE_PATH" ]; then
-    echo "Error: Lambda package zip file not found: $ZIP_FILE_PATH"
-    exit 1
-fi
 
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     echo "Updating existing Lambda function..."
@@ -67,8 +62,8 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     sleep 30  # 30초 대기
     aws lambda update-function-code \
         --function-name $FUNCTION_NAME \
-        --zip-file fileb://$ZIP_FILE_PATH
-    if [ $? -ne 0 ]; then
+        --zip-file fileb://lambda_test-package.zip
+     if [ $? -ne 0 ]; then
         echo "Error: Failed to update Lambda function code"
         exit 1
     fi
@@ -76,7 +71,7 @@ else
     echo "Creating new Lambda function..."
     aws lambda create-function \
         --function-name $FUNCTION_NAME \
-        --zip-file fileb://$ZIP_FILE_PATH \
+        --zip-file fileb://lambda_test-package.zip \
         --handler lambda_test.lambda_handler \
         --role $ROLE_ARN \
         --memory-size $MEMORY_SIZE \
