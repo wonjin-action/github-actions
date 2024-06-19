@@ -59,7 +59,7 @@ echo "SUBNET_ID : $SUBNET_ID"
 
 $CODEBUILD_SRC_DIR -> Codebuild Configuration Value
 
-END >>
+END
 
 
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
