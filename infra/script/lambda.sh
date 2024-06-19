@@ -56,7 +56,7 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
 fi
 
 # Lambda 함수 생성
-ZIP_FILE_PATH="lambda_test-package.zip"
+ZIP_FILE_PATH="lambda_test_package.zip"
 if [ ! -f "$ZIP_FILE_PATH" ]; then
     echo "Error: Lambda package zip file not found: $ZIP_FILE_PATH"
     exit 1
