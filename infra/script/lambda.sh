@@ -223,25 +223,65 @@ fi
 
 
 
-# Lambda 함수 생성 또는 업데이트
+# Lambda 함수 생성 또는 업데이트 ## 도커 이미지 ###
+# if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
+#     echo "Updating existing Lambda function...";
+#     aws lambda update-function-configuration \
+#         --function-name $FUNCTION_NAME \
+#         --memory-size $MEMORY_SIZE \
+#         --timeout $TIMEOUT \
+#         --role $ROLE_ARN \
+#         --region $REGION \
+#         --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+#     echo "Lambda configuration updated successfully."
+#     sleep 30  # 30초 대기
+#     aws lambda update-function-code \
+#     --function-name $FUNCTION_NAME \
+#     --image-uri "${REPO_URL}:${TAG}"
+# else
+#     echo "Creating new Lambda function..."
+#     aws lambda create-function \
+#     --function-name $FUNCTION_NAME \
+#     --package-type Image \
+#     --code ImageUri="${REPO_URL}:${TAG}" \
+#     --role $ROLE_ARN \
+#     --memory-size $MEMORY_SIZE \
+#     --timeout $TIMEOUT \
+#     --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+
+# fi
+
+
+### 테스트용 람다 함수 with Python
+
+zip lambda_test-package.zip ../lambda/lambda_test.py
+
+
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     echo "Updating existing Lambda function...";
     aws lambda update-function-configuration \
         --function-name $FUNCTION_NAME \
+        --handler lambda_test.lambda_handler \
         --memory-size $MEMORY_SIZE \
         --timeout $TIMEOUT \
         --role $ROLE_ARN \
         --region $REGION \
+        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}" \
+        --runtime python3.8
         --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+
     echo "Lambda configuration updated successfully."
     sleep 30  # 30초 대기
     aws lambda update-function-code \
     --function-name $FUNCTION_NAME \
-    --image-uri "${REPO_URL}:${TAG}"
+    --zip-file fileb://../lambda/lambda_test-package.zip \
+
 else
     echo "Creating new Lambda function..."
     aws lambda create-function \
     --function-name $FUNCTION_NAME \
+    --zip-file fileb://../lambda/lambda_test-package.zip \
+    --handler lambda_test.lambda_handler \
     --package-type Image \
     --code ImageUri="${REPO_URL}:${TAG}" \
     --role $ROLE_ARN \
@@ -249,7 +289,21 @@ else
     --timeout $TIMEOUT \
     --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
 
-fi
+
+
+check_update_status() {
+    local status
+    status=$(aws lambda get-function-configuration --function-name $FUNCTION_NAME --query "LastUpdateStatus" --output text)
+    echo $status
+}
+
+# 함수 업데이트가 진행 중인 경우 대기
+while [[ $(check_update_status) == "InProgress" ]]; do
+    echo "Update in progress... Waiting for 10 seconds."
+    sleep 10
+done
+
+
 
 ### Api Gateway의 엔드포인트를 CloudMap의 서비스 인스턴스로 등록
 

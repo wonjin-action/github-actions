@@ -122,20 +122,20 @@ const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
 // });
 
 // Aurora
-// const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {
-//   vpc: shareResources.vpc,
-//   dbAllocatedStorage: 25,
-//   vpcSubnets: shareResources.vpc.selectSubnets({
-//     subnetGroupName: 'Protected',
-//   }),
-//   appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
-//   // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
-//   // bastionSecurityGroup: webApp.ecs.bastionApp.securityGroup,
-//   appKey: shareResources.appKey,
-//   alarmTopic: shareResources.alarmTopic,
-//   ...config.AuroraParam,
-//   env: deployEnv,
-// });
+const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {
+  vpc: shareResources.vpc,
+  dbAllocatedStorage: 25,
+  vpcSubnets: shareResources.vpc.selectSubnets({
+    subnetGroupName: 'Protected',
+  }),
+  appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
+  // appServerSecurityGroup: ecs.app.backEcsAppsBg[0].securityGroupForFargate,
+  // bastionSecurityGroup: webApp.ecs.bastionApp.securityGroup,
+  appKey: shareResources.appKey,
+  alarmTopic: shareResources.alarmTopic,
+  ...config.AuroraParam,
+  env: deployEnv,
+});
 
 // new MonitorStack(app, `${pjPrefix}-MonitorStack`, {
 //   pjPrefix: `${pjPrefix}`,
@@ -156,15 +156,15 @@ const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
 //   env: deployEnv,
 // });
 
-// new ElastiCacheRedisStack(app, `${pjPrefix}-Redis`, {
-//   vpc: shareResources.vpc,
-//   appKey: shareResources.appKey,
-//   alarmTopic: shareResources.alarmTopic,
-//   appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
-//   bastionSecurityGroup: webApp.ecs.bastionApp?.securityGroup,
-//   ...config.ElastiCacheRedisParam,
-//   env: deployEnv,
-// });
+new ElastiCacheRedisStack(app, `${pjPrefix}-Redis`, {
+  vpc: shareResources.vpc,
+  appKey: shareResources.appKey,
+  alarmTopic: shareResources.alarmTopic,
+  appServerSecurityGroup: webApp.ecs.backEcsApps[0].securityGroupForFargate,
+  bastionSecurityGroup: webApp.ecs.bastionApp?.securityGroup,
+  ...config.ElastiCacheRedisParam,
+  env: deployEnv,
+});
 
 // --------------------------------- Tagging  -------------------------------------
 

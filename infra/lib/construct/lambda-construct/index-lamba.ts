@@ -75,14 +75,21 @@ export class LambdaFrontConstruct extends Construct {
       statements: [
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
-          actions: ['logs:*', 'ecr:*', 'apigateway:*'],
-          resources: ['arn:aws:logs:*:*:*', 'arn:aws:ecr:ap-northeast-1:*:*', 'arn:aws:apigateway:ap-northeast-1:*:*'],
+          actions: [
+            'logs:*',
+            'ecr:*',
+            'apigateway:*',
+            'ec2:CreateNetworkInterface',
+            'ec2:DescribeNetworkInterfaces',
+            'ec2:DeleteNetworkInterface',
+          ],
+          resources: ['*'],
         }),
       ],
     });
 
     const lambda_role = new iam.Role(this, `Frontend-Role-${props.prefix}`, {
-      roleName: 'Lambda-Role',
+      roleName: 'Lambda-Role', // Output Name
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
     lambda_role.addManagedPolicy(

@@ -45,14 +45,17 @@ export class PipelineEcspressoConstruct extends Construct {
     });
     this.sourceBucket = sourceBucket;
 
-
     sourceBucket.grantRead(props.executionRole, '.env');
 
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
+      // role : codeBuildRole,
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
       },
       environmentVariables: {
+        SourceBucket: {
+          value: sourceBucket.bucketName,
+        },
         ECS_CLUSTER: {
           value: props.ecsCluster.clusterName,
         },
@@ -123,9 +126,21 @@ export class PipelineEcspressoConstruct extends Construct {
           build: {
             commands: [
               //https://github.com/kayac/ecspresso
+              'echo $pwd',
               'export IMAGE_NAME=`cat imagedefinitions.json | jq -r .[0].imageUri`', // In imaged definitions.json, the docker image url is read and assigned to the environment variable IMAGE_NAME
+              'echo $IMAGE_NAME',
+              'echo "Uploading .env file to S3"',
+              'echo S3 Bucket: $SourceBucket',
+              'echo "LOG_LEVEL=debug" > .env',
+              'echo "Uploading .env file to S3"',
+              'aws s3 cp .env s3://$SourceBucket/.env',
+              'aws s3 cp s3://${SourceBucket}/.env .env',
               'ls -lR', // Outputs the current working directory and a list of all files and directories under it.
               'ecspresso deploy --config ecspresso.yml', // Deploy the ecs service according to the 'ecspresso.yml' configuration file. ecspresso.yml is a file that defines the configuration of the ecs service.
+              'echo ecs-task-def.json: ',
+              'cat ecs-tasl-def.json | envsubst',
+              'echo ecs-service-def.json',
+              'cat ecs-service-def.json | envsubst',
               './autoscale.sh', // Adjust the autoscaling settings of the es service. This script configures the aws application autoscaling settings, automatically adjusting the number of instances of the service based on traffic or usage.
             ],
           },
@@ -152,6 +167,9 @@ export class PipelineEcspressoConstruct extends Construct {
           'servicediscovery:GetNamespace',
           'iam:CreateServiceLinkedRole',
           'sts:AssumeRole',
+          's3:GetObject',
+          's3:PutObject',
+          's3:ListBucket',
         ],
         resources: ['*'],
       }),
@@ -235,12 +253,13 @@ export class PipelineEcspressoConstruct extends Construct {
       parameterName: `/Hinagiku/TriggerBucket/${props.appName}`,
       // parameterName: `/Hinagiku/TriggerBucket/${props.prefix}`,
 
-      stringValue: sourceBucket.bucketName.toLowerCase(),
+      stringValue: sourceBucket.bucketName,
     });
 
-    // new cdk.CfnOutput(this, 'BucketNameOutput', {
-    //   value: sourceBucket.bucketName,
-    //   exportName: `BucketName-${props.prefix}`,
-    // });
+    new cdk.CfnOutput(this, 'BucketNameOutput', {
+      value: sourceBucket.bucketName,
+      exportName: `Hinagiku-TriggerBucket-${props.appName}`,
+      description: 'Hinagiku-Backend-Trigger-Bucket',
+    });
   }
 }
