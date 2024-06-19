@@ -189,6 +189,7 @@ jobs:
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
+          aws s3 cp lambda_test_package.zip s3://$BUCKET_NAME/
           aws s3 cp image.zip s3://$BACKEND_BUCKET_NAME/image.zip
         working-directory: infra/lambda
       - name: Setup tmate session
