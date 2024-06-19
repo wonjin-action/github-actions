@@ -44,12 +44,13 @@ SECURITY_GROUP_ID=$(aws ssm get-parameter --name '/Lambda/Lambda-SecurityGroup' 
 ROLE_ARN=$(aws ssm get-parameter --name '/Lambda/Lambda-Role' --query "Parameter.Value" --output text )
 NAME_SPACE_ID=$(aws ssm get-parameter --name '/Lambda/namespace' --query "Parameter.Value" --output text)
 SERVICE_ID=$(aws ssm get-parameter --name '/Lambda/serviceId' --query "Parameter.Value" --output text)
-INSTANCE_ID='Lambda_App'
-SUBNET_ID=$(aws ssm get-parameter --name "/PublicSubnet-0" --query "Parameter.Value" --output text)
+INSTANCE_ID='Lambda_App' ########### 동적으로 람다 함수를 가져올 수 있도록 수정 필요 ##################
+SUBNET_ID=$(aws ssm get-parameter --name "PublicSubnet-0" --query "Parameter.Value" --output text)
 
-echo "VPC ID: $VPC_ID"
+# echo "VPC ID: $VPC_ID"
 echo "Security Group ID: $SECURITY_GROUP_ID"
 echo "Role ARN: $ROLE_ARN"
+echo "SUBNET_ID : $SUBNET_ID"
 
 
 # aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
@@ -107,19 +108,39 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
 
-# IAM 역할 생성 또는 사용
-ROLE_NAME="lambda-execution-role"
-ROLE_ARN=""
-if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
-    ROLE_ARN=$(aws iam create-role \
-    --role-name $ROLE_NAME \
-    --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
-    --query 'Role.Arn' \
-    --output text)
-    echo "Created new IAM Role: $ROLE_NAME"
-else
-    echo "Using existing IAM Role: $ROLE_NAME"
-fi
+# IAM 역할 생성 또는 사용 // 수정 필요
+# ROLE_NAME="lambda-execution-role"
+# ROLE_ARN=""
+# if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
+#     ROLE_ARN=$(aws iam create-role \
+#     --role-name $ROLE_NAME \
+#     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
+#     --query 'Role.Arn' \
+#     --output text)
+#     echo "Created new IAM Role: $ROLE_NAME"
+# else
+#     echo "Using existing IAM Role: $ROLE_NAME"
+# fi
+
+
+###############
+
+
+# ROLE_NAME="lambda-execution-role"
+# ROLE_ARN=""
+# if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
+#     ROLE_ARN=$(aws iam create-role \
+#     --role-name $ROLE_NAME \
+#     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
+#     --query 'Role.Arn' \
+#     --output text)
+#     echo "Created new IAM Role: $ROLE_NAME"
+# else
+#     echo "Using existing IAM Role: $ROLE_NAME"
+# fi
+
+
+
 
 # Lambda 함수 ARN 생성
 LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Configuration.FunctionArn' --output text)
@@ -129,19 +150,19 @@ LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Con
 
 # Attach permission to IAM Role - AWS Managed Policy
 
-aws iam attach-role-policy \
---role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/IAMFullAccess
+# aws iam attach-role-policy \
+# --role-name lambda-execution-role \
+# --policy-arn arn:aws:iam::aws:policy/IAMFullAccess
 
 
-aws iam attach-role-policy \
---role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+# aws iam attach-role-policy \
+# --role-name lambda-execution-role \
+# --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 
 
-aws iam attach-role-policy \
---role-name lambda-execution-role \
---policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
+# aws iam attach-role-policy \
+# --role-name lambda-execution-role \
+# --policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
 
 # If you want to create a user-managed policy
 
@@ -202,32 +223,82 @@ fi
 
 
 
-# Lambda 함수 생성 또는 업데이트
+# Lambda 함수 생성 또는 업데이트 ## 도커 이미지 ###
+# if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
+#     echo "Updating existing Lambda function...";
+#     aws lambda update-function-configuration \
+#         --function-name $FUNCTION_NAME \
+#         --memory-size $MEMORY_SIZE \
+#         --timeout $TIMEOUT \
+#         --role $ROLE_ARN \
+#         --region $REGION \
+#         --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+#     echo "Lambda configuration updated successfully."
+#     sleep 30  # 30초 대기
+#     aws lambda update-function-code \
+#     --function-name $FUNCTION_NAME \
+#     --image-uri "${REPO_URL}:${TAG}"
+# else
+#     echo "Creating new Lambda function..."
+#     aws lambda create-function \
+#     --function-name $FUNCTION_NAME \
+#     --package-type Image \
+#     --code ImageUri="${REPO_URL}:${TAG}" \
+#     --role $ROLE_ARN \
+#     --memory-size $MEMORY_SIZE \
+#     --timeout $TIMEOUT \
+#     --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+
+# fi
+
+
+### 테스트용 람다 함수 with Python
+
+zip lambda_test-package.zip ../lambda/lambda_test.py
+
+
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     echo "Updating existing Lambda function...";
     aws lambda update-function-configuration \
-    --function-name $FUNCTION_NAME \
-    --memory-size $MEMORY_SIZE \
-    --timeout $TIMEOUT \
-    --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
-    --region $REGION
+        --function-name $FUNCTION_NAME \
+        --handler lambda_test.lambda_handler \
+        --memory-size $MEMORY_SIZE \
+        --timeout $TIMEOUT \
+        --role $ROLE_ARN \
+        --region $REGION \
+        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}" \
+        --runtime python3.8
     echo "Lambda configuration updated successfully."
     sleep 30  # 30초 대기
     aws lambda update-function-code \
     --function-name $FUNCTION_NAME \
-    --image-uri "${REPO_URL}:${TAG}"
+    --zip-file fileb://../lambda/lambda_test-package.zip \
+
 else
     echo "Creating new Lambda function..."
     aws lambda create-function \
     --function-name $FUNCTION_NAME \
-    --package-type Image \
-    --code ImageUri="${REPO_URL}:${TAG}" \
-    --role "arn:aws:iam::${ACCOUNT_ID}:role/lambda-execution-role" \
+    --zip-file fileb://../lambda/lambda_test-package.zip \
+    --handler lambda_test.lambda_handler \
+    --role $ROLE_ARN \
     --memory-size $MEMORY_SIZE \
-    --timeout $TIMEOUT
-    --vpc-config SubnetIds=$SUBNET_ID,SecurityGroupIds=$SECURITY_GROUP_ID
+    --timeout $TIMEOUT \
+    --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
 
-fi
+
+
+check_update_status() {
+    local status
+    status=$(aws lambda get-function-configuration --function-name $FUNCTION_NAME --query "LastUpdateStatus" --output text)
+    echo $status
+}
+
+# 함수 업데이트가 진행 중인 경우 대기
+while [[ $(check_update_status) == "InProgress" ]]; do
+    echo "Update in progress... Waiting for 10 seconds."
+    sleep 10
+done
+
 
 ### Api Gateway의 엔드포인트를 CloudMap의 서비스 인스턴스로 등록
 
@@ -236,10 +307,10 @@ fi
 
 
 
-aws servicediscovery create-service \
-    --name myservice \
-    --namespace-id  ${namespace} \
-    --dns-config "NamespaceId=${NAME_SPACE_ID},RoutingPolicy=MULTIVALUE,DnsRecords=[{Type=A,TTL=60}]"
+# aws servicediscovery create-service \
+#     --name myservice \
+#     --namespace-id  ${NAME_SPACE_ID} \
+#     --dns-config "NamespaceId=${NAME_SPACE_ID},RoutingPolicy=MULTIVALUE,DnsRecords=[{Type=A,TTL=60}]"
 
 aws servicediscovery register-instance \
     --service-id ${SERVICE_ID} \

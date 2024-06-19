@@ -85,8 +85,8 @@ function generate_image_tag() {
 function get_image_uri() {
   local -r app_name="$1"
   local -r tag="$2"
-  local -r repo_name=$(aws ssm get-parameter --name "/$PARAMETER_PREFIX/Repository/$app_name" --query "Parameter.Value" --output text)
-
+  # local -r repo_name=$(aws ssm get-parameter --name "/$PARAMETER_PREFIX/Repository/$app_name" --query "Parameter.Value" --output text)
+  repo_name='my-app-dev' # 검증 때문에 하드코딩 됨. 
   if [[ -z $repo_name ]]; then
       error "Could not get ECR repo such as 'devblea-simplefrontstack-ecsapprepo1234'."
       exit 1
@@ -114,6 +114,7 @@ function get_s3_bucket_name() {
   local -r app_name="$1"
 
   echo "Setting Pipeline source S3 Bucket..."
+  echo "app name : ${app_name}"
   S3_BUCKET=$(aws ssm get-parameter \
     --name "/Hinagiku/TriggerBucket/$app_name" \
     --query "Parameter.Value" \
@@ -170,6 +171,7 @@ function main() {
   local -r config_path="$2"
   local -r app_name="$3"
   echo "Your environment is $env"
+
 
   . "$SCRIPT_DIR/../config/parameters/$env.conf"
 
