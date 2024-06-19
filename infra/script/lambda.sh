@@ -55,10 +55,15 @@ echo "SUBNET_ID : $SUBNET_ID"
 
 # aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
 
+<< 'END'
+
+$CODEBUILD_SRC_DIR -> Codebuild Configuration Value
+
+END >>
+
+
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
-
-
-DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
+# DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
 
 if [ -f "$LAMBDA_CONFIG_FILE" ]; then
     echo "Found lambda configuration file: $LAMBDA_CONFIG_FILE"
@@ -265,8 +270,6 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
         --region $REGION \
         --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}" \
         --runtime python3.8
-        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
-
     echo "Lambda configuration updated successfully."
     sleep 30  # 30초 대기
     aws lambda update-function-code \
@@ -279,14 +282,12 @@ else
     --function-name $FUNCTION_NAME \
     --zip-file fileb://../lambda/lambda_test-package.zip \
     --handler lambda_test.lambda_handler \
-    --package-type Image \
-    --code ImageUri="${REPO_URL}:${TAG}" \
     --role $ROLE_ARN \
     --memory-size $MEMORY_SIZE \
     --timeout $TIMEOUT \
     --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
 
-
+fi
 
 check_update_status() {
     local status
@@ -299,7 +300,6 @@ while [[ $(check_update_status) == "InProgress" ]]; do
     echo "Update in progress... Waiting for 10 seconds."
     sleep 10
 done
-
 
 
 ### Api Gateway의 엔드포인트를 CloudMap의 서비스 인스턴스로 등록
