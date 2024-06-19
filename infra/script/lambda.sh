@@ -63,7 +63,7 @@ END
 
 
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
-DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
+# DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
 
 if [ -f "$LAMBDA_CONFIG_FILE" ]; then
     echo "Found lambda configuration file: $LAMBDA_CONFIG_FILE"
@@ -86,11 +86,11 @@ TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 
 # Import Docker Info for Iambda Backend
 
-REPO_URL=$(jq -r '.DOCKER_IMAGE_URL' $DOCKER_INFO)
-TAG=$(jq -r '.TAG' $DOCKER_INFO)
+# REPO_URL=$(jq -r '.DOCKER_IMAGE_URL' $DOCKER_INFO)
+# TAG=$(jq -r '.TAG' $DOCKER_INFO)
 
-echo "docker image url : ${REPO_URL}"
-echo "Image tag is ${TAG}"
+# echo "docker image url : ${REPO_URL}"
+# echo "Image tag is ${TAG}"
 
 # 동적으로 가져오기 -> 사용자에게 값을 입력받지 않는다.
 # REGION=$(aws configure get region --region ap-northeast-1)
@@ -172,8 +172,8 @@ LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Con
 # If you want to create a user-managed policy
 
 
-REPO_NAME=$(echo $REPO_URL | awk -F'/' '{print $2}')
-          echo "Repository Name: $REPO_NAME"
+# REPO_NAME=$(echo $REPO_URL | awk -F'/' '{print $2}')
+#           echo "Repository Name: $REPO_NAME"
 
 
 # aws ecr set-repository-policy \
@@ -274,7 +274,7 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     sleep 30  # 30초 대기
     aws lambda update-function-code \
     --function-name $FUNCTION_NAME \
-    --zip-file fileb://../lambda/lambda_test-package.zip \
+    --zip-file fileb://../lambda/lambda_test-package.zip 
 
 else
     echo "Creating new Lambda function..."
