@@ -63,7 +63,7 @@ END >>
 
 
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
-# DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
+DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
 
 if [ -f "$LAMBDA_CONFIG_FILE" ]; then
     echo "Found lambda configuration file: $LAMBDA_CONFIG_FILE"
