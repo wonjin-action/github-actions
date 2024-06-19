@@ -43,7 +43,7 @@ echo "Security Group ID: $SECURITY_GROUP_ID"
 echo "Role ARN: $ROLE_ARN"
 echo "SUBNET_ID : $SUBNET_ID"
 
-ZIP_FILE_PATH="../lambda/lambda_test-package.zip"
+ZIP_FILE_PATH="lambda_test-package.zip"
 if [ ! -f "$ZIP_FILE_PATH" ]; then
     echo "Error: Lambda package zip file not found: $ZIP_FILE_PATH"
     exit 1
