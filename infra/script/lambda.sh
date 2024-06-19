@@ -254,9 +254,6 @@ fi
 
 ### 테스트용 람다 함수 with Python
 
-zip lambda_test-package.zip ../lambda/lambda_test.py
-
-
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     echo "Updating existing Lambda function...";
     aws lambda update-function-configuration \
