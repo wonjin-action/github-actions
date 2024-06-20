@@ -7,7 +7,7 @@ logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     # ECS 클러스터의 서비스 URL
-    ecs_service_url = 'http://backend.Hinagiku-Dev'
+    ecs_service_url = 'backend.hinagiku-dev'
 
     try:
         # Lambda 함수에서 ECS 클러스터로 API 호출
