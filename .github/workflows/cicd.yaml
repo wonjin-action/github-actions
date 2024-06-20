@@ -185,7 +185,7 @@ jobs:
           echo "zipped image.zip : "
           unzip -l image.zip
 
-          ehco "lambda_package.zip is working : "
+          echo "lambda_package.zip is working : "
           mkdir -p lambda_package
           pip install requests -t ./lambda_package
           cp lambda_test.py ./lambda_package
