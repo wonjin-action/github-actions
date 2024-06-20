@@ -7,7 +7,7 @@ logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     # ECS 클러스터의 서비스 URL
-    ecs_service_url = 'http://Hinagiku-Dev-EcsBackend-Service.Hinagiku-Dev'
+    ecs_service_url = 'http://backend.Hinagiku-Dev'
 
     # 도메인 = 서비스이름.네임스페이스
 
