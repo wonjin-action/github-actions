@@ -189,7 +189,7 @@ jobs:
           mkdir -p lambda_package
           pip install requests -t ./lambda_package
           cp lambda_test.py ./lambda_package
-          cd package
+          cd lambda_package
           zip -r9 ../lambda_test_package.zip .
           cd ..
           echo "zipped lambda_test_package.zip : "
