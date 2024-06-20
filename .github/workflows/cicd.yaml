@@ -179,17 +179,29 @@ jobs:
           pwd
           jq -n --arg url "${{ needs.image-build.outputs.REPO_URL }}" --arg tag "${{ needs.image-build.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
-          zip lambda_test_package.zip lambda_test.py
+          echo "Installing dependencies..."
+
           zip -r image.zip docker_image_info.json lambda_function_config.json -j ../script/lambda.sh trust_policy_for_lambda.json Lambda_iam_policy.json ../script/ecs-service-def.json ../script/ecs-task-def.json ../script/ecspresso.yml ../script/autoscale_sample.sh
           echo "zipped image.zip : "
           unzip -l image.zip
+
+          ehco "lambda_package.zip is working : "
+          mkdir -p lambda_package
+          pip install requests -t ./lambda_package
+          cp lambda_test.py ./lambda_package
+          cd package
+          zip -r9 ../lambda_test_package.zip .
+          cd ..
+          echo "zipped lambda_test_package.zip : "
+          unzip -l lambda_test_package.zip
+
           
         working-directory: infra/lambda
   
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
-          aws s3 cp lambda_test_package.zip s3://$BUCKET_NAME/
+          aws s3 cp ./lambda_package/lambda_test_package.zip s3://$BUCKET_NAME/
           aws s3 cp image.zip s3://$BACKEND_BUCKET_NAME/image.zip
         working-directory: infra/lambda
       - name: Setup tmate session
