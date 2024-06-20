@@ -187,7 +187,7 @@ jobs:
 
           echo "lambda_package.zip is working : "
           mkdir -p lambda_package
-          pip install -r requirements.txt ./lambda_package
+          pip install -r requirements.txt -t ./lambda_package
           cp lambda_test.py ./lambda_package
           cd lambda_package
           zip -r9 ../lambda_test_package.zip .
