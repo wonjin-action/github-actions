@@ -134,3 +134,26 @@ if ! aws apigatewayv2 get-routes --api-id "$API_ID" --output json | jq -e '.Item
         exit 1
     fi
 fi
+
+echo "Lambda has been created : $FUNCTION_NAME"
+
+# Lambda 함수 실행 (ENI가 생성되도록)
+aws lambda invoke --function-name $FUNCTION_NAME output.txt
+
+# Lambda 함수와 연결된 ENI ID 확인
+ENI_IDS=$(aws ec2 describe-network-interfaces --filters "Name=description,Values=AWS Lambda VPC ENI-*-*-$FUNCTION_NAME" --query 'NetworkInterfaces[*].NetworkInterfaceId' --output text)
+
+# ENI ID 출력
+if [ -z "$ENI_IDS" ]; then
+    echo "No ENIs found for Lambda function $FUNCTION_NAME"
+else
+    echo "Lambda 함수에 연결된 ENI ID들: $ENI_IDS"
+
+    # 각 ENI ID의 상세 정보 조회
+    for ENI_ID in $ENI_IDS; do
+        echo "ENI ID: $ENI_ID"
+        aws ec2 describe-network-interfaces --network-interface-ids $ENI_ID
+    done
+fi
+
+
