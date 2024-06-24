@@ -178,7 +178,7 @@ fi
 aws servicediscovery register-instance \
     --service-id ${SERVICE_ID} \
     --instance-id $INSTANCE_ID \
-    --attributes=AWS_INSTANCE_IPV4=172.2.1.3,AWS_INSTANCE_PORT=8080 # attribute 플래그를 사용하여 특정 서비스 인스턴스를 클라우드 맵에 등록하는데 사용
+    --attributes=AWS_INSTANCE_IPV4=172.2.1.3,AWS_INSTANCE_PORT=8080
 
 << 'END'
   # Setting the instance port 8080 specifies the port number on which the service instance will receive traffic.
