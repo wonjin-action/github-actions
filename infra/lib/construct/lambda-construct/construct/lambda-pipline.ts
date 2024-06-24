@@ -40,15 +40,17 @@ export class Pipeline_lambdaConstruct extends Construct {
       managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
     });
 
+    const codePipelineRole = new iam.Role(this, 'CodePipelineRole', {
+      assumedBy: new iam.ServicePrincipal('codepipeline.amazonaws.com'),
+      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
+    });
 
     const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
       versioned: true,
       eventBridgeEnabled: true,
     });
 
-
-
-    sourceBucket.grantRead(props.executionRole, '.env'); 
+    sourceBucket.grantRead(props.executionRole, '.env');
     // sourceBucket.grantRead -> To allow access Permisson for s3 bucket
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
       role: codeBuildRole,
@@ -75,7 +77,7 @@ export class Pipeline_lambdaConstruct extends Construct {
             subnetGroupName: 'Private',
           }).subnetIds[2],
         },
-  
+
         REGISTRY_ARN: {
           value: props.cloudmapService.serviceArn,
         },
@@ -104,7 +106,7 @@ export class Pipeline_lambdaConstruct extends Construct {
 
               'ls -l',
 
-              'unzip -o image.zip -d ./unzip_folder', 
+              'unzip -o image.zip -d ./unzip_folder',
 
               'ls -l ./unzip_folder',
             ],
@@ -120,12 +122,11 @@ export class Pipeline_lambdaConstruct extends Construct {
         },
       }),
     });
- 
-     new cdk.CfnOutput(this, 'SourceBucketName', {
+
+    new cdk.CfnOutput(this, 'SourceBucketName', {
       value: sourceBucket.bucketName,
       description: 'The name of the source bucket',
     });
-
 
     deployProject.addToRolePolicy(
       new iam.PolicyStatement({
@@ -146,7 +147,7 @@ export class Pipeline_lambdaConstruct extends Construct {
           'servicediscovery:GetNamespace',
           'iam:CreateServiceLinkedRole',
           'sts:AssumeRole',
-          'lambda:*', 
+          'lambda:*',
           's3:GetObject',
           'ssm:GetParameter',
           'cloudformation:DescribeStacks',
@@ -155,6 +156,17 @@ export class Pipeline_lambdaConstruct extends Construct {
           'apigateway:POST',
           'iam:PassRole',
           'iam:CreateRole',
+          'cloudformation:DescribeStacks',
+          'apigateway:GET',
+          'apigateway:POST',
+          'apigateway:PUT',
+          'apigatewayv2:CreateIntegration',
+          'apigatewayv2:GetRoutes',
+          'apigatewayv2:UpdateStage',
+          'apigatewayv2:CreateStage',
+          'sts:GetCallerIdentity',
+          'servicediscovery:RegisterInstance',
+          'servicediscovery:GetNamespace',
         ],
         resources: ['*'],
       }),
@@ -179,7 +191,6 @@ export class Pipeline_lambdaConstruct extends Construct {
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       crossAccountKeys: false,
-      role: codePipelineRole,
     });
 
     pipeline.addStage({
@@ -212,8 +223,6 @@ export class Pipeline_lambdaConstruct extends Construct {
       targets: [new targets.CodePipeline(pipeline)],
     });
 
-
-
     const securityGroupParam = new ssm.StringParameter(this, 'Lambda/Lambda-SecurityGroup', {
       parameterName: '/Lambda/Lambda-SecurityGroup',
       stringValue: props.securityGroup.securityGroupId,
@@ -228,7 +237,5 @@ export class Pipeline_lambdaConstruct extends Construct {
       parameterName: '/Hinagiku/TriggerBucket/Lambda-Bucket',
       stringValue: sourceBucket.bucketName,
     });
-
-    console.log(`CodeBuild project role ARN: ${deployProject.role?.roleArn}`);
   }
 }
