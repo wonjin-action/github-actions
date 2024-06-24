@@ -14,20 +14,12 @@ END
 
 # Setting Permission for CodeBuild
 
-
-
-
-# 역할에 연결된 정책 확인
+# Check attached Policy of CodeBuild 
 # aws iam list-attached-role-policies --role-name CodeBuildServiceRole
-
-# 특정 정책의 내용 확인 (인라인 정책인 경우)
-# aws iam get-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy
-
 
 # aws iam create-role \
 #     --role-name lambda-execution-role \
 #     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust-policy-codebuild.json
-
 
 # aws iam attach-role-policy \
 #     --role-name CodeBuildServiceRole \
@@ -87,8 +79,6 @@ TAG=$(jq -r '.TAG' $DOCKER_INFO)
 echo "docker image url : ${REPO_URL}"
 echo "Image tag is ${TAG}"
 
-# 동적으로 가져오기 -> 사용자에게 값을 입력받지 않는다.
-# REGION=$(aws configure get region --region ap-northeast-1)
 
 REGION=$AWS_DEFAULT_REGION
 
@@ -103,82 +93,14 @@ STATEMENT_ID="apigateway-$(date +%Y%m%d%H%M%S)"
 
 echo "Statement ID: ${STATEMENT_ID}"
 
-# 현재 AWS 계정 ID 가져오기
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
-
-# IAM 역할 생성 또는 사용 // 수정 필요
-# ROLE_NAME="lambda-execution-role"
-# ROLE_ARN=""
-# if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
-#     ROLE_ARN=$(aws iam create-role \
-#     --role-name $ROLE_NAME \
-#     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
-#     --query 'Role.Arn' \
-#     --output text)
-#     echo "Created new IAM Role: $ROLE_NAME"
-# else
-#     echo "Using existing IAM Role: $ROLE_NAME"
-# fi
-
-
-###############
-
-
-# ROLE_NAME="lambda-execution-role"
-# ROLE_ARN=""
-# if ! ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null); then
-#     ROLE_ARN=$(aws iam create-role \
-#     --role-name $ROLE_NAME \
-#     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust_policy_for_lambda.json \
-#     --query 'Role.Arn' \
-#     --output text)
-#     echo "Created new IAM Role: $ROLE_NAME"
-# else
-#     echo "Using existing IAM Role: $ROLE_NAME"
-# fi
-
-
-
-
-# Lambda 함수 ARN 생성
+# Get Lambda ARN  
 LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Configuration.FunctionArn' --output text)
-
-
-
-
-# Attach permission to IAM Role - AWS Managed Policy
-
-# aws iam attach-role-policy \
-# --role-name lambda-execution-role \
-# --policy-arn arn:aws:iam::aws:policy/IAMFullAccess
-
-
-# aws iam attach-role-policy \
-# --role-name lambda-execution-role \
-# --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-
-
-# aws iam attach-role-policy \
-# --role-name lambda-execution-role \
-# --policy-arn arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
-
-# If you want to create a user-managed policy
-
 
 REPO_NAME=$(echo $REPO_URL | awk -F'/' '{print $2}')
           echo "Repository Name: $REPO_NAME"
-
-
-# aws ecr set-repository-policy \
-#     --repository-name ${REPO_NAME} \
-#     --policy-text "$ECR_POLICY"
-
-# # aws ecr set-repository-policy \
-#     --repository-name <repository-name> \
-#     --policy-text file://path/to/ecr-policy.json
-
 
 # Allow API Gateway for invoking lambda (Resource-based Policy)
 aws lambda add-permission \
@@ -223,7 +145,7 @@ fi
 
 
 
-# Lambda 함수 생성 또는 업데이트
+# Create Lamba OR Update Lambda depends on existed Lambda 
 if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
     echo "Updating existing Lambda function...";
     aws lambda update-function-configuration \
@@ -234,7 +156,7 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
         --region $REGION \
         --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
     echo "Lambda configuration updated successfully."
-    sleep 30  # 30초 대기
+    sleep 30  # wait 30 second to Update Lambda Function
     aws lambda update-function-code \
     --function-name $FUNCTION_NAME \
     --image-uri "${REPO_URL}:${TAG}"
@@ -251,17 +173,7 @@ else
 
 fi
 
-### Api Gateway의 엔드포인트를 CloudMap의 서비스 인스턴스로 등록
-
-# import Value from SSM
-
-
-
-
-# aws servicediscovery create-service \
-#     --name myservice \
-#     --namespace-id  ${NAME_SPACE_ID} \
-#     --dns-config "NamespaceId=${NAME_SPACE_ID},RoutingPolicy=MULTIVALUE,DnsRecords=[{Type=A,TTL=60}]"
+### Register API GateWay Endpoint to CloudMap Service Instance
 
 aws servicediscovery register-instance \
     --service-id ${SERVICE_ID} \
@@ -269,15 +181,11 @@ aws servicediscovery register-instance \
     --attributes=AWS_INSTANCE_IPV4=172.2.1.3,AWS_INSTANCE_PORT=8080 # attribute 플래그를 사용하여 특정 서비스 인스턴스를 클라우드 맵에 등록하는데 사용
 
 << 'END'
-    # 인스턴스 포트 8080으로 설정하는것은 해당 서비스 인스턴스가 트래픽을 수신할 포트 번호를 지정한다.
-    # 일반적으로 포트 8080은 HTTP 트래픽을 위한 대체 포트로 사용되며, 기본 HTTP 포트인 80과 같은 역할을 수행한다.
-    # 이 설정은 API 게이트웨이 엔드포인트가 람다 함수를 호출할 때 사용되는 내부 네트워크 설정의 일부
-    # 포트 번호를 8080으로 설정함으로써, CloudMap은 이 포트에서 들어오는 트래픽을 해당 Lambda 함수로 라우팅하도록 구성
+  # Setting the instance port 8080 specifies the port number on which the service instance will receive traffic.
+  # In general, port 8080 is used as an alternative port for HTTP traffic and plays the same role as the default HTTP port 80.
+  # This setting is part of the internal network settings used by API gateway endpoints to invoke lambda functions
+  # By setting the port number to 8080, CloudMap is configured to route incoming traffic from this port to its Lambda function
 
 END
 
 
-# 환경 변수 설정
-# aws lambda update-function-configuration \
-# --function-name $FUNCTION_NAME \
-# --environment "Variables={REGION=\"${REGION}\",REPO_NAME=\"${REPO_NAME}\"}"
