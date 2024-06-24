@@ -78,7 +78,6 @@ export class LambdaFrontConstruct extends Construct {
   
 
     new Pipeline_lambdaConstruct(this, `${props.prefix}-FrontApp-Pipeline`, {
-      // appName : props.appname ,
       prefix: props.prefix,
       cloudmapService: props.cloudmap.frontendService,
       securityGroup: props.securityGroup, 
