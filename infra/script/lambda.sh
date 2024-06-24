@@ -4,7 +4,25 @@ WORKING_DIR=$(pwd)
 echo "Current directory is: $WORKING_DIR"
 # Load the configuration from the JSON file
 
+
+
+SECURITY_GROUP_ID=$(aws ssm get-parameter --name '/Lambda/Lambda-SecurityGroup' --query "Parameter.Value" --output text )
+ROLE_ARN=$(aws ssm get-parameter --name '/Lambda/Lambda-Role' --query "Parameter.Value" --output text )
+NAME_SPACE_ID=$(aws ssm get-parameter --name '/Lambda/namespace' --query "Parameter.Value" --output text)
+SERVICE_ID=$(aws ssm get-parameter --name '/Lambda/serviceId' --query "Parameter.Value" --output text)
+INSTANCE_ID='Lambda_App' 
+SUBNET_ID=$(aws ssm get-parameter --name "PublicSubnet-0" --query "Parameter.Value" --output text)
+
+# echo "VPC ID: $VPC_ID"
+echo "Security Group ID: $SECURITY_GROUP_ID"
+echo "Role ARN: $ROLE_ARN"
+echo "SUBNET_ID : $SUBNET_ID"
+
+
+# aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
+
 echo "existed file list is : $(ls -l) via lambda.sh"
+
 
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
 
@@ -23,6 +41,15 @@ FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r '.FunctionName')
 MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r '.MemorySize')
 TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
 
+
+# Import Docker Info for Iambda Backend
+
+REPO_URL=$(jq -r '.DOCKER_IMAGE_URL' $DOCKER_INFO)
+TAG=$(jq -r '.TAG' $DOCKER_INFO)
+
+echo "docker image url : ${REPO_URL}"
+echo "Image tag is ${TAG}"
+
 REGION=$AWS_DEFAULT_REGION
 echo "AWS Region: $REGION"
 
@@ -35,58 +62,6 @@ echo "Statement ID: ${STATEMENT_ID}"
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
-SECURITY_GROUP_ID=$(aws ssm get-parameter --name '/Lambda/Lambda-SecurityGroup' --query "Parameter.Value" --output text)
-ROLE_ARN=$(aws ssm get-parameter --name '/Lambda/Lambda-Role' --query "Parameter.Value" --output text)
-SUBNET_ID=$(aws ssm get-parameter --name "PublicSubnet-0" --query "Parameter.Value" --output text)
-
-echo "Security Group ID: $SECURITY_GROUP_ID"
-echo "Role ARN: $ROLE_ARN"
-echo "SUBNET_ID : $SUBNET_ID"
-
-
-# Lambda 함수 삭제 (기존 이미지 패키지)
-if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
-    echo "Deleting existing Lambda function..."
-    aws lambda delete-function --function-name $FUNCTION_NAME
-    if [ $? -ne 0 ]; then
-        echo "Error: Failed to delete existing Lambda function"
-        exit 1
-    fi
-    echo "Deleted existing Lambda function."
-fi
-
-# Lambda 함수 생성
-ZIP_FILE_PATH="lambda_test_package.zip"
-if [ ! -f "$ZIP_FILE_PATH" ]; then
-    echo "Error: Lambda package zip file not found: $ZIP_FILE_PATH"
-    exit 1
-fi
-
-echo "Creating new Lambda function..."
-aws lambda create-function \
-    --function-name $FUNCTION_NAME \
-    --zip-file fileb://$ZIP_FILE_PATH \
-    --handler lambda_test.lambda_handler \
-    --role $ROLE_ARN \
-    --memory-size $MEMORY_SIZE \
-    --timeout $TIMEOUT \
-    --runtime python3.8 \
-    --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to create Lambda function"
-    exit 1
-fi
-
-check_update_status() {
-    local status
-    status=$(aws lambda get-function-configuration --function-name $FUNCTION_NAME --query "LastUpdateStatus" --output text)
-    echo $status
-}
-
-while [[ $(check_update_status) == "InProgress" ]]; do
-    echo "Update in progress... Waiting for 10 seconds."
-    sleep 10
-done
 
 aws lambda add-permission \
     --function-name $FUNCTION_NAME \
@@ -137,23 +112,50 @@ fi
 
 echo "Lambda has been created : $FUNCTION_NAME"
 
-# Lambda 함수 실행 (ENI가 생성되도록)
-aws lambda invoke --function-name $FUNCTION_NAME output.txt
 
-# Lambda 함수와 연결된 ENI ID 확인
-ENI_IDS=$(aws ec2 describe-network-interfaces --filters "Name=description,Values=AWS Lambda VPC ENI-*-*-$FUNCTION_NAME" --query 'NetworkInterfaces[*].NetworkInterfaceId' --output text)
-
-# ENI ID 출력
-if [ -z "$ENI_IDS" ]; then
-    echo "No ENIs found for Lambda function $FUNCTION_NAME"
+# Create Lamba OR Update Lambda depends on existed Lambda 
+if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
+    echo "Updating existing Lambda function...";
+    aws lambda update-function-configuration \
+        --function-name $FUNCTION_NAME \
+        --memory-size $MEMORY_SIZE \
+        --timeout $TIMEOUT \
+        --role $ROLE_ARN \
+        --region $REGION \
+        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+    echo "Lambda configuration updated successfully."
+    sleep 30  # wait 30 second to Update Lambda Function
+    aws lambda update-function-code \
+    --function-name $FUNCTION_NAME \
+    --image-uri "${REPO_URL}:${TAG}"
 else
-    echo "Lambda 함수에 연결된 ENI ID들: $ENI_IDS"
+    echo "Creating new Lambda function..."
+    aws lambda create-function \
+    --function-name $FUNCTION_NAME \
+    --package-type Image \
+    --code ImageUri="${REPO_URL}:${TAG}" \
+    --role $ROLE_ARN \
+    --memory-size $MEMORY_SIZE \
+    --timeout $TIMEOUT \
+    --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
 
-    # 각 ENI ID의 상세 정보 조회
-    for ENI_ID in $ENI_IDS; do
-        echo "ENI ID: $ENI_ID"
-        aws ec2 describe-network-interfaces --network-interface-ids $ENI_ID
-    done
 fi
+
+
+### Register API GateWay Endpoint to CloudMap Service Instance
+
+aws servicediscovery register-instance \
+    --service-id ${SERVICE_ID} \
+    --instance-id $INSTANCE_ID \
+    --attributes=AWS_INSTANCE_IPV4=172.2.1.3,AWS_INSTANCE_PORT=8080
+
+<< 'END'
+  # Setting the instance port 8080 specifies the port number on which the service instance will receive traffic.
+  # In general, port 8080 is used as an alternative port for HTTP traffic and plays the same role as the default HTTP port 80.
+  # This setting is part of the internal network settings used by API gateway endpoints to invoke lambda functions
+  # By setting the port number to 8080, CloudMap is configured to route incoming traffic from this port to its Lambda function
+
+END
+
 
 

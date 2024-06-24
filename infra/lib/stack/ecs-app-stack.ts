@@ -37,6 +37,12 @@ export class EcsAppStack extends cdk.Stack {
     // });
     // this.alb = albConstruct;
 
+    const lamba_securityGroup = new ec2.SecurityGroup(this, 'LambdaSecurityGroup', {
+      vpc: props.vpc,
+      description: 'Allow ',
+      allowAllOutbound: true,
+    });
+
     const app = new EcsAppConstruct(this, `${props.prefix}-EcsApp`, {
       vpc: props.vpc,
       appKey: props.appKey,
@@ -47,16 +53,13 @@ export class EcsAppStack extends cdk.Stack {
       ecsBackTasks: props.ecsBackTasks,
       ecsAuthTasks: props.ecsAuthTasks,
       ecsBastionTasks: props.ecsBastionTasks ?? true,
+      lambdaSecurityGroup : lamba_securityGroup
+
     });
     this.ecs = app;
 
     // Security Group FOR lambda
 
-    const lamba_securityGroup = new ec2.SecurityGroup(this, 'LambdaSecurityGroup', {
-      vpc: props.vpc,
-      description: 'Allow ',
-      allowAllOutbound: true,
-    });
 
     lamba_securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80));
 
@@ -66,7 +69,7 @@ export class EcsAppStack extends cdk.Stack {
       prefix: props.prefix,
       securityGroup: lamba_securityGroup,
       alarmTopic: props.alarmTopic,
-      cloudmap: app.cloudmap, // EcsAppConstruct라는 클래스에 cloudmap 인스턴스를 생성하므로, EcsAppConstruct의 인스턴스 변수에서 cloudmap을 참조한다.
+      cloudmap: app.cloudmap, 
     });
     this.lambda = lambdaApp;
   }

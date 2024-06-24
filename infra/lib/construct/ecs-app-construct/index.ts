@@ -26,6 +26,7 @@ interface EcsAppConstructProps {
   ecsBackTasks?: IEcsParam[];
   ecsBastionTasks: boolean;
   ecsAuthTasks?: IEcsParam[];
+  lambdaSecurityGroup?: ec2.ISecurityGroup;
 }
 
 export class EcsAppConstruct extends Construct {
@@ -35,6 +36,7 @@ export class EcsAppConstruct extends Construct {
   public readonly bastionApp: BastionECSAppConstruct;
   public readonly authEcsApps: EcsappConstruct[];
   public readonly cloudmap: CloudMap;
+
 
   constructor(scope: Construct, id: string, props: EcsAppConstructProps) {
     super(scope, id);
@@ -53,9 +55,9 @@ export class EcsAppConstruct extends Construct {
     });
     this.cloudmap = cloudmap;
 
-    ////////////////////////////////////// 클라우드 맵 리소스가 생성되지 않았음 ///
+  
     new cdk.CfnOutput(this, 'NamespaceId', {
-      value: cloudmap.namespace.namespaceName, // Hinagiku-Dev라는 값으로 출력
+      value: cloudmap.namespace.namespaceName, 
     });
 
     if (props.ecsFrontTasks) {
@@ -103,6 +105,7 @@ export class EcsAppConstruct extends Construct {
           alarmTopic: props.alarmTopic,
           allowFromSg: this.frontEcsApps.map((ecsAlbApp) => ecsAlbApp.securityGroupForFargate),
           portNumber: ecsApp.portNumber,
+          lambdaSecurityGroup : props.lambdaSecurityGroup
         });
       });
       this.backEcsApps = backEcsApps;
@@ -182,9 +185,6 @@ export class EcsAppConstruct extends Construct {
       });
       this.bastionApp = bastionApp;
     }
-    //   new cdk.CfnOutput(this, 'CloudMapNamespaceId', {
-    //     value: cloudmap.frontendService,
-    //     exportName: 'CloudMapNamespaceId',
-    // }
+
   }
 }

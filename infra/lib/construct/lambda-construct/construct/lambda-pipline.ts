@@ -20,18 +20,11 @@ import { PipelineEcspressoConstruct } from '../../ecs-app-construct/construct/pi
 
 export interface PipelineEcspressoConstructProps extends cdk.StackProps {
   prefix: string;
-  // appName: string;
-  // ecsCluster: ecs.Cluster;
-  // ecsServiceName: string;
-  // targetGroup?: elbv2.ApplicationTargetGroup;
   securityGroup: ec2.SecurityGroup;
   vpc: ec2.Vpc;
   logGroup?: cwl.LogGroup;
-  // port: number;
   logGroupForServiceConnect?: cwl.LogGroup;
   cloudmapService: sd.IService;
-
-  // taskRole?: iam.Role;
   executionRole: iam.Role;
 }
 
@@ -40,18 +33,6 @@ export class Pipeline_lambdaConstruct extends Construct {
   constructor(scope: Construct, id: string, props: PipelineEcspressoConstructProps) {
     super(scope, id);
 
-    //タスクロール,TargetGroupが指定されていない場合は、空文字をCodeBuildの環境変数として設定
-    // const taskRoleArn = props.taskRole?.roleArn || props.executionRole.roleArn;
-    // const targetGroupArn = props.targetGroup?.targetGroupArn || '';
-    // const logGroupForServiceConnect = props.logGroupForServiceConnect?.logGroupName || '';
-
-    // Create CodePipeLine Role
-
-    const codePipelineRole = new iam.Role(this, 'CodePipelineRole', {
-      assumedBy: new iam.ServicePrincipal('codepipeline.amazonaws.com'),
-      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
-    });
-
     // Create CodeBuildRole
 
     const codeBuildRole = new iam.Role(this, 'CodeBuildRole', {
@@ -59,29 +40,18 @@ export class Pipeline_lambdaConstruct extends Construct {
       managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
     });
 
-    // const producer = new PipelineEcspressoConstruct(this,'pipe',{
+    const codePipelineRole = new iam.Role(this, 'CodePipelineRole', {
+      assumedBy: new iam.ServicePrincipal('codepipeline.amazonaws.com'),
+      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
+    });
 
-    // })
-
-    //////////////// intergrate s3 bucket
-    // const sourceBucket_name = ssm.StringParameter.valueForStringParameter(this,`/Hinagiku/TriggerBucket/${props.prefix}`).toLowerCase();
-
-    // const sourceBucket = s3.Bucket.fromBucketName(this,'bucket-for-lambda',sourceBucket_name);
-
-    ///////////////// cfn out put 활용 //////////
-
-    // const sourceBucketName = cdk.Fn.importValue(`bucketName-${props.prefix}`);
-
-    // const sourceBucket = s3.Bucket.fromBucketName(this, 'ReferencedBucket', sourceBucketName);
-
-    /// seperate s3 Bucket
     const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
       versioned: true,
       eventBridgeEnabled: true,
     });
 
+    sourceBucket.grantRead(props.executionRole, '.env');
 
-    sourceBucket.grantRead(props.executionRole, '.env'); // ecs 클러스터가 s3에 대해서 읽을 수 있도록 권한을 부여한다.
     // sourceBucket.grantRead -> To allow access Permisson for s3 bucket
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
       role: codeBuildRole,
@@ -89,15 +59,6 @@ export class Pipeline_lambdaConstruct extends Construct {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
       },
       environmentVariables: {
-        // ECS_CLUSTER: {
-        //   value: props.ecsCluster.clusterName,
-        // },
-        // ECS_SERVICE: {
-        //   value: props.ecsServiceName,
-        // },
-        // TARGET_GROUP_ARN: {
-        //   value: targetGroupArn,
-        // },
         SECURITY_GROUP: {
           value: props.securityGroup.securityGroupId,
         },
@@ -117,30 +78,14 @@ export class Pipeline_lambdaConstruct extends Construct {
             subnetGroupName: 'Private',
           }).subnetIds[2],
         },
-        // LOG_GROUP: {
-        //   value: props.logGroup.logGroupName,
-        // },
-        // LOG_GROUP_SERVICE_CONNECT: {
-        //   value: logGroupForServiceConnect,
-        // },
-        // EXECUTION_ROLE_ARN: {
-        //   value: props.executionRole.roleArn,
-        // },
-        // TASK_ROLE: {
-        //   value: taskRoleArn,
-        // },
-        // FAMILY: {
-        //   value: `${props.prefix}-${props.appName}-Taskdef`,
-        // },
+
         REGISTRY_ARN: {
           value: props.cloudmapService.serviceArn,
         },
         ENVFILE_BUCKET_ARN: {
           value: sourceBucket.arnForObjects('.env'),
         },
-        // APP_PORT: {
-        //   value: props.port,
-        // },
+
         SourceBucket: {
           value: sourceBucket.bucketName,
         },
@@ -162,7 +107,7 @@ export class Pipeline_lambdaConstruct extends Construct {
 
               'ls -l',
 
-              'unzip -o image.zip -d ./unzip_folder', // 기존 파일이 존재할 경우, 덮어씌우도록 만든다. -> 자동으로 설정
+              'unzip -o image.zip -d ./unzip_folder',
 
               'ls -l ./unzip_folder',
             ],
@@ -178,13 +123,14 @@ export class Pipeline_lambdaConstruct extends Construct {
         },
       }),
     });
+
     // console.log(`소스 버킷 이름 : ${sourceBucket.bucketName}`)
 
      new cdk.CfnOutput(this, 'SourceBucketName', {
+
       value: sourceBucket.bucketName,
       description: 'The name of the source bucket',
     });
-
 
     deployProject.addToRolePolicy(
       new iam.PolicyStatement({
@@ -205,7 +151,7 @@ export class Pipeline_lambdaConstruct extends Construct {
           'servicediscovery:GetNamespace',
           'iam:CreateServiceLinkedRole',
           'sts:AssumeRole',
-          'lambda:*', // 나중에 수정 필요 ,
+          'lambda:*',
           's3:GetObject',
           'ssm:GetParameter',
           'cloudformation:DescribeStacks',
@@ -214,32 +160,21 @@ export class Pipeline_lambdaConstruct extends Construct {
           'apigateway:POST',
           'iam:PassRole',
           'iam:CreateRole',
+          'cloudformation:DescribeStacks',
+          'apigateway:GET',
+          'apigateway:POST',
+          'apigateway:PUT',
+          'apigatewayv2:CreateIntegration',
+          'apigatewayv2:GetRoutes',
+          'apigatewayv2:UpdateStage',
+          'apigatewayv2:CreateStage',
+          'sts:GetCallerIdentity',
+          'servicediscovery:RegisterInstance',
+          'servicediscovery:GetNamespace',
         ],
         resources: ['*'],
       }),
     );
-    // // 여기를 어떻게 해결해야하는지 알아볼 것
-    // if (props.taskRole) {
-    //   deployProject.addToRolePolicy(
-    //     new iam.PolicyStatement({
-    //       effect: iam.Effect.ALLOW,
-    //       actions: [
-    //       'iam:PassRole',
-    //       'iam:PassRole',
-    //       'iam:CreateRole',
-    //       'iam:AttachRolePolicy',],
-    //       resources: [props.executionRole.roleArn, props.taskRole.roleArn],
-    //     }),
-    //   );
-    // } else {
-    //   deployProject.addToRolePolicy(
-    //     new iam.PolicyStatement({
-    //       effect: iam.Effect.ALLOW,
-    //       actions: ['iam:PassRole'],
-    //       resources: [props.executionRole.roleArn],
-    //     }),
-    //   );
-    // }
 
     const sourceOutput = new codepipeline.Artifact();
 
@@ -260,7 +195,6 @@ export class Pipeline_lambdaConstruct extends Construct {
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       crossAccountKeys: false,
-      role: codePipelineRole,
     });
 
     pipeline.addStage({
@@ -293,36 +227,6 @@ export class Pipeline_lambdaConstruct extends Construct {
       targets: [new targets.CodePipeline(pipeline)],
     });
 
-    // cdk.Stack.of(this).exportValue(sourceBucket.bucketName, {
-    //   // Dynamically set the name for verification in cloud formation
-    //   name: `sourceBucket-${props.appName}`,
-    // });
-
-    // codeBuildRole.addToPolicy(new iam.PolicyStatement({
-    //   actions: [
-    //     'ecs:RegisterTaskDefinition',
-    //     'ecs:ListTaskDefinitions',
-    //     'ecs:DescribeTaskDefinition',
-    //     'ecs:CreateService',
-    //     'ecs:UpdateService',
-    //     'ecs:DescribeServices',
-    //     'iam:PassRole',
-    //     "iam:CreateRole",
-    //     "iam:DeleteRole",
-    //     "iam:AttachRolePolicy",
-    //     "iam:DetachRolePolicy",
-    //     "iam:PutRolePolicy",
-    //     "iam:DeleteRolePolicy",
-    //     "iam:PassRole",
-    //     "iam:GetRole",
-    //     "iam:ListRolePolicies",
-    //     "iam:ListAttachedRolePolicies",
-    //     "iam:UpdateAssumeRolePolicy"
-
-    //   ],
-    //   resources: ['*'], // 필요한 리소스를 구체적으로 지정
-    // }));
-
     const securityGroupParam = new ssm.StringParameter(this, 'Lambda/Lambda-SecurityGroup', {
       parameterName: '/Lambda/Lambda-SecurityGroup',
       stringValue: props.securityGroup.securityGroupId,
@@ -334,11 +238,8 @@ export class Pipeline_lambdaConstruct extends Construct {
     });
 
     new ssm.StringParameter(this, 'Lambda-TriggerBucketName', {
-      // parameterName: `/Hinagiku/TriggerBucket/${props.appName}`,
       parameterName: '/Hinagiku/TriggerBucket/Lambda-Bucket',
       stringValue: sourceBucket.bucketName,
     });
-
-    console.log(`CodeBuild project role ARN: ${deployProject.role?.roleArn}`);
   }
 }
