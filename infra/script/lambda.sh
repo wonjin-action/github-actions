@@ -4,32 +4,6 @@ WORKING_DIR=$(pwd)
 echo "Current directory is: $WORKING_DIR"
 # Load the configuration from the JSON file
 
-<< 'END'
-
-< If you start a script locally >
-
-# LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/infra/lambda/lambda_function_config.json"
-
-END
-
-# Setting Permission for CodeBuild
-
-# Check attached Policy of CodeBuild 
-# aws iam list-attached-role-policies --role-name CodeBuildServiceRole
-
-# aws iam create-role \
-#     --role-name lambda-execution-role \
-#     --assume-role-policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/trust-policy-codebuild.json
-
-# aws iam attach-role-policy \
-#     --role-name CodeBuildServiceRole \
-#     --policy-arn arn:aws:iam::019817421975:policy/
-
-
-
-
-
-
 
 
 SECURITY_GROUP_ID=$(aws ssm get-parameter --name '/Lambda/Lambda-SecurityGroup' --query "Parameter.Value" --output text )
@@ -47,10 +21,10 @@ echo "SUBNET_ID : $SUBNET_ID"
 
 # aws iam put-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildServiceRolePolicy --policy-document file://$CODEBUILD_SRC_DIR/unzip_folder/create-role-codebuild.json
 
+echo "existed file list is : $(ls -l) via lambda.sh"
+
+
 LAMBDA_CONFIG_FILE="$CODEBUILD_SRC_DIR/unzip_folder/lambda_function_config.json"
-
-
-DOCKER_INFO="$CODEBUILD_SRC_DIR/unzip_folder/docker_image_info.json"
 
 if [ -f "$LAMBDA_CONFIG_FILE" ]; then
     echo "Found lambda configuration file: $LAMBDA_CONFIG_FILE"
@@ -59,17 +33,14 @@ else
     exit 1
 fi
 
-
 LAMBDA_CONFIG=$(cat $LAMBDA_CONFIG_FILE)
-
-# Configure Enivironment Variable
 
 export AWS_DEFAULT_REGION="ap-northeast-1"
 
-# Extract values from the JSON configuration
 FUNCTION_NAME=$(echo $LAMBDA_CONFIG | jq -r '.FunctionName')
 MEMORY_SIZE=$(echo $LAMBDA_CONFIG | jq -r '.MemorySize')
 TIMEOUT=$(echo $LAMBDA_CONFIG | jq -r '.Timeout')
+
 
 # Import Docker Info for Iambda Backend
 
@@ -79,45 +50,31 @@ TAG=$(jq -r '.TAG' $DOCKER_INFO)
 echo "docker image url : ${REPO_URL}"
 echo "Image tag is ${TAG}"
 
-
 REGION=$AWS_DEFAULT_REGION
-
-
 echo "AWS Region: $REGION"
-# echo "Repository Name: $REPO_NAME"
 
 API_ID=$(aws cloudformation describe-stacks --stack-name Hinagiku-Dev-apigateway --query "Stacks[0].Outputs[?OutputKey=='ApiId'].OutputValue" --output text)
 echo "API Gateway ID: $API_ID"
 
 STATEMENT_ID="apigateway-$(date +%Y%m%d%H%M%S)"
-
 echo "Statement ID: ${STATEMENT_ID}"
 
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
-# Get Lambda ARN  
-LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Configuration.FunctionArn' --output text)
 
-REPO_NAME=$(echo $REPO_URL | awk -F'/' '{print $2}')
-          echo "Repository Name: $REPO_NAME"
-
-# Allow API Gateway for invoking lambda (Resource-based Policy)
 aws lambda add-permission \
     --function-name $FUNCTION_NAME \
     --statement-id $STATEMENT_ID \
     --action lambda:InvokeFunction \
     --principal apigateway.amazonaws.com \
     --source-arn "arn:aws:execute-api:${REGION}:${ACCOUNT_ID}:${API_ID}/*"
-echo $(aws apigatewayv2 get-api --api-id "$API_ID" --query 'Arn' --output text)
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to add permission to Lambda"
+    exit 1
+fi
 
-# Integration Lambda with API Gateway
-aws apigatewayv2 create-integration \
-    --api-id $API_ID \
-    --integration-type AWS_PROXY \
-    --integration-method ANY \
-    --integration-uri $LAMBDA_ARN \
-    --payload-format-version 2.0
+LAMBDA_ARN=$(aws lambda get-function --function-name $FUNCTION_NAME --query 'Configuration.FunctionArn' --output text)
 
 INTEGRATION_ID=$(aws apigatewayv2 create-integration \
     --api-id $API_ID \
@@ -126,23 +83,34 @@ INTEGRATION_ID=$(aws apigatewayv2 create-integration \
     --integration-uri $LAMBDA_ARN \
     --payload-format-version 2.0 \
     --query 'IntegrationId' \
-    --output text \
-    --region $REGION)
+    --output text)
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to create API Gateway integration"
+    exit 1
+fi
 echo "Integration ID: $INTEGRATION_ID"
 
-# Create API Gateway route
 if ! aws apigatewayv2 get-routes --api-id "$API_ID" --output json | jq -e '.Items[] | select(.RouteKey == "ANY /{proxy+}")' >/dev/null; then
     aws apigatewayv2 create-stage \
-    --api-id $API_ID \
-    --stage-name dev \
-    --auto-deploy true \
-    --region $REGION
+        --api-id $API_ID \
+        --stage-name dev \
+        --auto-deploy true \
+        --region $REGION
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to create API Gateway stage"
+        exit 1
+    fi
 fi
 
 if ! aws apigatewayv2 get-routes --api-id "$API_ID" --output json | jq -e '.Items[] | select(.RouteKey == "ANY /{proxy+}")' >/dev/null; then
     aws apigatewayv2 update-stage --api-id $API_ID --stage-name dev --auto-deploy true --region $REGION
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to update API Gateway stage"
+        exit 1
+    fi
 fi
 
+echo "Lambda has been created : $FUNCTION_NAME"
 
 
 # Create Lamba OR Update Lambda depends on existed Lambda 
@@ -173,6 +141,7 @@ else
 
 fi
 
+
 ### Register API GateWay Endpoint to CloudMap Service Instance
 
 aws servicediscovery register-instance \
@@ -187,5 +156,6 @@ aws servicediscovery register-instance \
   # By setting the port number to 8080, CloudMap is configured to route incoming traffic from this port to its Lambda function
 
 END
+
 
 

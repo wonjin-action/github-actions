@@ -47,6 +47,7 @@ export class LambdaFrontConstruct extends Construct {
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: [
+
                 'logs:*',
                 'ecr:*',
                 'apigateway:*',
@@ -68,7 +69,7 @@ export class LambdaFrontConstruct extends Construct {
     });
 
     const lambda_role = new iam.Role(this, `Frontend-Role-${props.prefix}`, {
-      roleName: 'Lambda-Role',
+      roleName: 'Lambda-Role', // Output Name
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
     lambda_role.addManagedPolicy(

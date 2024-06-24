@@ -51,6 +51,7 @@ export class Pipeline_lambdaConstruct extends Construct {
     });
 
     sourceBucket.grantRead(props.executionRole, '.env');
+
     // sourceBucket.grantRead -> To allow access Permisson for s3 bucket
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
       role: codeBuildRole,
@@ -123,7 +124,10 @@ export class Pipeline_lambdaConstruct extends Construct {
       }),
     });
 
-    new cdk.CfnOutput(this, 'SourceBucketName', {
+    // console.log(`소스 버킷 이름 : ${sourceBucket.bucketName}`)
+
+     new cdk.CfnOutput(this, 'SourceBucketName', {
+
       value: sourceBucket.bucketName,
       description: 'The name of the source bucket',
     });
