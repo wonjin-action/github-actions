@@ -36,7 +36,7 @@ SECURITY_GROUP_ID=$(aws ssm get-parameter --name '/Lambda/Lambda-SecurityGroup' 
 ROLE_ARN=$(aws ssm get-parameter --name '/Lambda/Lambda-Role' --query "Parameter.Value" --output text )
 NAME_SPACE_ID=$(aws ssm get-parameter --name '/Lambda/namespace' --query "Parameter.Value" --output text)
 SERVICE_ID=$(aws ssm get-parameter --name '/Lambda/serviceId' --query "Parameter.Value" --output text)
-INSTANCE_ID='Lambda_App' ########### 동적으로 람다 함수를 가져올 수 있도록 수정 필요 ##################
+INSTANCE_ID='Lambda_App' 
 SUBNET_ID=$(aws ssm get-parameter --name "PublicSubnet-0" --query "Parameter.Value" --output text)
 
 # echo "VPC ID: $VPC_ID"
