@@ -64,6 +64,37 @@ echo "Statement ID: ${STATEMENT_ID}"
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 echo "Current AWS Account ID: $ACCOUNT_ID"
 
+# Create Lamba OR Update Lambda depends on existed Lambda 
+if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
+    echo "Updating existing Lambda function...";
+    aws lambda update-function-configuration \
+        --function-name $FUNCTION_NAME \
+        --memory-size $MEMORY_SIZE \
+        --timeout $TIMEOUT \
+        --role $ROLE_ARN \
+        --region $REGION \
+        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+    echo "Lambda configuration updated successfully."
+    sleep 30  # wait 30 second to Update Lambda Function
+    aws lambda update-function-code \
+    --function-name $FUNCTION_NAME \
+    --image-uri "${REPO_URL}:${TAG}"
+else
+    echo "Creating new Lambda function..."
+    aws lambda create-function \
+    --function-name $FUNCTION_NAME \
+    --package-type Image \
+    --code ImageUri="${REPO_URL}:${TAG}" \
+    --role $ROLE_ARN \
+    --memory-size $MEMORY_SIZE \
+    --timeout $TIMEOUT \
+    --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+
+fi
+
+
+
+
 
 aws lambda add-permission \
     --function-name $FUNCTION_NAME \
@@ -115,33 +146,6 @@ fi
 echo "Lambda has been created : $FUNCTION_NAME"
 
 
-# Create Lamba OR Update Lambda depends on existed Lambda 
-if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
-    echo "Updating existing Lambda function...";
-    aws lambda update-function-configuration \
-        --function-name $FUNCTION_NAME \
-        --memory-size $MEMORY_SIZE \
-        --timeout $TIMEOUT \
-        --role $ROLE_ARN \
-        --region $REGION \
-        --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
-    echo "Lambda configuration updated successfully."
-    sleep 30  # wait 30 second to Update Lambda Function
-    aws lambda update-function-code \
-    --function-name $FUNCTION_NAME \
-    --image-uri "${REPO_URL}:${TAG}"
-else
-    echo "Creating new Lambda function..."
-    aws lambda create-function \
-    --function-name $FUNCTION_NAME \
-    --package-type Image \
-    --code ImageUri="${REPO_URL}:${TAG}" \
-    --role $ROLE_ARN \
-    --memory-size $MEMORY_SIZE \
-    --timeout $TIMEOUT \
-    --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
-
-fi
 
 
 ### Register API GateWay Endpoint to CloudMap Service Instance
