@@ -125,6 +125,7 @@ if aws lambda get-function --function-name $FUNCTION_NAME >/dev/null 2>&1; then
         --role $ROLE_ARN \
         --region $REGION \
         --vpc-config "SubnetIds=${SUBNET_ID},SecurityGroupIds=${SECURITY_GROUP_ID}"
+        --package-type Image
     echo "Lambda configuration updated successfully."
     sleep 30  # wait 30 second to Update Lambda Function
     aws lambda update-function-code \
