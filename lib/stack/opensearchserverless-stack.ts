@@ -9,24 +9,36 @@ export interface OpenSearchServerlessStackProps extends cdk.StackProps {
 }
 
 export class OpenSearchServerlessStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: OpenSearchServerlessStackProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: OpenSearchServerlessStackProps
+  ) {
     super(scope, id, props);
 
-    const collection = new opensearch.CfnCollection(this, cdk.Stack.of(this).stackName + 'collection', {
-      // name属性が必須項目のためconstructoeのidではなくnameにStack名を設定
-      name: cdk.Stack.of(this).stackName.toLowerCase(),
-      type: 'SEARCH',
-    });
+    const collection = new opensearch.CfnCollection(
+      this,
+      cdk.Stack.of(this).stackName + 'collection',
+      {
+        // name属性が必須項目のためconstructoeのidではなくnameにStack名を設定
+        name: cdk.Stack.of(this).stackName.toLowerCase(),
+        type: 'SEARCH',
+      }
+    );
 
     // OpenSearchドメインに設定するセキュリティグループ、アウトバウンドルールのみ設定
     // インバウンドルールはメソッドを使用して追加する
     // 本コードのサンプルでは、以下2パターンのサンプルを用意しているため、必要に応じてコメントインして使用する
     // 1. 特定セキュリティグループＩＤからの許可：特定のコンテナリソースなどアクセス元リソースが絞れる場合
     // 2. サブネットの指定：特定リソースの絞り込みが難しく、サブネット全体で指定したい場合
-    const domainsg = new ec2.SecurityGroup(this, cdk.Stack.of(this).stackName + 'domainsg', {
-      vpc: props.vpc,
-      allowAllOutbound: true,
-    });
+    const domainsg = new ec2.SecurityGroup(
+      this,
+      cdk.Stack.of(this).stackName + 'domainsg',
+      {
+        vpc: props.vpc,
+        allowAllOutbound: true,
+      }
+    );
 
     // 1. 特定セキュリティグループIDからの許可 を使用する場合はこちらをコメントイン、 許可するSecurityGroupはpropsなど別スタックやIDで指定する
     // 例:ecs のsecurity group をインバウンドルールに追加
@@ -39,20 +51,27 @@ export class OpenSearchServerlessStack extends cdk.Stack {
     //     domainsg.addIngressRule(ec2.Peer.ipv4(x.ipv4CidrBlock), ec2.Port.tcp(443));
     //   });
 
-    const vpcEndpoint = new opensearch.CfnVpcEndpoint(this, cdk.Stack.of(this).stackName.toLowerCase() + 'endpoint', {
-      // name属性が必須項目のためconstructoeのidではなくnameにStack名を設定
-      name: cdk.Stack.of(this).stackName.toLowerCase(),
-      securityGroupIds: [domainsg.securityGroupId],
-      vpcId: props.vpc.vpcId,
-      subnetIds: props.vpc.isolatedSubnets.map(({ subnetId }) => subnetId),
-    });
+    const vpcEndpoint = new opensearch.CfnVpcEndpoint(
+      this,
+      cdk.Stack.of(this).stackName.toLowerCase() + 'endpoint',
+      {
+        // name属性が必須項目のためconstructoeのidではなくnameにStack名を設定
+        name: cdk.Stack.of(this).stackName.toLowerCase(),
+        securityGroupIds: [domainsg.securityGroupId],
+        vpcId: props.vpc.vpcId,
+        subnetIds: props.vpc.isolatedSubnets.map(({ subnetId }) => subnetId),
+      }
+    );
     collection.addDependency(vpcEndpoint);
 
-    const netPolicy = new opensearch.CfnSecurityPolicy(this, cdk.Stack.of(this).stackName.toLowerCase() + 'netpolicy', {
-      // name属性が必須項目のためconstructoeのidではなくnameにStack名を設定
-      name: cdk.Stack.of(this).stackName.toLowerCase(),
-      type: 'network',
-      policy: `[
+    const netPolicy = new opensearch.CfnSecurityPolicy(
+      this,
+      cdk.Stack.of(this).stackName.toLowerCase() + 'netpolicy',
+      {
+        // name属性が必須項目のためconstructoeのidではなくnameにStack名を設定
+        name: cdk.Stack.of(this).stackName.toLowerCase(),
+        type: 'network',
+        policy: `[
 	{
 		"Rules": [
 			{
@@ -74,19 +93,24 @@ export class OpenSearchServerlessStack extends cdk.Stack {
 		]
 	}
 ]`,
-    });
+      }
+    );
     collection.addDependency(netPolicy);
 
-    const encPolicy = new opensearch.CfnSecurityPolicy(this, cdk.Stack.of(this).stackName.toLowerCase + 'encpolicy', {
-      // name属性が必須項目のためconstructoeのidではなくnameにStack名を設定
-      name: cdk.Stack.of(this).stackName.toLowerCase(),
-      policy: `{"Rules":
+    const encPolicy = new opensearch.CfnSecurityPolicy(
+      this,
+      cdk.Stack.of(this).stackName.toLowerCase + 'encpolicy',
+      {
+        // name属性が必須項目のためconstructoeのidではなくnameにStack名を設定
+        name: cdk.Stack.of(this).stackName.toLowerCase(),
+        policy: `{"Rules":
       [{
         "ResourceType":"collection",
         "Resource":["collection/${collection.name}"]}],
         "AWSOwnedKey":true}`,
-      type: 'encryption',
-    });
+        type: 'encryption',
+      }
+    );
     collection.addDependency(encPolicy);
 
     //    特定のIAM RoleからOpenSarchドメインへアクセスを許可する場合は以降のサンプルをコメントインして使用する

@@ -5,6 +5,4 @@ import { Frontend } from '../lib/cdk-stack';
 
 const app = new cdk.App();
 
-
-const FrontEnd = new Frontend(app,'FrontEndV3')
-
+const FrontEnd = new Frontend(app, 'FrontEndV3');

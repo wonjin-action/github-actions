@@ -24,18 +24,14 @@
         "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-019817421975-ap-northeast-1/514c3209413555a0a3f714b5f868ea0aec17fd6658325ebaf0304a7d9aa74d1c.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
-        "additionalDependencies": [
-          "Hinagiku-Dev-ShareResources.assets"
-        ],
+        "additionalDependencies": ["Hinagiku-Dev-ShareResources.assets"],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::019817421975:role/cdk-hnb659fds-lookup-role-019817421975-ap-northeast-1",
           "requiresBootstrapStackVersion": 8,
           "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
         }
       },
-      "dependencies": [
-        "Hinagiku-Dev-ShareResources.assets"
-      ],
+      "dependencies": ["Hinagiku-Dev-ShareResources.assets"],
       "metadata": {
         "/Hinagiku-Dev-ShareResources": [
           {
@@ -656,9 +652,7 @@
         "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-019817421975-ap-northeast-1/4a1aab8ac642ec0b8f0023f678e846c3c527454d5d8b06ec6ce6a4c2ef9e9c41.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
-        "additionalDependencies": [
-          "Hinagiku-Dev-Ecs.assets"
-        ],
+        "additionalDependencies": ["Hinagiku-Dev-Ecs.assets"],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::019817421975:role/cdk-hnb659fds-lookup-role-019817421975-ap-northeast-1",
           "requiresBootstrapStackVersion": 8,
@@ -1493,9 +1487,7 @@
         "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-019817421975-ap-northeast-1/bb2c928acbab19e510d094e8753dc3e79ff3dccb519a03ca7ab1cfb546e117fe.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
-        "additionalDependencies": [
-          "Hinagiku-Dev-Aurora.assets"
-        ],
+        "additionalDependencies": ["Hinagiku-Dev-Aurora.assets"],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::019817421975:role/cdk-hnb659fds-lookup-role-019817421975-ap-northeast-1",
           "requiresBootstrapStackVersion": 8,
@@ -1659,9 +1651,7 @@
         "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-019817421975-ap-northeast-1/31ab14737da516d8e42473c5bcc86944ee1a345872b6fe25d7cc84c6bc418b6b.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
-        "additionalDependencies": [
-          "Hinagiku-Dev-Redis.assets"
-        ],
+        "additionalDependencies": ["Hinagiku-Dev-Redis.assets"],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::019817421975:role/cdk-hnb659fds-lookup-role-019817421975-ap-northeast-1",
           "requiresBootstrapStackVersion": 8,

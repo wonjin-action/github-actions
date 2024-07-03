@@ -40,7 +40,10 @@ export const WafParam: inf.IWafParam = {
 
 export const OidcParam: inf.IOidcParam = {
   OrganizationName: 'OrganizationName',
-  RepositoryNames: { WafRepositoryName: 'WafRepositoryName', InfraRepositoryName: 'InfraRepositoryName' },
+  RepositoryNames: {
+    WafRepositoryName: 'WafRepositoryName',
+    InfraRepositoryName: 'InfraRepositoryName',
+  },
 };
 
 export const OpensearchParam: inf.IOpenSearchParam = {
@@ -77,8 +80,14 @@ export const ElastiCacheRedisParam: inf.IElastiCacheRedisParam = {
 export const AuroraParam: inf.IAuroraParam = {
   dbName: 'mydbname',
   dbUser: 'dbUser',
-  instanceTypeWriter: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM),
-  instanceTypeReader: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM),
+  instanceTypeWriter: ec2.InstanceType.of(
+    ec2.InstanceClass.T3,
+    ec2.InstanceSize.MEDIUM
+  ),
+  instanceTypeReader: ec2.InstanceType.of(
+    ec2.InstanceClass.T3,
+    ec2.InstanceSize.MEDIUM
+  ),
   enablePerformanceInsights: false,
   auroraMinAcu: 2,
   auroraMaxAcu: 16,
@@ -103,7 +112,8 @@ export const AuroraParam: inf.IAuroraParam = {
   },
   postgresqlParamForInstance: {
     //「.」があるKey値はプロパティ扱いになるため「'」で括る
-    shared_preload_libraries: 'auto_explain,pg_stat_statements,pg_hint_plan,pgaudit',
+    shared_preload_libraries:
+      'auto_explain,pg_stat_statements,pg_hint_plan,pgaudit',
     log_statement: 'ddl',
     log_connections: '1',
     log_disconnections: '1',

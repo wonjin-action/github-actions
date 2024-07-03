@@ -11,7 +11,11 @@ import { region_info as ri } from 'aws-cdk-lib';
 import { aws_cloudfront as cloudfront } from 'aws-cdk-lib';
 import { aws_certificatemanager as acm } from 'aws-cdk-lib';
 import { AlbTarget } from './alb-target-group-construct';
-import { IEcsAlbParam, ICertificateIdentifier, IOptionalEcsAlbParam } from '../../../params/interface';
+import {
+  IEcsAlbParam,
+  ICertificateIdentifier,
+  IOptionalEcsAlbParam,
+} from '../../../params/interface';
 import { EcsappConstruct } from '../ecs-app-construct/construct/ecs-app-construct';
 
 interface AlbConstructProps extends cdk.StackProps {
@@ -37,10 +41,14 @@ export class AlbConstruct extends Construct {
     const hasValidAlbCert = props.albCertificateIdentifier.identifier !== '';
 
     // for ELB (Local regional Cert)
-    const albCertificateArn = `arn:aws:acm:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:certificate/${
-      props.albCertificateIdentifier.identifier
-    }`;
-    const albCert = acm.Certificate.fromCertificateArn(this, 'albCertificate', albCertificateArn);
+    const albCertificateArn = `arn:aws:acm:${cdk.Stack.of(this).region}:${
+      cdk.Stack.of(this).account
+    }:certificate/${props.albCertificateIdentifier.identifier}`;
+    const albCert = acm.Certificate.fromCertificateArn(
+      this,
+      'albCertificate',
+      albCertificateArn
+    );
 
     // --- Security Groups ---
 
@@ -104,11 +112,11 @@ export class AlbConstruct extends Construct {
     const cfManagedPrefixIpListId = 'pl-58a04531';
     securityGroupForAlb.connections.allowFrom(
       ec2.Peer.prefixList(cfManagedPrefixIpListId),
-      ec2.Port.tcp(defaultListenerlistenedPort),
+      ec2.Port.tcp(defaultListenerlistenedPort)
     );
     securityGroupForAlb.connections.allowFrom(
       ec2.Peer.ipv4('210.190.113.128/25'),
-      ec2.Port.tcp(defaultListenerlistenedPort),
+      ec2.Port.tcp(defaultListenerlistenedPort)
     );
 
     // Enable ALB Access Logging
@@ -137,22 +145,30 @@ export class AlbConstruct extends Construct {
         effect: iam.Effect.ALLOW,
         actions: ['s3:PutObject'],
         // ALB access logging needs S3 put permission from ALB service account for the region
-        principals: [new iam.AccountPrincipal(ri.RegionInfo.get(cdk.Stack.of(this).region).elbv2Account)],
-        resources: [albLogBucket.arnForObjects(`AWSLogs/${cdk.Stack.of(this).account}/*`)],
-      }),
+        principals: [
+          new iam.AccountPrincipal(
+            ri.RegionInfo.get(cdk.Stack.of(this).region).elbv2Account
+          ),
+        ],
+        resources: [
+          albLogBucket.arnForObjects(`AWSLogs/${cdk.Stack.of(this).account}/*`),
+        ],
+      })
     );
     albLogBucket.addToResourcePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ['s3:PutObject'],
         principals: [new iam.ServicePrincipal('delivery.logs.amazonaws.com')],
-        resources: [albLogBucket.arnForObjects(`AWSLogs/${cdk.Stack.of(this).account}/*`)],
+        resources: [
+          albLogBucket.arnForObjects(`AWSLogs/${cdk.Stack.of(this).account}/*`),
+        ],
         conditions: {
           StringEquals: {
             's3:x-amz-acl': 'bucket-owner-full-control',
           },
         },
-      }),
+      })
     );
     albLogBucket.addToResourcePolicy(
       new iam.PolicyStatement({
@@ -160,7 +176,7 @@ export class AlbConstruct extends Construct {
         actions: ['s3:GetBucketAcl'],
         principals: [new iam.ServicePrincipal('delivery.logs.amazonaws.com')],
         resources: [albLogBucket.bucketArn],
-      }),
+      })
     );
 
     // Alarm for ALB - ResponseTime
@@ -172,7 +188,8 @@ export class AlbConstruct extends Construct {
       .createAlarm(this, 'AlbResponseTime', {
         evaluationPeriods: 3,
         threshold: 100,
-        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         actionsEnabled: true,
       })
       .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
@@ -186,7 +203,8 @@ export class AlbConstruct extends Construct {
       .createAlarm(this, 'AlbHttp4xx', {
         evaluationPeriods: 3,
         threshold: 10,
-        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         actionsEnabled: true,
       })
       .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
@@ -200,7 +218,8 @@ export class AlbConstruct extends Construct {
       .createAlarm(this, 'AlbHttp5xx', {
         evaluationPeriods: 3,
         threshold: 10,
-        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         actionsEnabled: true,
       })
       .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));

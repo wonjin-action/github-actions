@@ -38,7 +38,10 @@ export class OpenSearchStack extends cdk.Stack {
     // domainsg.connections.allowFrom(props.appServerSecurityGroup,ec2.Port.tcp(443));
     // For Bastion Container
     if (props.bastionSecurityGroup) {
-      domainsg.connections.allowFrom(props.bastionSecurityGroup, ec2.Port.tcp(443));
+      domainsg.connections.allowFrom(
+        props.bastionSecurityGroup,
+        ec2.Port.tcp(443)
+      );
     }
 
     // 「2. サブネットの指定」を使用する場合はこちらをコメントイン

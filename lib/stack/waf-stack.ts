@@ -3,7 +3,11 @@ import { Construct } from 'constructs';
 import { aws_wafv2 as wafv2 } from 'aws-cdk-lib';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { SHA256 } from 'crypto-js';
-import { Bucket, BucketEncryption, BlockPublicAccess } from 'aws-cdk-lib/aws-s3';
+import {
+  Bucket,
+  BucketEncryption,
+  BlockPublicAccess,
+} from 'aws-cdk-lib/aws-s3';
 import { CfnLoggingConfiguration } from 'aws-cdk-lib/aws-wafv2';
 
 export interface WafStackProps extends cdk.StackProps {
@@ -29,7 +33,10 @@ export class WafStack extends cdk.Stack {
     super(scope, id, props);
 
     let basicAuthToken: string | undefined;
-    if (props.basicAuthUserName != undefined && props.basicAuthUserPass != undefined) {
+    if (
+      props.basicAuthUserName != undefined &&
+      props.basicAuthUserPass != undefined
+    ) {
       const basicAuthSecret = this.initBasicAuthSecret({
         basicAuthUserName: props.basicAuthUserName,
         basicAuthPassword: props.basicAuthUserPass,
@@ -50,107 +57,111 @@ export class WafStack extends cdk.Stack {
     }
 
     // WebACLを作成
-    const webAcl = new wafv2.CfnWebACL(this, cdk.Stack.of(this).stackName + 'WebAcl', {
-      defaultAction: { allow: {} },
-      scope: props.scope,
-      visibilityConfig: {
-        cloudWatchMetricsEnabled: true,
-        metricName: 'WebAcl',
-        sampledRequestsEnabled: true,
-      },
-      rules: [
-        {
-          priority: 1,
-          overrideAction: props.overrideAction_CommonRuleSet,
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'AWS-AWSManagedRulesCommonRuleSet',
-          },
-          name: 'AWSManagedRulesCommonRuleSet',
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesCommonRuleSet',
+    const webAcl = new wafv2.CfnWebACL(
+      this,
+      cdk.Stack.of(this).stackName + 'WebAcl',
+      {
+        defaultAction: { allow: {} },
+        scope: props.scope,
+        visibilityConfig: {
+          cloudWatchMetricsEnabled: true,
+          metricName: 'WebAcl',
+          sampledRequestsEnabled: true,
+        },
+        rules: [
+          {
+            priority: 1,
+            overrideAction: props.overrideAction_CommonRuleSet,
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: 'AWS-AWSManagedRulesCommonRuleSet',
+            },
+            name: 'AWSManagedRulesCommonRuleSet',
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: 'AWS',
+                name: 'AWSManagedRulesCommonRuleSet',
+              },
             },
           },
-        },
-        {
-          priority: 2,
-          overrideAction: props.overrideAction_KnownBadInputsRuleSet,
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'AWS-AWSManagedRulesKnownBadInputsRuleSet',
-          },
-          name: 'AWSManagedRulesKnownBadInputsRuleSet',
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesKnownBadInputsRuleSet',
+          {
+            priority: 2,
+            overrideAction: props.overrideAction_KnownBadInputsRuleSet,
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: 'AWS-AWSManagedRulesKnownBadInputsRuleSet',
+            },
+            name: 'AWSManagedRulesKnownBadInputsRuleSet',
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: 'AWS',
+                name: 'AWSManagedRulesKnownBadInputsRuleSet',
+              },
             },
           },
-        },
-        {
-          priority: 3,
-          overrideAction: props.overrideAction_AmazonIpReputationList,
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'AWS-AWSManagedRulesAmazonIpReputationList',
-          },
-          name: 'AWSManagedRulesAmazonIpReputationList',
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesAmazonIpReputationList',
+          {
+            priority: 3,
+            overrideAction: props.overrideAction_AmazonIpReputationList,
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: 'AWS-AWSManagedRulesAmazonIpReputationList',
+            },
+            name: 'AWSManagedRulesAmazonIpReputationList',
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: 'AWS',
+                name: 'AWSManagedRulesAmazonIpReputationList',
+              },
             },
           },
-        },
-        {
-          priority: 4,
-          overrideAction: props.overrideAction_LinuxRuleSet,
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'AWS-AWSManagedRulesLinuxRuleSet',
-          },
-          name: 'AWSManagedRulesLinuxRuleSet',
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesLinuxRuleSet',
+          {
+            priority: 4,
+            overrideAction: props.overrideAction_LinuxRuleSet,
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: 'AWS-AWSManagedRulesLinuxRuleSet',
+            },
+            name: 'AWSManagedRulesLinuxRuleSet',
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: 'AWS',
+                name: 'AWSManagedRulesLinuxRuleSet',
+              },
             },
           },
-        },
-        {
-          priority: 5,
-          overrideAction: props.overrideAction_SQLiRuleSet,
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'AWS-AWSManagedRulesSQLiRuleSet',
-          },
-          name: 'AWSManagedRulesSQLiRuleSet',
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesSQLiRuleSet',
+          {
+            priority: 5,
+            overrideAction: props.overrideAction_SQLiRuleSet,
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: 'AWS-AWSManagedRulesSQLiRuleSet',
+            },
+            name: 'AWSManagedRulesSQLiRuleSet',
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: 'AWS',
+                name: 'AWSManagedRulesSQLiRuleSet',
+              },
             },
           },
-        },
-        ...(props.allowIPList != undefined
-          ? [
-              this.createIpRule({
-                scope: props.scope,
-                ipList: props.allowIPList,
-                ipRuleSetAction: props.ruleAction_IPsetRuleSet,
-                basicAuthToken: basicAuthToken,
-              }),
-            ]
-          : []),
-      ],
-    });
+          ...(props.allowIPList != undefined
+            ? [
+                this.createIpRule({
+                  scope: props.scope,
+                  ipList: props.allowIPList,
+                  ipRuleSetAction: props.ruleAction_IPsetRuleSet,
+                  basicAuthToken: basicAuthToken,
+                }),
+              ]
+            : []),
+        ],
+      }
+    );
     this.webAcl = webAcl;
 
     const wafLogBucket = new Bucket(this, 'WafLogBucket', {
@@ -173,7 +184,10 @@ export class WafStack extends cdk.Stack {
     });
   }
 
-  private initBasicAuthSecret(props: { basicAuthUserName: string; basicAuthPassword: string }) {
+  private initBasicAuthSecret(props: {
+    basicAuthUserName: string;
+    basicAuthPassword: string;
+  }) {
     const passwordHash = SHA256(props.basicAuthPassword).toString().slice(0, 8);
 
     const authToken = `${props.basicAuthUserName}:${passwordHash}`;

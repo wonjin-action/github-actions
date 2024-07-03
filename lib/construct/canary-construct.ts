@@ -71,7 +71,7 @@ export class Canary extends Construct {
             resources: [appCanary.artifactsBucket.bucketArn],
           }),
         ],
-      }),
+      })
     );
 
     // Create duration alarm
@@ -84,10 +84,13 @@ export class Canary extends Construct {
         evaluationPeriods: 2,
         datapointsToAlarm: 2,
         threshold: 400,
-        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         actionsEnabled: true,
       });
-    this.canaryDurationAlarm.addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
+    this.canaryDurationAlarm.addAlarmAction(
+      new cw_actions.SnsAction(props.alarmTopic)
+    );
 
     // Create failed run alarm
     this.canaryFailedAlarm = appCanary
@@ -99,10 +102,13 @@ export class Canary extends Construct {
         evaluationPeriods: 3,
         datapointsToAlarm: 3,
         threshold: 0.5,
-        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         actionsEnabled: true,
         treatMissingData: cw.TreatMissingData.NOT_BREACHING,
       });
-    this.canaryFailedAlarm.addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
+    this.canaryFailedAlarm.addAlarmAction(
+      new cw_actions.SnsAction(props.alarmTopic)
+    );
   }
 }

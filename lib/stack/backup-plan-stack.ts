@@ -30,7 +30,7 @@ export class BackupPlanStack extends cdk.Stack {
           ],
           scheduleExpression: props.backupSchedule,
           deleteAfter: props.retentionPeriod,
-        }),
+        })
       );
     } else {
       plan.addRule(
@@ -38,7 +38,7 @@ export class BackupPlanStack extends cdk.Stack {
           backupVault: props.vault,
           scheduleExpression: props.backupSchedule,
           deleteAfter: props.retentionPeriod,
-        }),
+        })
       );
     }
 

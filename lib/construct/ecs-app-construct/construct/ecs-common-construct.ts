@@ -31,7 +31,11 @@ export class EcsCommonConstruct extends Construct {
     // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html
     const executionRole = new iam.Role(this, 'EcsTaskExecutionRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy')],
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AmazonECSTaskExecutionRolePolicy'
+        ),
+      ],
       inlinePolicies: {
         createLogs:
           // For Service Connect, ECS Agent need to create CW Logs groups
@@ -62,7 +66,8 @@ export class EcsCommonConstruct extends Construct {
     // ----------------------- Event notification for ECS -----------------------------
     // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_cwe_events.html#ecs_service_events
     new cwe.Rule(this, 'ECSServiceActionEventRule', {
-      description: 'CloudWatch Event Rule to send notification on ECS Service action events.',
+      description:
+        'CloudWatch Event Rule to send notification on ECS Service action events.',
       enabled: true,
       eventPattern: {
         source: ['aws.ecs'],
@@ -76,7 +81,8 @@ export class EcsCommonConstruct extends Construct {
 
     // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_cwe_events.html#ecs_service_deployment_events
     new cwe.Rule(this, 'ECSServiceDeploymentEventRule', {
-      description: 'CloudWatch Event Rule to send notification on ECS Service deployment events.',
+      description:
+        'CloudWatch Event Rule to send notification on ECS Service deployment events.',
       enabled: true,
       eventPattern: {
         source: ['aws.ecs'],

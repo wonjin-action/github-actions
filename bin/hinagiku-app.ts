@@ -22,7 +22,9 @@ function getCtxVariable(): CtxEnvironment {
   const argContext = 'environment';
   const envKey = app.node.tryGetContext(argContext);
   if (envKey == undefined)
-    throw new Error(`Please specify environment with context option. ex) cdk deploy -c ${argContext}=dev`);
+    throw new Error(
+      `Please specify environment with context option. ex) cdk deploy -c ${argContext}=dev`
+    );
 
   return envKey;
 }
@@ -30,7 +32,9 @@ function getCtxVariable(): CtxEnvironment {
 function getConfig(deployEnv: CtxEnvironment): IConfig {
   const tsEnvPath = './params/' + deployEnv + '.ts';
   if (!fs.existsSync(tsEnvPath)) {
-    throw new Error(`Can't find a ts environment file [../params/${deployEnv}.ts]`);
+    throw new Error(
+      `Can't find a ts environment file [../params/${deployEnv}.ts]`
+    );
   }
 
   return require('../params/' + deployEnv); // eslint-disable-line @typescript-eslint/no-var-requires
@@ -59,21 +63,25 @@ const deployEnv: cdk.Environment = getProcEnv(config.Env);
 // const workspaceId = config.NotifierParam.workspaceId;
 // const channelIdMon = config.NotifierParam.channelIdMon;
 
-const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`, {
-  pjPrefix,
-  // chatbotProps: {
-  //   notifyEmail: config.NotifierParam.monitoringNotifyEmail,
-  //   workspaceId: workspaceId,
-  //   channelId: channelIdMon,
-  // },
-  cognitoProps: {
-    domainPrefix: `${pjPrefix}`.toLowerCase(),
-    ...config.CognitoParam,
-  },
-  vpcCidr: config.VpcParam.cidr,
-  vpcMaxAzs: config.VpcParam.maxAzs,
-  env: deployEnv,
-});
+const shareResources = new ShareResourcesStack(
+  app,
+  `${pjPrefix}-ShareResources`,
+  {
+    pjPrefix,
+    // chatbotProps: {
+    //   notifyEmail: config.NotifierParam.monitoringNotifyEmail,
+    //   workspaceId: workspaceId,
+    //   channelId: channelIdMon,
+    // },
+    cognitoProps: {
+      domainPrefix: `${pjPrefix}`.toLowerCase(),
+      ...config.CognitoParam,
+    },
+    vpcCidr: config.VpcParam.cidr,
+    vpcMaxAzs: config.VpcParam.maxAzs,
+    env: deployEnv,
+  }
+);
 
 // InfraResources
 // new InfraResourcesPipelineStack(app, `${pjPrefix}-Pipeline`, {

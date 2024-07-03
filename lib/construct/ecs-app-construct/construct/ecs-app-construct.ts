@@ -52,15 +52,20 @@ export class EcsappConstruct extends Construct {
     });
 
     if (props.lambdaSecurityGroup) {
-      securityGroupForFargate.connections.allowFrom(props.lambdaSecurityGroup, ec2.Port.tcp(props.portNumber));
+      securityGroupForFargate.connections.allowFrom(
+        props.lambdaSecurityGroup,
+        ec2.Port.tcp(props.portNumber)
+      );
     }
 
     if (props.allowFromSg) {
       for (const sg of props.allowFromSg) {
-        securityGroupForFargate.connections.allowFrom(sg, ec2.Port.tcp(props.portNumber));
+        securityGroupForFargate.connections.allowFrom(
+          sg,
+          ec2.Port.tcp(props.portNumber)
+        );
       }
     }
-
 
     this.securityGroupForFargate = securityGroupForFargate;
 
@@ -75,12 +80,16 @@ export class EcsappConstruct extends Construct {
 
     if (props.useServiceConnect) {
       // CloudWatch Logs Group for Service Connect
-      const serviceConnectLogGroup = new cwl.LogGroup(this, `LogforServiceConnect`, {
-        // 方式設計より保存期間5年とする
-        retention: cwl.RetentionDays.FIVE_YEARS,
-        encryptionKey: props.appKey,
-        logGroupName: cdk.PhysicalName.GENERATE_IF_NEEDED,
-      });
+      const serviceConnectLogGroup = new cwl.LogGroup(
+        this,
+        `LogforServiceConnect`,
+        {
+          // 方式設計より保存期間5年とする
+          retention: cwl.RetentionDays.FIVE_YEARS,
+          encryptionKey: props.appKey,
+          logGroupName: cdk.PhysicalName.GENERATE_IF_NEEDED,
+        }
+      );
       this.serviceConnectLogGroup = serviceConnectLogGroup;
     }
 
@@ -99,7 +108,8 @@ export class EcsappConstruct extends Construct {
         evaluationPeriods: 3,
         datapointsToAlarm: 3,
         threshold: 80,
-        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         actionsEnabled: true,
       })
       .addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));

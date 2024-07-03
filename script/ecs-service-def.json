@@ -25,7 +25,11 @@
     "awsvpcConfiguration": {
       "assignPublicIp": "ENABLED",
       "securityGroups": ["{{ must_env `SECURITY_GROUP` }}"],
-      "subnets": ["{{ must_env `SUBNET_1` }}", "{{ must_env `SUBNET_2` }}", "{{ must_env `SUBNET_3` }}"]
+      "subnets": [
+        "{{ must_env `SUBNET_1` }}",
+        "{{ must_env `SUBNET_2` }}",
+        "{{ must_env `SUBNET_3` }}"
+      ]
     }
   },
   "pendingCount": 0,

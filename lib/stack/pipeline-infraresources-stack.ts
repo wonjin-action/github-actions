@@ -17,7 +17,11 @@ export interface InfraResourcesPipelineStackProps {
 }
 
 export class InfraResourcesPipelineStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: InfraResourcesPipelineStackProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: InfraResourcesPipelineStackProps
+  ) {
     super(scope, id);
 
     const sourceBucket = new s3.Bucket(this, `SourceBucket`, {
@@ -47,7 +51,10 @@ export class InfraResourcesPipelineStack extends cdk.Stack {
           commands: [],
         },
         build: {
-          commands: ['npm install', `npx cdk deploy --require-approval never --all -c environment=${props.env}`],
+          commands: [
+            'npm install',
+            `npx cdk deploy --require-approval never --all -c environment=${props.env}`,
+          ],
         },
       },
     });
@@ -67,7 +74,7 @@ export class InfraResourcesPipelineStack extends cdk.Stack {
           effect: iam.Effect.ALLOW,
           actions: ['sts:AssumeRole'],
           resources: ['arn:aws:iam::*:role/cdk-*'],
-        }),
+        })
       );
 
       const buildAction = new actions.CodeBuildAction({
@@ -99,17 +106,23 @@ export class InfraResourcesPipelineStack extends cdk.Stack {
       });
 
       // Slack使用時のChatBot作成
-      const target = new chatbot.SlackChannelConfiguration(this, `SlackChannel`, {
-        slackChannelConfigurationName: props.slackChannelName,
-        slackWorkspaceId: props.slackWorkspaceId,
-        slackChannelId: props.slackChannelId,
-      });
+      const target = new chatbot.SlackChannelConfiguration(
+        this,
+        `SlackChannel`,
+        {
+          slackChannelConfigurationName: props.slackChannelName,
+          slackWorkspaceId: props.slackWorkspaceId,
+          slackChannelId: props.slackChannelId,
+        }
+      );
 
       // Slack向け通知ルール作成
       buildProject.notifyOnBuildSucceeded('NotifyOnBuildSucceeded', target);
       buildProject.notifyOnBuildFailed('NotifyOnBuildfailed', target);
       // 必要に応じて、さらにステージやアクションを追加
     }
-    new cdk.CfnOutput(this, `SourceBucketName`, { value: sourceBucket.bucketName });
+    new cdk.CfnOutput(this, `SourceBucketName`, {
+      value: sourceBucket.bucketName,
+    });
   }
 }

@@ -33,7 +33,7 @@ export class SNS extends Construct {
         principals: [new iam.ServicePrincipal('cloudwatch.amazonaws.com')],
         actions: ['sns:Publish'],
         resources: [topic.topicArn],
-      }),
+      })
     );
   }
 }

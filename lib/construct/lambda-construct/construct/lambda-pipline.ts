@@ -30,19 +30,27 @@ export interface PipelineEcspressoConstructProps extends cdk.StackProps {
 
 export class Pipeline_lambdaConstruct extends Construct {
   public readonly LambdaCommon: EcsCommonConstruct;
-  constructor(scope: Construct, id: string, props: PipelineEcspressoConstructProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: PipelineEcspressoConstructProps
+  ) {
     super(scope, id);
 
     // Create CodeBuildRole
 
     const codeBuildRole = new iam.Role(this, 'CodeBuildRole', {
       assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
-      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
+      ],
     });
 
     const codePipelineRole = new iam.Role(this, 'CodePipelineRole', {
       assumedBy: new iam.ServicePrincipal('codepipeline.amazonaws.com'),
-      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
+      ],
     });
 
     const sourceBucket = new s3.Bucket(this, `PipelineSourceBucket`, {
@@ -126,8 +134,7 @@ export class Pipeline_lambdaConstruct extends Construct {
 
     // console.log(`소스 버킷 이름 : ${sourceBucket.bucketName}`)
 
-     new cdk.CfnOutput(this, 'SourceBucketName', {
-
+    new cdk.CfnOutput(this, 'SourceBucketName', {
       value: sourceBucket.bucketName,
       description: 'The name of the source bucket',
     });
@@ -173,7 +180,7 @@ export class Pipeline_lambdaConstruct extends Construct {
           'servicediscovery:GetNamespace',
         ],
         resources: ['*'],
-      }),
+      })
     );
 
     const sourceOutput = new codepipeline.Artifact();
@@ -227,10 +234,14 @@ export class Pipeline_lambdaConstruct extends Construct {
       targets: [new targets.CodePipeline(pipeline)],
     });
 
-    const securityGroupParam = new ssm.StringParameter(this, 'Lambda/Lambda-SecurityGroup', {
-      parameterName: '/Lambda/Lambda-SecurityGroup',
-      stringValue: props.securityGroup.securityGroupId,
-    });
+    const securityGroupParam = new ssm.StringParameter(
+      this,
+      'Lambda/Lambda-SecurityGroup',
+      {
+        parameterName: '/Lambda/Lambda-SecurityGroup',
+        stringValue: props.securityGroup.securityGroupId,
+      }
+    );
 
     const roleParam = new ssm.StringParameter(this, 'Lambda-Role', {
       parameterName: '/Lambda/Lambda-Role',

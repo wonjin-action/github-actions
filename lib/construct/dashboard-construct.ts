@@ -673,7 +673,7 @@ export class Dashboard extends Construct {
           width: 12,
           height: 6,
           alarm: props.canaryFailedAlarm,
-        }),
+        })
       );
     }
 
@@ -779,7 +779,12 @@ export class Dashboard extends Construct {
         height: 6,
         // stacked: false,
         stacked: true,
-        left: [albTg5xxErrors, albTg4xxErrors, albTgConnectionErrors, albTgTLSNegotiationErrors],
+        left: [
+          albTg5xxErrors,
+          albTg4xxErrors,
+          albTgConnectionErrors,
+          albTgTLSNegotiationErrors,
+        ],
       }),
       new cw.GraphWidget({
         title: 'Aurora CPU Utilization',
@@ -801,7 +806,7 @@ export class Dashboard extends Construct {
         height: 6,
         stacked: false,
         left: [dbWriterFreeLocalStorage, dbReaderFreeLocalStorage],
-      }),
+      })
     );
 
     for (let i = 0; i < props.ecsAlbServiceNames.length; i++) {
@@ -877,7 +882,7 @@ export class Dashboard extends Construct {
           width: 6,
           height: 6,
           alarm: props.albTgUnHealthyHostCountAlarms[i], // This alarm is defined on ECSApp Stack
-        }),
+        })
       );
     }
 
@@ -915,7 +920,10 @@ export class Dashboard extends Construct {
           width: 6,
           height: 6,
           stacked: true,
-          left: [ecsInternalRunningTaskCount[i], ecsInternalPendingTaskCount[i]],
+          left: [
+            ecsInternalRunningTaskCount[i],
+            ecsInternalPendingTaskCount[i],
+          ],
         }),
         // InternalはTGが存在しないため使用しない
         /*
@@ -950,8 +958,11 @@ export class Dashboard extends Construct {
               fill: cw.Shading.BELOW,
             },
           ],
-          right: [ecsInternalRunningTaskCount[i], ecsInternalPendingTaskCount[i]],
-        }),
+          right: [
+            ecsInternalRunningTaskCount[i],
+            ecsInternalPendingTaskCount[i],
+          ],
+        })
       );
     }
   }

@@ -6,7 +6,10 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
-import { ICertificateIdentifier, ICloudFrontParam } from '../../params/interface';
+import {
+  ICertificateIdentifier,
+  ICloudFrontParam,
+} from '../../params/interface';
 
 interface CloudFrontConstructProps extends cdk.StackProps {
   webAcl?: wafv2.CfnWebACL;
@@ -34,10 +37,14 @@ export class CloudFrontConstruct extends Construct {
     // Note:  CloudFront and ALB need certificate with the same FQDN
 
     // for cloudfront (us-east-1 Cert)
-    const cfCertificateArn = `arn:aws:acm:us-east-1:${cdk.Stack.of(this).account}:certificate/${
-      props.CertificateIdentifier.identifier
-    }`;
-    const cloudfrontCert = acm.Certificate.fromCertificateArn(this, 'cfCertificate', cfCertificateArn);
+    const cfCertificateArn = `arn:aws:acm:us-east-1:${
+      cdk.Stack.of(this).account
+    }:certificate/${props.CertificateIdentifier.identifier}`;
+    const cloudfrontCert = acm.Certificate.fromCertificateArn(
+      this,
+      'cfCertificate',
+      cfCertificateArn
+    );
 
     // ------------ S3 Bucket for Web Contents ---------------
     // This bucket cannot be encrypted with KMS CMK
@@ -66,7 +73,8 @@ export class CloudFrontConstruct extends Construct {
       const cfDistribution = new cloudfront.Distribution(this, 'Distribution', {
         defaultBehavior: {
           origin: new origins.S3Origin(closedBucket),
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         },
 
@@ -100,7 +108,8 @@ export class CloudFrontConstruct extends Construct {
               ? cloudfront.OriginProtocolPolicy.HTTPS_ONLY
               : cloudfront.OriginProtocolPolicy.HTTP_ONLY,
           }),
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
           originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
@@ -122,7 +131,8 @@ export class CloudFrontConstruct extends Construct {
           */
           '/static/*': {
             origin: new origins.S3Origin(webContentBucket),
-            viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            viewerProtocolPolicy:
+              cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
           },
         },

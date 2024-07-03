@@ -71,9 +71,12 @@ export class AlbTarget extends Construct {
       .createAlarm(this, `AlbTgUnHealthyHostCount`, {
         evaluationPeriods: 3,
         threshold: 1,
-        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         actionsEnabled: true,
       });
-    this.albTgUnHealthyHostCountAlarm.addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
+    this.albTgUnHealthyHostCountAlarm.addAlarmAction(
+      new cw_actions.SnsAction(props.alarmTopic)
+    );
   }
 }

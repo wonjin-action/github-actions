@@ -19,15 +19,12 @@ import { EcsCommonConstruct } from '../../construct/ecs-app-construct/construct/
 import * as sns from 'aws-cdk-lib/aws-sns';
 import { PipelineEcspressoConstruct } from '../ecs-app-construct/construct/pipeline-ecspresso-construct';
 
-
-
 interface LambdaConstructProps extends cdk.StackProps {
   prefix: string;
   vpc: ec2.Vpc;
   alarmTopic: sns.Topic;
   securityGroup: ec2.SecurityGroup;
-  cloudmap: CloudMap; 
-  
+  cloudmap: CloudMap;
 }
 
 export class LambdaFrontConstruct extends Construct {
@@ -36,34 +33,30 @@ export class LambdaFrontConstruct extends Construct {
   constructor(scope: Construct, id: string, props: LambdaConstructProps) {
     super(scope, id);
 
-
-
     // IAM Policy
 
-      const lambda_policy = new iam.ManagedPolicy(this, 'Lambda_policy', {
+    const lambda_policy = new iam.ManagedPolicy(this, 'Lambda_policy', {
       managedPolicyName: 'Lambda_basic_policy',
       description: 'IAM policy for Lambda',
       statements: [
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: [
-
-                'logs:*',
-                'ecr:*',
-                'apigateway:*',
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "ec2:CreateNetworkInterface",
-                "ec2:DescribeNetworkInterfaces",
-                "ec2:DescribeSubnets",
-                "ec2:DeleteNetworkInterface",
-                "ec2:AssignPrivateIpAddresses",
-                "ec2:UnassignPrivateIpAddresses",
-                "servicediscovery:DiscoverInstances"
+            'logs:*',
+            'ecr:*',
+            'apigateway:*',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+            'ec2:CreateNetworkInterface',
+            'ec2:DescribeNetworkInterfaces',
+            'ec2:DescribeSubnets',
+            'ec2:DeleteNetworkInterface',
+            'ec2:AssignPrivateIpAddresses',
+            'ec2:UnassignPrivateIpAddresses',
+            'servicediscovery:DiscoverInstances',
           ],
           resources: ['*'],
-
         }),
       ],
     });
@@ -73,15 +66,16 @@ export class LambdaFrontConstruct extends Construct {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
     lambda_role.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+      iam.ManagedPolicy.fromAwsManagedPolicyName(
+        'service-role/AWSLambdaBasicExecutionRole'
+      )
     );
     lambda_role.addManagedPolicy(lambda_policy);
-  
 
     new Pipeline_lambdaConstruct(this, `${props.prefix}-FrontApp-Pipeline`, {
       prefix: props.prefix,
       cloudmapService: props.cloudmap.frontendService,
-      securityGroup: props.securityGroup, 
+      securityGroup: props.securityGroup,
       vpc: props.vpc,
       executionRole: lambda_role,
     });

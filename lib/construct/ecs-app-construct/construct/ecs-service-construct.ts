@@ -38,7 +38,9 @@ export class EcsServiceConstruct extends Construct {
       // -- Option 3: If you want to use DockerHub, you can use like this.
       // --           You need public access route to internet for ECS Task.
       // --           See vpcSubnets property for new ecs.FargateService().
-      image: ecs.ContainerImage.fromRegistry('public.ecr.aws/nginx/nginx:stable'),
+      image: ecs.ContainerImage.fromRegistry(
+        'public.ecr.aws/nginx/nginx:stable'
+      ),
 
       environment: {
         ENVIRONMENT_VARIABLE_SAMPLE_KEY: 'Environment Variable Sample Value',

@@ -3,7 +3,11 @@ import * as servicediscovery from 'aws-cdk-lib/aws-servicediscovery';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Duration } from 'aws-cdk-lib';
 import { IVpc } from 'aws-cdk-lib/aws-ec2';
-import { PrivateDnsNamespace, DnsRecordType, Service } from 'aws-cdk-lib/aws-servicediscovery';
+import {
+  PrivateDnsNamespace,
+  DnsRecordType,
+  Service,
+} from 'aws-cdk-lib/aws-servicediscovery';
 import { Construct } from 'constructs';
 
 interface CloudMapProps {

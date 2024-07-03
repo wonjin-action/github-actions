@@ -35,20 +35,30 @@ describe(`${pjPrefix} Guest Stacks`, () => {
     const channelIdMon = envVals['slackNotifier']['channelIdMon'];
 
     // Topic for monitoring guest system
-    const monitorAlarm = new BLEAMonitorAlarmStack(app, `${pjPrefix}-MonitorAlarm`, {
-      notifyEmail: envVals['monitoringNotifyEmail'],
-      env: procEnv,
-    });
+    const monitorAlarm = new BLEAMonitorAlarmStack(
+      app,
+      `${pjPrefix}-MonitorAlarm`,
+      {
+        notifyEmail: envVals['monitoringNotifyEmail'],
+        env: procEnv,
+      }
+    );
 
-    const chatbotMonitor = new BLEAChatbotStack(app, `${pjPrefix}-ChatbotMonitor`, {
-      topicArn: monitorAlarm.alarmTopic.topicArn,
-      workspaceId: workspaceId,
-      channelId: channelIdMon,
-      env: procEnv,
-    });
+    const chatbotMonitor = new BLEAChatbotStack(
+      app,
+      `${pjPrefix}-ChatbotMonitor`,
+      {
+        topicArn: monitorAlarm.alarmTopic.topicArn,
+        workspaceId: workspaceId,
+        channelId: channelIdMon,
+        env: procEnv,
+      }
+    );
 
     // CMK for Apps
-    const appKey = new BLEAKeyAppStack(app, `${pjPrefix}-AppKey`, { env: procEnv });
+    const appKey = new BLEAKeyAppStack(app, `${pjPrefix}-AppKey`, {
+      env: procEnv,
+    });
 
     // Networking
     const vpcCidr = envVals['vpcCidr'];
@@ -64,11 +74,15 @@ describe(`${pjPrefix} Guest Stacks`, () => {
     });
 
     // Simple CloudFront FrontEnd
-    const front = new BLEAFrontendSimpleStack(app, `${pjPrefix}-SimpleFrontStack`, {
-      vpc: prodVpc.vpc,
-      webAcl: waf.webAcl,
-      env: procEnv,
-    });
+    const front = new BLEAFrontendSimpleStack(
+      app,
+      `${pjPrefix}-SimpleFrontStack`,
+      {
+        vpc: prodVpc.vpc,
+        webAcl: waf.webAcl,
+        env: procEnv,
+      }
+    );
 
     // Application Stack (LoadBalancer + Fargate)
     const ecsApp = new BLEAECSAppStack(app, `${pjPrefix}-ECSApp`, {
@@ -101,20 +115,24 @@ describe(`${pjPrefix} Guest Stacks`, () => {
       env: procEnv,
     });
 
-    const dashboard = new BLEADashboardStack(app, `${pjPrefix}-ECSAppDashboard`, {
-      dashboardName: `${pjPrefix}-ECSApp`,
-      webFront: front,
-      ecsClusterName: ecsApp.ecsClusterName,
-      ecsServiceName: ecsApp.ecsServiceName,
-      appTargetGroupName: ecsApp.appTargetGroupName,
-      dbClusterName: dbCluster.dbClusterName,
-      albTgUnHealthyHostCountAlarm: ecsApp.albTgUnHealthyHostCountAlarm,
-      ecsScaleOnRequestCount: ecsApp.ecsScaleOnRequestCount,
-      ecsTargetUtilizationPercent: ecsApp.ecsTargetUtilizationPercent,
-      canaryDurationAlarm: appCanary.canaryDurationAlarm,
-      canaryFailedAlarm: appCanary.canaryFailedAlarm,
-      env: procEnv,
-    });
+    const dashboard = new BLEADashboardStack(
+      app,
+      `${pjPrefix}-ECSAppDashboard`,
+      {
+        dashboardName: `${pjPrefix}-ECSApp`,
+        webFront: front,
+        ecsClusterName: ecsApp.ecsClusterName,
+        ecsServiceName: ecsApp.ecsServiceName,
+        appTargetGroupName: ecsApp.appTargetGroupName,
+        dbClusterName: dbCluster.dbClusterName,
+        albTgUnHealthyHostCountAlarm: ecsApp.albTgUnHealthyHostCountAlarm,
+        ecsScaleOnRequestCount: ecsApp.ecsScaleOnRequestCount,
+        ecsTargetUtilizationPercent: ecsApp.ecsTargetUtilizationPercent,
+        canaryDurationAlarm: appCanary.canaryDurationAlarm,
+        canaryFailedAlarm: appCanary.canaryFailedAlarm,
+        env: procEnv,
+      }
+    );
 
     // Tagging "Environment" tag to all resources in this app
     const envTagName = 'Environment';

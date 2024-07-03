@@ -21,7 +21,11 @@ export class OidcIamRoleConstruct extends Construct {
         },
         StringLike: {
           ['token.actions.githubusercontent.com:sub']:
-            'repo:' + props.organizationName + '/' + props.repositoryName + ':*',
+            'repo:' +
+            props.organizationName +
+            '/' +
+            props.repositoryName +
+            ':*',
         },
       }),
       roleName: props.name,

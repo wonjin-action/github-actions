@@ -13,10 +13,14 @@ export class OidcStack extends cdk.Stack {
     super(scope, id, props);
 
     // GithubActionsと接続するためのOpenIdConnectを作成
-    const oidcProvider = new iam.OpenIdConnectProvider(this, 'GithubActionsOidcProvider', {
-      url: 'https://token.actions.githubusercontent.com',
-      clientIds: ['sts.amazonaws.com'],
-    });
+    const oidcProvider = new iam.OpenIdConnectProvider(
+      this,
+      'GithubActionsOidcProvider',
+      {
+        url: 'https://token.actions.githubusercontent.com',
+        clientIds: ['sts.amazonaws.com'],
+      }
+    );
 
     // // WAF用ロール
     // new OidcIamRoleConstruct(this, 'WafRole', {

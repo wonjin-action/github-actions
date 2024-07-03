@@ -48,23 +48,34 @@ export class Cognito extends Construct {
 
   // クライアントIDとシークレットは事前にSecretsManagerを作っておく必要があります
   createIdentityProviderGoogle() {
-    const googleOAuthClientSecret = sm.Secret.fromSecretAttributes(this, 'GoogleOAuthClientSecret', {
-      secretCompleteArn: this.props.secretArn,
-    });
+    const googleOAuthClientSecret = sm.Secret.fromSecretAttributes(
+      this,
+      'GoogleOAuthClientSecret',
+      {
+        secretCompleteArn: this.props.secretArn,
+      }
+    );
 
-    return new cognito.UserPoolIdentityProviderGoogle(this, 'UserPoolIdentityProviderGoogle', {
-      userPool: this.userPool,
-      clientId: googleOAuthClientSecret.secretValueFromJson('client_id').unsafeUnwrap(),
-      clientSecretValue: googleOAuthClientSecret.secretValueFromJson('client_secret'),
+    return new cognito.UserPoolIdentityProviderGoogle(
+      this,
+      'UserPoolIdentityProviderGoogle',
+      {
+        userPool: this.userPool,
+        clientId: googleOAuthClientSecret
+          .secretValueFromJson('client_id')
+          .unsafeUnwrap(),
+        clientSecretValue:
+          googleOAuthClientSecret.secretValueFromJson('client_secret'),
 
-      // Email scope is required, because the default is 'profile' and that doesn't allow Cognito
-      // to fetch the user's email from his Google account after the user does an SSO with Google
-      scopes: ['email'],
+        // Email scope is required, because the default is 'profile' and that doesn't allow Cognito
+        // to fetch the user's email from his Google account after the user does an SSO with Google
+        scopes: ['email'],
 
-      // Map fields from the user's Google profile to Cognito user fields, when the user is auto-provisioned
-      attributeMapping: {
-        email: cognito.ProviderAttribute.GOOGLE_EMAIL,
-      },
-    });
+        // Map fields from the user's Google profile to Cognito user fields, when the user is auto-provisioned
+        attributeMapping: {
+          email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+        },
+      }
+    );
   }
 }

@@ -246,10 +246,7 @@
                           "aws:cdk:cloudformation:props": {
                             "aliasName": "alias/Hinagiku-Dev-AppKey-for-app",
                             "targetKeyId": {
-                              "Fn::GetAtt": [
-                                "HinagikuDevAppKeyB9380A62",
-                                "Arn"
-                              ]
+                              "Fn::GetAtt": ["HinagikuDevAppKeyB9380A62", "Arn"]
                             }
                           }
                         },
@@ -2786,10 +2783,7 @@
                           "aws:cdk:cloudformation:props": {
                             "aliasName": "alias/Hinagiku-Dev-Vpc-for-flowlog",
                             "targetKeyId": {
-                              "Fn::GetAtt": [
-                                "HinagikuDevVpcKey9E0C5783",
-                                "Arn"
-                              ]
+                              "Fn::GetAtt": ["HinagikuDevVpcKey9E0C5783", "Arn"]
                             }
                           }
                         },
@@ -3648,10 +3642,7 @@
                         "attributes": {
                           "aws:cdk:cloudformation:type": "AWS::ECS::ClusterCapacityProviderAssociations",
                           "aws:cdk:cloudformation:props": {
-                            "capacityProviders": [
-                              "FARGATE",
-                              "FARGATE_SPOT"
-                            ],
+                            "capacityProviders": ["FARGATE", "FARGATE_SPOT"],
                             "cluster": {
                               "Ref": "HinagikuDevEcsAppHinagikuDevEcsCommonClusterE3950829"
                             },
@@ -3681,17 +3672,10 @@
                           "aws:cdk:cloudformation:props": {
                             "description": "CloudWatch Event Rule to send notification on ECS Service action events.",
                             "eventPattern": {
-                              "source": [
-                                "aws.ecs"
-                              ],
-                              "detail-type": [
-                                "ECS Service Action"
-                              ],
+                              "source": ["aws.ecs"],
+                              "detail-type": ["ECS Service Action"],
                               "detail": {
-                                "eventType": [
-                                  "WARN",
-                                  "ERROR"
-                                ]
+                                "eventType": ["WARN", "ERROR"]
                               }
                             },
                             "state": "ENABLED",
@@ -3728,17 +3712,10 @@
                           "aws:cdk:cloudformation:props": {
                             "description": "CloudWatch Event Rule to send notification on ECS Service deployment events.",
                             "eventPattern": {
-                              "source": [
-                                "aws.ecs"
-                              ],
-                              "detail-type": [
-                                "ECS Deployment State Change"
-                              ],
+                              "source": ["aws.ecs"],
+                              "detail-type": ["ECS Deployment State Change"],
                               "detail": {
-                                "eventType": [
-                                  "WARN",
-                                  "ERROR"
-                                ]
+                                "eventType": ["WARN", "ERROR"]
                               }
                             },
                             "state": "ENABLED",
@@ -4098,21 +4075,15 @@
                               "aws:cdk:cloudformation:type": "AWS::Events::Rule",
                               "aws:cdk:cloudformation:props": {
                                 "eventPattern": {
-                                  "source": [
-                                    "aws.ecr"
-                                  ],
-                                  "detail-type": [
-                                    "ECR Image Scan"
-                                  ],
+                                  "source": ["aws.ecr"],
+                                  "detail-type": ["ECR Image Scan"],
                                   "detail": {
                                     "repository-name": [
                                       {
                                         "Ref": "HinagikuDevEcsAppHinagikuDevEcsAppFrontAppEcsResourcesRepoC722D59F"
                                       }
                                     ],
-                                    "scan-status": [
-                                      "COMPLETE"
-                                    ]
+                                    "scan-status": ["COMPLETE"]
                                   }
                                 },
                                 "state": "ENABLED",
@@ -5515,15 +5486,9 @@
                           "aws:cdk:cloudformation:type": "AWS::Events::Rule",
                           "aws:cdk:cloudformation:props": {
                             "eventPattern": {
-                              "account": [
-                                "019817421975"
-                              ],
-                              "source": [
-                                "aws.s3"
-                              ],
-                              "detail-type": [
-                                "Object Created"
-                              ],
+                              "account": ["019817421975"],
+                              "source": ["aws.s3"],
+                              "detail-type": ["Object Created"],
                               "detail": {
                                 "bucket": {
                                   "name": [
@@ -5533,9 +5498,7 @@
                                   ]
                                 },
                                 "object": {
-                                  "key": [
-                                    "image.zip"
-                                  ]
+                                  "key": ["image.zip"]
                                 }
                               }
                             },
@@ -5657,21 +5620,15 @@
                               "aws:cdk:cloudformation:type": "AWS::Events::Rule",
                               "aws:cdk:cloudformation:props": {
                                 "eventPattern": {
-                                  "source": [
-                                    "aws.ecr"
-                                  ],
-                                  "detail-type": [
-                                    "ECR Image Scan"
-                                  ],
+                                  "source": ["aws.ecr"],
+                                  "detail-type": ["ECR Image Scan"],
                                   "detail": {
                                     "repository-name": [
                                       {
                                         "Ref": "HinagikuDevEcsAppHinagikuDevEcsBackendBackAppEcsResourcesRepoCE5391E0"
                                       }
                                     ],
-                                    "scan-status": [
-                                      "COMPLETE"
-                                    ]
+                                    "scan-status": ["COMPLETE"]
                                   }
                                 },
                                 "state": "ENABLED",
@@ -7192,15 +7149,9 @@
                           "aws:cdk:cloudformation:type": "AWS::Events::Rule",
                           "aws:cdk:cloudformation:props": {
                             "eventPattern": {
-                              "account": [
-                                "019817421975"
-                              ],
-                              "source": [
-                                "aws.s3"
-                              ],
-                              "detail-type": [
-                                "Object Created"
-                              ],
+                              "account": ["019817421975"],
+                              "source": ["aws.s3"],
+                              "detail-type": ["Object Created"],
                               "detail": {
                                 "bucket": {
                                   "name": [
@@ -7210,9 +7161,7 @@
                                   ]
                                 },
                                 "object": {
-                                  "key": [
-                                    "image.zip"
-                                  ]
+                                  "key": ["image.zip"]
                                 }
                               }
                             },
@@ -7334,21 +7283,15 @@
                               "aws:cdk:cloudformation:type": "AWS::Events::Rule",
                               "aws:cdk:cloudformation:props": {
                                 "eventPattern": {
-                                  "source": [
-                                    "aws.ecr"
-                                  ],
-                                  "detail-type": [
-                                    "ECR Image Scan"
-                                  ],
+                                  "source": ["aws.ecr"],
+                                  "detail-type": ["ECR Image Scan"],
                                   "detail": {
                                     "repository-name": [
                                       {
                                         "Ref": "HinagikuDevEcsAppHinagikuDevAuthenticateAuthEcsResourcesRepoB0C14D5B"
                                       }
                                     ],
-                                    "scan-status": [
-                                      "COMPLETE"
-                                    ]
+                                    "scan-status": ["COMPLETE"]
                                   }
                                 },
                                 "state": "ENABLED",
@@ -8840,15 +8783,9 @@
                           "aws:cdk:cloudformation:type": "AWS::Events::Rule",
                           "aws:cdk:cloudformation:props": {
                             "eventPattern": {
-                              "account": [
-                                "019817421975"
-                              ],
-                              "source": [
-                                "aws.s3"
-                              ],
-                              "detail-type": [
-                                "Object Created"
-                              ],
+                              "account": ["019817421975"],
+                              "source": ["aws.s3"],
+                              "detail-type": ["Object Created"],
                               "detail": {
                                 "bucket": {
                                   "name": [
@@ -8858,9 +8795,7 @@
                                   ]
                                 },
                                 "object": {
-                                  "key": [
-                                    "image.zip"
-                                  ]
+                                  "key": ["image.zip"]
                                 }
                               }
                             },
@@ -10565,15 +10500,9 @@
                           "aws:cdk:cloudformation:type": "AWS::Events::Rule",
                           "aws:cdk:cloudformation:props": {
                             "eventPattern": {
-                              "account": [
-                                "019817421975"
-                              ],
-                              "source": [
-                                "aws.s3"
-                              ],
-                              "detail-type": [
-                                "Object Created"
-                              ],
+                              "account": ["019817421975"],
+                              "source": ["aws.s3"],
+                              "detail-type": ["Object Created"],
                               "detail": {
                                 "bucket": {
                                   "name": [
@@ -10583,9 +10512,7 @@
                                   ]
                                 },
                                 "object": {
-                                  "key": [
-                                    "image.zip"
-                                  ]
+                                  "key": ["image.zip"]
                                 }
                               }
                             },
@@ -10981,10 +10908,7 @@
                       "aws:cdk:cloudformation:props": {
                         "description": "from HinagikuDevEcsHinagikuDevEcsAppHinagikuDevEcsBackendBackAppEcsResourcesSgE3BFC323:{IndirectPort}",
                         "fromPort": {
-                          "Fn::GetAtt": [
-                            "Aurora2CBAB212",
-                            "Endpoint.Port"
-                          ]
+                          "Fn::GetAtt": ["Aurora2CBAB212", "Endpoint.Port"]
                         },
                         "groupId": {
                           "Fn::GetAtt": [
@@ -10997,10 +10921,7 @@
                           "Fn::ImportValue": "Hinagiku-Dev-Ecs:ExportsOutputFnGetAttHinagikuDevEcsAppHinagikuDevEcsBackendBackAppEcsResourcesSgD94F6A45GroupId4CE95B61"
                         },
                         "toPort": {
-                          "Fn::GetAtt": [
-                            "Aurora2CBAB212",
-                            "Endpoint.Port"
-                          ]
+                          "Fn::GetAtt": ["Aurora2CBAB212", "Endpoint.Port"]
                         }
                       }
                     },
@@ -11109,9 +11030,7 @@
                     "dbSubnetGroupName": {
                       "Ref": "AuroraSubnetsC4DF45C9"
                     },
-                    "enableCloudwatchLogsExports": [
-                      "postgresql"
-                    ],
+                    "enableCloudwatchLogsExports": ["postgresql"],
                     "engine": "aurora-postgresql",
                     "engineVersion": "15.4",
                     "kmsKeyId": {
@@ -11148,10 +11067,7 @@
                     ],
                     "vpcSecurityGroupIds": [
                       {
-                        "Fn::GetAtt": [
-                          "AuroraSecurityGroup3440C66D",
-                          "GroupId"
-                        ]
+                        "Fn::GetAtt": ["AuroraSecurityGroup3440C66D", "GroupId"]
                       }
                     ]
                   }
@@ -11439,11 +11355,7 @@
               "aws:cdk:cloudformation:type": "AWS::RDS::EventSubscription",
               "aws:cdk:cloudformation:props": {
                 "enabled": true,
-                "eventCategories": [
-                  "failure",
-                  "failover",
-                  "maintenance"
-                ],
+                "eventCategories": ["failure", "failover", "maintenance"],
                 "snsTopicArn": {
                   "Fn::ImportValue": "Hinagiku-Dev-ShareResources:ExportsOutputRefHinagikuDevAlarmSNSTopic2D377A7AE4E88178"
                 },

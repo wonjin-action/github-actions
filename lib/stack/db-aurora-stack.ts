@@ -40,16 +40,24 @@ export class DbAuroraStack extends cdk.Stack {
     const engine = rds.DatabaseClusterEngine.auroraPostgres({
       version,
     });
-    const parameterGroupForCluster = new rds.ParameterGroup(this, 'AuroraClusterParameterGroup', {
-      engine,
-      description: 'Aurora-ClusterParameterGroup',
-      parameters: props.postgresqlParamForCluster,
-    });
-    const parameterGroupForInstance = new rds.ParameterGroup(this, 'AuroraInstanceParameterGroup', {
-      engine,
-      description: 'Aurora-InstanceParameterGroup',
-      parameters: props.postgresqlParamForInstance,
-    });
+    const parameterGroupForCluster = new rds.ParameterGroup(
+      this,
+      'AuroraClusterParameterGroup',
+      {
+        engine,
+        description: 'Aurora-ClusterParameterGroup',
+        parameters: props.postgresqlParamForCluster,
+      }
+    );
+    const parameterGroupForInstance = new rds.ParameterGroup(
+      this,
+      'AuroraInstanceParameterGroup',
+      {
+        engine,
+        description: 'Aurora-InstanceParameterGroup',
+        parameters: props.postgresqlParamForInstance,
+      }
+    );
 
     // for Aurora MySQL
     // const version = rds.AuroraMysqlEngineVersion.VER_3_02_1;

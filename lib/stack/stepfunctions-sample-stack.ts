@@ -15,7 +15,11 @@ export interface StepFunctionsSampleStackProps extends cdk.StackProps {
 }
 
 export class StepFunctionsSampleStack extends cdk.Stack {
-  constructor(scope: cdk.App, id: string, props: StepFunctionsSampleStackProps) {
+  constructor(
+    scope: cdk.App,
+    id: string,
+    props: StepFunctionsSampleStackProps
+  ) {
     super(scope, id, props);
 
     // タスク名からタスクARNを生成
@@ -45,21 +49,21 @@ export class StepFunctionsSampleStack extends cdk.Stack {
         effect: iam.Effect.ALLOW,
         actions: ['events:PutTargets', 'events:PutRule', 'events:DescribeRule'],
         resources: ['*'],
-      }),
+      })
     );
     iamRoleForStateMachine.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ['ecs:RunTask'],
         resources: [ecsTaskDefArn],
-      }),
+      })
     );
     iamRoleForStateMachine.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ['iam:PassRole'],
         resources: [props.ecsTaskExecutionRole.roleArn],
-      }),
+      })
     );
 
     const securityGroupForTask = new ec2.SecurityGroup(this, 'SgTask', {
@@ -105,11 +109,15 @@ export class StepFunctionsSampleStack extends cdk.Stack {
       stateJson: runTaskParam,
     });
 
-    const sampleFunction = new lambda_nodejs.NodejsFunction(this, 'SampleFunction', {
-      entry: path.join(__dirname, '../lambda/batch-sample-app/index.js'),
-      runtime: Runtime.NODEJS_16_X,
-      handler: 'handler',
-    });
+    const sampleFunction = new lambda_nodejs.NodejsFunction(
+      this,
+      'SampleFunction',
+      {
+        entry: path.join(__dirname, '../lambda/batch-sample-app/index.js'),
+        runtime: Runtime.NODEJS_16_X,
+        handler: 'handler',
+      }
+    );
     sampleFunction.grantInvoke(iamRoleForStateMachine);
 
     const lambdaTask = new tasks.LambdaInvoke(this, 'LambdaTask', {

@@ -70,10 +70,16 @@ export class Vpc extends Construct {
     });
     flowLogKey.addToResourcePolicy(
       new iam.PolicyStatement({
-        actions: ['kms:Encrypt*', 'kms:Decrypt*', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:Describe*'],
+        actions: [
+          'kms:Encrypt*',
+          'kms:Decrypt*',
+          'kms:ReEncrypt*',
+          'kms:GenerateDataKey*',
+          'kms:Describe*',
+        ],
         principals: [new iam.ServicePrincipal('delivery.logs.amazonaws.com')],
         resources: ['*'],
-      }),
+      })
     );
 
     // Bucket
@@ -145,7 +151,10 @@ export class Vpc extends Construct {
     // VPC Endpoint for S3
     vpc.addGatewayEndpoint('S3EndpointForPrivate', {
       service: ec2.GatewayVpcEndpointAwsService.S3,
-      subnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }, { subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
+      subnets: [
+        { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+        { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      ],
     });
 
     // VPC Endpoint for SSM
