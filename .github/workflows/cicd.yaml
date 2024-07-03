@@ -167,9 +167,7 @@ jobs:
         id: get_s3_bucket_name
         run: |
           BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/Lambda-Bucket" --query "Parameter.Value" --output text)
-          BACKEND_BUCKET_NAME=$(aws ssm get-parameter --name "/Hinagiku/TriggerBucket/EcsBackend" --query "Parameter.Value" --output text)
-          echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
-          echo "BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME" >> $GITHUB_ENV
+          echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
 
       - name: List files in lambda
         run: ls -l lambda
@@ -179,17 +177,24 @@ jobs:
           pwd
           jq -n --arg url "${{ needs.image-build.outputs.REPO_URL }}" --arg tag "${{ needs.image-build.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
-          zip -r image.zip docker_image_info.json lambda_function_config.json
+          echo "Installing dependencies..."
+
+          zip -r image.zip docker_image_info.json lambda_function_config.json -j ../script/lambda.sh
           echo "zipped image.zip : "
           unzip -l image.zip
+
+
+
 
         working-directory: lambda
 
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
-          aws s3 cp image.zip s3://$BACKEND_BUCKET_NAME/image.zip
         working-directory: lambda
+
+      ## If you want to verified, Enable below code
+
       # - name: Setup tmate session
       #   if: always()
       #   uses: mxschmitt/action-tmate@v3
