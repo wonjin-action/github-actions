@@ -129,7 +129,7 @@ jobs:
           path: '.lambda'
       - name: Load environment variables
         run: |
-          DOCKER_IMAGE_INFO=$(cat lambda/docker_image_info.json)
+          DOCKER_IMAGE_INFO=$(cat .lambda/docker_image_info.json)
           export REPO_URL=$(echo $DOCKER_IMAGE_INFO | jq -r '.DOCKER_IMAGE_URL')
           export TAG=$(echo $DOCKER_IMAGE_INFO | jq -r '.TAG')
           echo "REPO_URL=${{ needs.image-build.outputs.REPO_URL }}"
@@ -190,7 +190,7 @@ jobs:
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
           aws s3 cp image.zip s3://$BACKEND_BUCKET_NAME/image.zip
         working-directory: lambda
-      - name: Setup tmate session
-        if: always()
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 60
+      # - name: Setup tmate session
+      #   if: always()
+      #   uses: mxschmitt/action-tmate@v3
+      #   timeout-minutes: 60
