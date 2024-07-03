@@ -103,12 +103,12 @@ jobs:
           echo "Create docker_image_info.json in $(pwd)"
           jq -n --arg url "${{ steps.get_ecr_repo_url_and_tag.outputs.REPO_URL }}" --arg tag "${{ steps.get_ecr_repo_url_and_tag.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
-        working-directory: infra/lambda
+        working-directory: lambda
       - name: Save environment variables as artifact
         uses: actions/upload-artifact@v3
         with:
           name: docker_image_info
-          path: infra/lambda/docker_image_info.json
+          path: lambda/docker_image_info.json
       - name: Docker build & push
         id: docker_build_push
         run: |
@@ -126,10 +126,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: docker_image_info
-          path: './infra/lambda'
+          path: '.lambda'
       - name: Load environment variables
         run: |
-          DOCKER_IMAGE_INFO=$(cat ./infra/lambda/docker_image_info.json)
+          DOCKER_IMAGE_INFO=$(cat lambda/docker_image_info.json)
           export REPO_URL=$(echo $DOCKER_IMAGE_INFO | jq -r '.DOCKER_IMAGE_URL')
           export TAG=$(echo $DOCKER_IMAGE_INFO | jq -r '.TAG')
           echo "REPO_URL=${{ needs.image-build.outputs.REPO_URL }}"
@@ -171,25 +171,25 @@ jobs:
           echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_ENV
           echo "BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME" >> $GITHUB_ENV
 
-      - name: List files in infra/lambda
-        run: ls -l infra/lambda
+      - name: List files in lambda
+        run: ls -l lambda
 
       - name: Prepare Lambda Deployment Package
         run: |
           pwd
           jq -n --arg url "${{ needs.image-build.outputs.REPO_URL }}" --arg tag "${{ needs.image-build.outputs.TAG }}" '{"DOCKER_IMAGE_URL": $url, "TAG": $tag}' > docker_image_info.json
           cat docker_image_info.json
-          zip -r image.zip docker_image_info.json lambda_function_config.json -j ../script/lambda.sh trust_policy_for_lambda.json Lambda_iam_policy.json ../script/ecs-service-def.json ../script/ecs-task-def.json ../script/ecspresso.yml ../script/autoscale_sample.sh
+          zip -r image.zip docker_image_info.json lambda_function_config.json
           echo "zipped image.zip : "
           unzip -l image.zip
 
-        working-directory: infra/lambda
+        working-directory: lambda
 
       - name: Upload to S3
         run: |
           aws s3 cp image.zip s3://$BUCKET_NAME/image.zip
           aws s3 cp image.zip s3://$BACKEND_BUCKET_NAME/image.zip
-        working-directory: infra/lambda
+        working-directory: lambda
       - name: Setup tmate session
         if: always()
         uses: mxschmitt/action-tmate@v3
