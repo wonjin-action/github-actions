@@ -81,28 +81,28 @@ const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`
 //   env: ctxEnvironment,
 // });
 
-const waf = new WafStack(app, `${pjPrefix}-Waf`, {
-  scope: 'CLOUDFRONT',
-  env: {
-    account: deployEnv.account,
-    region: 'us-east-1',
-  },
-  crossRegionReferences: true,
-  ...config.WafParam,
-  pjPrefix: pjPrefix,
-});
+// const waf = new WafStack(app, `${pjPrefix}-Waf`, {
+//   scope: 'CLOUDFRONT',
+//   env: {
+//     account: deployEnv.account,
+//     region: 'us-east-1',
+//   },
+//   crossRegionReferences: true,
+//   ...config.WafParam,
+//   pjPrefix: pjPrefix,
+// });
 
-new OidcStack(app, `${pjPrefix}-Oidc`, {
-  organizationName: config.OidcParam.OrganizationName,
-  repositoryNames: config.OidcParam.RepositoryNames,
-});
+// new OidcStack(app, `${pjPrefix}-Oidc`, {
+//   organizationName: config.OidcParam.OrganizationName,
+//   repositoryNames: config.OidcParam.RepositoryNames,
+// });
 
 const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   vpc: shareResources.vpc,
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
   prefix: pjPrefix,
-  albCertificateIdentifier: config.AlbCertificateIdentifier,
+  // albCertificateIdentifier: config.AlbCertificateIdentifier,
   ecsFrontTasks: config.EcsFrontTasks,
   ecsBackTasks: config.EcsBackTasks,
   ecsAuthTasks: config.EcsAuthTasks,
@@ -111,15 +111,15 @@ const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   ecsBastionTasks: false,
 });
 
-new CloudfrontStack(app, `${pjPrefix}-CloudFront`, {
-  pjPrefix: pjPrefix,
-  webAcl: waf.webAcl,
-  CertificateIdentifier: config.CertificateIdentifier,
-  cloudFrontParam: config.CloudFrontParam,
-  appAlbs: [webApp.alb.appAlb],
-  env: deployEnv,
-  crossRegionReferences: true,
-});
+// new CloudfrontStack(app, `${pjPrefix}-CloudFront`, {
+//   pjPrefix: pjPrefix,
+//   webAcl: waf.webAcl,
+//   CertificateIdentifier: config.CertificateIdentifier,
+//   cloudFrontParam: config.CloudFrontParam,
+//   appAlbs: [webApp.alb.appAlb],
+//   env: deployEnv,
+//   crossRegionReferences: true,
+// });
 
 // Aurora
 const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {
@@ -171,3 +171,10 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-Redis`, {
 // Tagging "Environment" tag to all resources in this app
 const envTagName = 'Environment';
 cdk.Tags.of(app).add(envTagName, config.Env.envName);
+
+// --------------------------- ssm parameter store--------------------------
+
+//  new ssm.StringParameter(this, `${pjPrefix}-Ecs`,{
+//    paramtername :`${pjPrefix}-Ecs`,
+//    stringValue : webApp
+// })
