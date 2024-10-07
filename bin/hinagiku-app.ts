@@ -92,17 +92,16 @@ const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`
 //   pjPrefix: pjPrefix,
 // });
 
-// new OidcStack(app, `${pjPrefix}-Oidc`, {
-//   organizationName: config.OidcParam.OrganizationName,
-//   repositoryNames: config.OidcParam.RepositoryNames,
-// });
+new OidcStack(app, `${pjPrefix}-Oidc`, {
+  organizationName: config.OidcParam.OrganizationName,
+  repositoryNames: config.OidcParam.RepositoryNames,
+});
 
 const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   vpc: shareResources.vpc,
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
   prefix: pjPrefix,
-  // albCertificateIdentifier: config.AlbCertificateIdentifier,
   ecsFrontTasks: config.EcsFrontTasks,
   ecsBackTasks: config.EcsBackTasks,
   ecsAuthTasks: config.EcsAuthTasks,
@@ -171,10 +170,3 @@ new ElastiCacheRedisStack(app, `${pjPrefix}-Redis`, {
 // Tagging "Environment" tag to all resources in this app
 const envTagName = 'Environment';
 cdk.Tags.of(app).add(envTagName, config.Env.envName);
-
-// --------------------------- ssm parameter store--------------------------
-
-//  new ssm.StringParameter(this, `${pjPrefix}-Ecs`,{
-//    paramtername :`${pjPrefix}-Ecs`,
-//    stringValue : webApp
-// })
