@@ -1,5 +1,4 @@
 import * as cdk from 'aws-cdk-lib';
-import * as servicediscovery from 'aws-cdk-lib/aws-servicediscovery';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Duration } from 'aws-cdk-lib';
 import { IVpc } from 'aws-cdk-lib/aws-ec2';
@@ -21,7 +20,7 @@ export class CloudMap extends Construct {
     super(scope, id);
 
     // Service Discovery NameSpace.
-    const namespace = new PrivateDnsNamespace(this, 'Namespace-1', {
+    const namespace = new PrivateDnsNamespace(this, 'Namespace', {
       name: props.namespaceName,
       vpc: props.vpc,
     });
