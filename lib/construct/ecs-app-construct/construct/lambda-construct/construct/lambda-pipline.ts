@@ -43,7 +43,7 @@ export class PipelineLambdaConstruct extends Construct {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
-          's3:GetObject', // S3에서 소스 가져오기
+          's3:GetObject',
           'ecs:RegisterTaskDefinition',
           'ecs:ListTaskDefinitions',
           'ecs:DescribeTaskDefinition',
@@ -57,7 +57,7 @@ export class PipelineLambdaConstruct extends Construct {
           'cloudformation:DescribeStacks',
           'ssm:GetParameter',
         ],
-        resources: ['*'], // 특정 리소스를 지정할 수 있다면 더 좋습니다.
+        resources: ['*'],
       }),
     );
 
