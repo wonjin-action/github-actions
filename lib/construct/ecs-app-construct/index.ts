@@ -10,17 +10,19 @@ import { BastionECSAppConstruct } from './construct/bastion-ecs-construct';
 import { AlbConstruct } from '../alb-construct';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { CloudMap } from './construct/cloudmap';
+import * as cdk from 'aws-cdk-lib';
 
 interface EcsAppConstructProps {
   vpc: ec2.Vpc;
   appKey: kms.IKey;
   alarmTopic: sns.Topic;
   prefix: string;
-  albConstruct: AlbConstruct;
+  albConstruct?: AlbConstruct;
   ecsFrontTasks?: IEcsAlbParam;
   ecsBackTasks?: IEcsParam[];
   ecsBastionTasks: boolean;
   ecsAuthTasks?: IEcsParam[];
+  lambdaSecurityGroup?: ec2.ISecurityGroup;
 }
 
 export class EcsAppConstruct extends Construct {
@@ -29,6 +31,7 @@ export class EcsAppConstruct extends Construct {
   public readonly ecsCommon: EcsCommonConstruct;
   public readonly bastionApp: BastionECSAppConstruct;
   public readonly authEcsApps: EcsappConstruct[];
+  public readonly cloudmap: CloudMap;
 
   constructor(scope: Construct, id: string, props: EcsAppConstructProps) {
     super(scope, id);
@@ -45,6 +48,11 @@ export class EcsAppConstruct extends Construct {
       namespaceName: props.prefix,
       vpc: props.vpc,
     });
+    this.cloudmap = cloudmap;
+
+    new cdk.CfnOutput(this, 'NamespaceId', {
+      value: cloudmap.namespace.namespaceName,
+    });
 
     if (props.ecsFrontTasks) {
       const frontEcsApps = props.ecsFrontTasks.map((app) => {
@@ -55,20 +63,20 @@ export class EcsAppConstruct extends Construct {
           prefix: props.prefix,
           appKey: props.appKey,
           alarmTopic: props.alarmTopic,
-          allowFromSg: [props.albConstruct.appAlbSecurityGroup],
+          // allowFromSg: [props.albConstruct.appAlbSecurityGroup],
           portNumber: app.portNumber,
         });
       });
       this.frontEcsApps = frontEcsApps;
 
       //Pipeline for Frontend Rolling
-      frontEcsApps.forEach((ecsApp, index) => {
+      frontEcsApps.forEach((ecsApp) => {
         new PipelineEcspressoConstruct(this, `${props.prefix}-${ecsApp.appName}-FrontApp-Pipeline`, {
           prefix: props.prefix,
           appName: ecsApp.appName,
           ecsCluster: ecsCommon.ecsCluster,
           ecsServiceName: ecsApp.ecsServiceName,
-          targetGroup: props.albConstruct.targetGroupConstructs[index].targetGroup,
+          // targetGroup: props.albConstruct.targetGroupConstructs[index].targetGroup,
           securityGroup: ecsApp.securityGroupForFargate,
           vpc: props.vpc,
           logGroup: ecsApp.fargateLogGroup,
@@ -91,6 +99,7 @@ export class EcsAppConstruct extends Construct {
           alarmTopic: props.alarmTopic,
           allowFromSg: this.frontEcsApps.map((ecsAlbApp) => ecsAlbApp.securityGroupForFargate),
           portNumber: ecsApp.portNumber,
+          lambdaSecurityGroup: props.lambdaSecurityGroup,
         });
       });
       this.backEcsApps = backEcsApps;

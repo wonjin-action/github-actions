@@ -81,16 +81,16 @@ const shareResources = new ShareResourcesStack(app, `${pjPrefix}-ShareResources`
 //   env: ctxEnvironment,
 // });
 
-const waf = new WafStack(app, `${pjPrefix}-Waf`, {
-  scope: 'CLOUDFRONT',
-  env: {
-    account: deployEnv.account,
-    region: 'us-east-1',
-  },
-  crossRegionReferences: true,
-  ...config.WafParam,
-  pjPrefix: pjPrefix,
-});
+// const waf = new WafStack(app, `${pjPrefix}-Waf`, {
+//   scope: 'CLOUDFRONT',
+//   env: {
+//     account: deployEnv.account,
+//     region: 'us-east-1',
+//   },
+//   crossRegionReferences: true,
+//   ...config.WafParam,
+//   pjPrefix: pjPrefix,
+// });
 
 new OidcStack(app, `${pjPrefix}-Oidc`, {
   organizationName: config.OidcParam.OrganizationName,
@@ -102,7 +102,6 @@ const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   appKey: shareResources.appKey,
   alarmTopic: shareResources.alarmTopic,
   prefix: pjPrefix,
-  albCertificateIdentifier: config.AlbCertificateIdentifier,
   ecsFrontTasks: config.EcsFrontTasks,
   ecsBackTasks: config.EcsBackTasks,
   ecsAuthTasks: config.EcsAuthTasks,
@@ -111,15 +110,15 @@ const webApp = new EcsAppStack(app, `${pjPrefix}-Ecs`, {
   ecsBastionTasks: false,
 });
 
-new CloudfrontStack(app, `${pjPrefix}-CloudFront`, {
-  pjPrefix: pjPrefix,
-  webAcl: waf.webAcl,
-  CertificateIdentifier: config.CertificateIdentifier,
-  cloudFrontParam: config.CloudFrontParam,
-  appAlbs: [webApp.alb.appAlb],
-  env: deployEnv,
-  crossRegionReferences: true,
-});
+// new CloudfrontStack(app, `${pjPrefix}-CloudFront`, {
+//   pjPrefix: pjPrefix,
+//   webAcl: waf.webAcl,
+//   CertificateIdentifier: config.CertificateIdentifier,
+//   cloudFrontParam: config.CloudFrontParam,
+//   appAlbs: [webApp.alb.appAlb],
+//   env: deployEnv,
+//   crossRegionReferences: true,
+// });
 
 // Aurora
 const dbCluster = new DbAuroraStack(app, `${pjPrefix}-Aurora`, {

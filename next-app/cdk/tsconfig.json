@@ -1,9 +1,8 @@
 {
-  "exclude": ["cdk.out"],
   "compilerOptions": {
-    "target": "ES2018",
+    "target": "ES2020",
     "module": "commonjs",
-    "lib": ["es2018"],
+    "lib": ["es2020", "dom"],
     "declaration": true,
     "strict": true,
     "noImplicitAny": true,
@@ -18,7 +17,7 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "resolveJsonModule": true
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "params/**/*.ts", "next-app/src/**/*.tsx"]
+  "exclude": ["node_modules", "cdk.out"]
 }
