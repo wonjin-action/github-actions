@@ -21,7 +21,6 @@ export interface EcsappConstructProps extends cdk.StackProps {
   allowFromSg?: ec2.ISecurityGroup[];
   portNumber: number;
   useServiceConnect?: boolean;
-  lambdaSecurityGroup?: ec2.ISecurityGroup;
 }
 
 export class EcsappConstruct extends Construct {
@@ -50,10 +49,6 @@ export class EcsappConstruct extends Construct {
       vpc: props.vpc,
       allowAllOutbound: true, // for AWS APIs
     });
-
-    if (props.lambdaSecurityGroup) {
-      securityGroupForFargate.connections.allowFrom(props.lambdaSecurityGroup, ec2.Port.tcp(props.portNumber));
-    }
 
     if (props.allowFromSg) {
       for (const sg of props.allowFromSg) {

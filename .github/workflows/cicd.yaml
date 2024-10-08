@@ -35,12 +35,6 @@ jobs:
           cd next-app/cdk
           npm install
           npm run build
-      - name: Install CDK dependencies
-        run: |
-          cd next-app/cdk
-          npm install aws-cdk-lib
-          npm install -g aws-cdk
-
   image-build:
     if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest

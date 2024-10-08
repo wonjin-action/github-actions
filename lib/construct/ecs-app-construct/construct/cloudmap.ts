@@ -5,7 +5,7 @@ import { IVpc } from 'aws-cdk-lib/aws-ec2';
 import { PrivateDnsNamespace, DnsRecordType, Service } from 'aws-cdk-lib/aws-servicediscovery';
 import { Construct } from 'constructs';
 
-interface CloudMapProps {
+interface CloudMapProps extends cdk.StackProps {
   namespaceName: string;
   vpc: IVpc;
 }
@@ -55,5 +55,8 @@ export class CloudMap extends Construct {
       parameterName: '/Lambda/namespace',
       stringValue: namespace.namespaceId,
     });
+    // new cdk.CfnOutput(this, 'NamespaceId', {
+    //   value: this.namespace.namespaceName,
+    // });
   }
 }

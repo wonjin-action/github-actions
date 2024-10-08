@@ -11,11 +11,14 @@
     "cdk": "bash ./etc/scripts/cdk.sh",
     "depcheck": "npx depcheck --ignore-dirs cdk.out",
     "build": "tsc --build",
+    "build:esbuild": "esbuild ./src/index.ts --bundle --outfile=./dist/index.js",
     "clean": "tsc --build --clean && rm -rf cdk.out",
     "watch": "tsc -w",
     "test": "jest",
     "lint": "eslint --fix .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "diff": "cdk diff -c environment=dev --all",
+    "deploy": "cdk deploy -c environment=dev --all"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.1.1",

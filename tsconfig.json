@@ -20,5 +20,5 @@
     "strictPropertyInitialization": false,
     "resolveJsonModule": true
   },
-  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "params/**/*.ts", "next-app/src/**/*.tsx"]
+  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "params/**/*.ts"]
 }
